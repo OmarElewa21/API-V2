@@ -20,4 +20,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::group(['middleware' => ['auth:sanctum']], function() {
     Route::resource('users', UsersController::class);
+    Route::resource('roles', RoleController::class);
 });

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->string('name', 32);
             $table->text('description')->nullable();
-            $table->json('privileges')->nullable();
+            $table->efficientUuid('uuid')->index()->unique()->nullable();
             $table->softDeletes($column = 'deleted_at', $precision = 0);
             $table->timestamps();
         });
