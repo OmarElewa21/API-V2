@@ -20,5 +20,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::group(['middleware' => ['auth:sanctum']], function() {
     Route::resource('users', UsersController::class);
+
+    // Todo: may add future middleware to this resource route
     Route::resource('roles', RoleController::class);
 });
