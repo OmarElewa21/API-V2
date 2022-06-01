@@ -3,39 +3,39 @@
 namespace App\Http\Controllers;
 
 use App\Models\Role;
+use App\Models\Permission;
+use App\Models\Requests\CreateRoleRequest;
 use Illuminate\Http\Request;
 
 class RoleController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the Roles.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index()
     {
-        
+        return response(Role::with('permissions')->all(), 200);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created Role in database.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  App\Models\Requests\CreateRoleRequest  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(CreateRoleRequest $request)
     {
-        //
+        $permission = new Permission;
+        $permission->create(['permissions_set'=>$request->permissions_set]);
+        Role::create([
+            'name'          => $request->name,
+            'description'   => $request->description,
+            'permission_id' => $permission->id
+        ]);
+        return response(200);
     }
 
     /**
@@ -46,7 +46,7 @@ class RoleController extends Controller
      */
     public function show(Role $role)
     {
-        //
+        return;
     }
 
     /**
@@ -57,7 +57,7 @@ class RoleController extends Controller
      */
     public function edit(Role $role)
     {
-        //
+        return response($role->load('permissions'),200);
     }
 
     /**

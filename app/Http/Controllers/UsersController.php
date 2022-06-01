@@ -9,6 +9,44 @@ use Exception;
 
 class UsersController extends Controller
 {
+
+    public function login(Request $request)
+    {
+        // Request Validation
+        $request->validate([
+            'username' => 'required',
+            'password' => 'required'
+        ]);
+
+        // Check if there is a record with given username
+        if( !User::where("username", $request->username)->exists() ){
+            return response()->json(["message" => "User not found"], 401);
+        }
+
+        // Auth attempt for given credintials
+        if(!auth()->attempt(request(['username', 'password']))){
+            return response()->json(["message" => "Invalid credintials"], 422);
+        }
+        
+        $user = User::where("username", $request->username)->with(['role', 'role.permission'])->first();       // get user
+        $authToken = $user->createToken("auth_token")->plainTextToken;                      // generate token
+
+        return response()->json([
+            "user"    =>   $user,
+            "token"   =>   $authToken
+        ], 200);
+    }
+
+
+    public function logout()
+    {
+        if(!auth()->check()){
+            return response()->json(["message" => "No User Authinticated"], 400);
+        }
+        auth()->user()->tokens()->delete();
+        return response()->json(["message" => "User logged out successfully"], 200);
+    }
+
     /**
      * Display a listing of the users.
      *

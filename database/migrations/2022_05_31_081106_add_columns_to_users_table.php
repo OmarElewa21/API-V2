@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->foreignId('role_id')->constrained('roles');
             $table->string('username', 170)->unique();
+            $table->boolean('permission_by_role')->default(true);
             $table->softDeletes($column = 'deleted_at', $precision = 0);
         });
     }
@@ -29,7 +30,10 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropForeign(['role_id']);
+            $table->dropColumn('role_id');
             $table->dropColumn('username');
+            $table->dropColumn('deleted_at');
+            $table->dropColumn('permission_by_role');
         });
     }
 };
