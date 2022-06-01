@@ -9,6 +9,8 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use Illuminate\Support\Str;
+
 
 class User extends Authenticatable
 {
@@ -46,5 +48,9 @@ class User extends Authenticatable
 
     public function role(){
         return $this->belongsTo(Role::class);
+    }
+
+    public function hasRole($role){
+        return Str::lower($this->role->name) === Str::lower($role);
     }
 }

@@ -16,7 +16,7 @@ class RoleController extends Controller
      */
     public function index()
     {
-        return response(Role::with('permissions')->all(), 200);
+        return response(Role::with('permission')->get(), 200);
     }
 
 
