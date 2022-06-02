@@ -8,13 +8,15 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Dyrynda\Database\Casts\EfficientUuid;
+use Dyrynda\Database\Support\GeneratesUuid;
 
 use Illuminate\Support\Str;
 
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, GeneratesUuid;
 
     /**
      * The attributes that are mass assignable.
@@ -25,6 +27,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role_id',
+        'username',
+        'permission_by_role',
     ];
 
     /**
@@ -44,6 +49,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'uuid' => EfficientUuid::class,
     ];
 
     public function role(){

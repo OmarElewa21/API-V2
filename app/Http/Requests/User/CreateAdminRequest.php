@@ -1,15 +1,16 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rules\Password;
 
 
-class SaveRoleRequest extends FormRequest
+class CreateAdminRequest extends FormRequest
 {
-     /**
+    /**
      * Determine if the user is authorized to make this request.
      *
      * @return bool
@@ -27,8 +28,15 @@ class SaveRoleRequest extends FormRequest
     public function rules()
     {
         return [
-            'name'              => 'required|string|max:32',
-            'permission_set'    => 'required|array'
+            'name'              => 'required|string|max:160',
+            'role'              => 'required|exists:roles,name',
+            'username'          => 'required|unique:users|string|max:64',
+            'email'             => 'required|unique:users|email',
+            'password'          => Password::min(8)
+                                        ->letters()
+                                        ->numbers()
+                                        ->symbols()
+                                        ->uncompromised()
         ];
     }
 

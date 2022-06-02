@@ -20,8 +20,12 @@ use App\Http\Controllers\RoleController;
 Route::post('login', [UsersController::class,"login"]);
 
 Route::group(['middleware' => ['auth:sanctum']], function() {
-    Route::resource('users', UsersController::class);
     Route::post('logout', [UsersController::class,"logout"]);
-    
-    Route::apiResource('roles', RoleController::class)->middleware('role:super admin');
+
+
+    Route::group(['middleware' => ['role:super admin']], function() {
+        Route::post('user/create_admin', [UsersController::class, "createAdmin"]);
+        
+        Route::apiResource('roles', RoleController::class);
+    });
 });

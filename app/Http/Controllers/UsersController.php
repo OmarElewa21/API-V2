@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Requests\User\CreateAdminRequest;
 use App\Models\User;
+use App\Models\Role;
 use Exception;
 
 
@@ -63,25 +65,24 @@ class UsersController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Create admin User
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function createAdmin(CreateAdminRequest $request)
     {
-        //
+        $user = new User;
+        $user->fill([
+            'name'          => $request->name,
+            'username'      => $request->username,
+            'email'         => $request->email,
+            'role_id'          => Role::where('name', $request->role)->value('id'),
+            'password'      => bcrypt($request->password),
+        ])->save();
+        return response($user, 200);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+
 
     /**
      * Display the specified resource.
