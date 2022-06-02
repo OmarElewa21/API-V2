@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\Permission;
 use App\Http\Requests\CreateRoleRequest;
 use Illuminate\Http\Request;
+use Exception;
 
 class RoleController extends Controller
 {
@@ -29,12 +30,21 @@ class RoleController extends Controller
     public function store(CreateRoleRequest $request)
     {
         $permission = new Permission;
-        $permission->create(['permissions_set'=>$request->permissions_set]);
-        Role::create([
-            'name'          => $request->name,
-            'description'   => $request->description,
-            'permission_id' => $permission->id
-        ]);
+        $permission->fill([
+            'permissions_set'   =>  $request->permission_set
+        ])->save();
+
+        try {
+            Role::create([
+                'name'          => $request->name,
+                'description'   => $request->description,
+                'permission_id' => $permission->id
+            ]);
+        } catch (Exception $e) {
+            $permission->forceDelete();
+            return response($e->getMessage(), 500);
+        }
+
         return response(200);
     }
 
