@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Role;
 use App\Models\Permission;
-use App\Http\Requests\CreateRoleRequest;
+use App\Http\Requests\SaveRoleRequest;
 use Illuminate\Http\Request;
 use Exception;
 
@@ -24,10 +24,10 @@ class RoleController extends Controller
     /**
      * Store a newly created Role in database.
      *
-     * @param  App\Models\Requests\CreateRoleRequest  $request
+     * @param  App\Models\Requests\SaveRoleRequest  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(CreateRoleRequest $request)
+    public function store(SaveRoleRequest $request)
     {
         $permission = new Permission;
         $permission->fill([
@@ -45,51 +45,66 @@ class RoleController extends Controller
             return response($e->getMessage(), 500);
         }
 
-        return response(200);
+        return $this->index();
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Role  $role
+     * @param  roleUuid
      * @return \Illuminate\Http\Response
      */
-    public function show(Role $role)
+    public function show($roleUuid)
     {
-        return;
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Role  $role
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Role $role)
-    {
-        return response($role->load('permissions'),200);
+        if(Role::whereUuid($roleUuid)->exists()){
+            return response(Role::whereUuid($roleUuid)->with('permission')->first(), 200);
+        }
+        return response()->json(['message' => 'Role Not Found'],  404);
     }
 
     /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Role  $role
+     * @param  roleUuid
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Role $role)
+    public function update(SaveRoleRequest $request, $roleUuid)
     {
-        //
+        if(Role::whereUuid($roleUuid)->exists()){
+            $role = Role::whereUuid($roleUuid)->with('permission')->first();
+        }else{
+            return response()->json(['message' => 'Role Not Found'],  404);
+        }
+        try{
+            $role->update([
+                'name'          => $request->name,
+                'description'   => $request->description,
+                'permission_id' => $role->permission->id
+            ]);
+            $role->permission->update([
+                'permissions_set'   =>  $request->permission_set
+            ]);
+
+        } catch (Exception $e) {
+            return response($e->getMessage(), 500);
+        }
+        return response()->json($role, 200);
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Role  $role
+     * @param  roleUuid
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Role $role)
+    public function destroy($roleUuid)
     {
-        //
+        if(Role::whereUuid($roleUuid)->exists()){
+            Role::whereUuid($roleUuid)->delete();
+            return $this->index();
+        }else{
+            return response()->json(['message' => 'Role Not Found'],  404);
+        }
     }
 }

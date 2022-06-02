@@ -23,5 +23,5 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
     Route::resource('users', UsersController::class);
     Route::post('logout', [UsersController::class,"logout"]);
     
-    Route::resource('roles', RoleController::class)->except(['create', 'show'])->middleware('role:super admin');
+    Route::apiResource('roles', RoleController::class)->middleware('role:super admin');
 });

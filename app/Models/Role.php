@@ -22,6 +22,14 @@ class Role extends Model
         'uuid' => EfficientUuid::class,
     ];
 
+    public static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function($role) {
+            $role->permission()->delete();
+        });
+    }
 
     public function users()
     {
