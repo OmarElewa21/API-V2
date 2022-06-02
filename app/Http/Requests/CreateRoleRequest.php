@@ -4,6 +4,9 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
+
 
 class CreateRoleRequest extends FormRequest
 {
@@ -14,7 +17,7 @@ class CreateRoleRequest extends FormRequest
      */
     public function authorize()
     {
-        return Str::lower(auth()->user()->role) === 'super admin' ? true : false;
+        return auth()->user()->hasRole('super admin');
     }
 
     /**
@@ -26,7 +29,16 @@ class CreateRoleRequest extends FormRequest
     {
         return [
             'name'              => 'required|string|max:32',
-            'permission_set'    => 'required|json'
+            'permission_set'    => 'required|array'
         ];
+    }
+
+    /**
+     * Overwrite validation return
+     *
+     * @return HttpResponseException
+     */
+    protected function failedValidation(Validator $validator) {
+        throw new HttpResponseException(response()->json($validator->errors(), 422));
     }
 }

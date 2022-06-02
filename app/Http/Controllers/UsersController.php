@@ -28,7 +28,8 @@ class UsersController extends Controller
             return response()->json(["message" => "Invalid credintials"], 422);
         }
         
-        $user = User::where("username", $request->username)->with(['role', 'role.permission'])->first();       // get user
+        $user = User::where("username", $request->username)->with(['role', 'role.permission'])->first();      // get user
+        $user->tokens()->delete();                                                          // delete any tokens
         $authToken = $user->createToken("auth_token")->plainTextToken;                      // generate token
 
         return response()->json([
