@@ -52,8 +52,13 @@ class User extends Authenticatable
         'uuid' => EfficientUuid::class,
     ];
 
+    public function scopeAdmins($query)
+    {
+        return $query->whereRelation('role', 'name', 'admin');
+    }
+
     public function role(){
-        return $this->belongsTo(Role::class);
+        return $this->belongsTo(Role::class)->withTrashed();
     }
 
     public function hasRole($role){

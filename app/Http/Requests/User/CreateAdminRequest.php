@@ -6,7 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rules\Password;
-
+use Illuminate\Validation\Rule;
 
 class CreateAdminRequest extends FormRequest
 {
@@ -30,8 +30,8 @@ class CreateAdminRequest extends FormRequest
         return [
             'name'              => 'required|string|max:160',
             'role'              => 'required|exists:roles,name',
-            'username'          => 'required|unique:users|string|max:64',
-            'email'             => 'required|unique:users|email',
+            'username'          => ['required', 'string', 'max:64', Rule::unique('users')->whereNull('deleted_at')],
+            'email'             => ['required', 'email', 'max:64', Rule::unique('users')->whereNull('deleted_at')],
             'password'          => Password::min(8)
                                         ->letters()
                                         ->numbers()
