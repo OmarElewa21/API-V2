@@ -3,19 +3,26 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Routing\Route;
 use Illuminate\Validation\Rule;
 
-class CreateOrganizationRequest extends BaseRequest
+class UpdateOrganizationRequest extends CreateOrganizationRequest
 {
+
     /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
+     * @var organization
      */
-    public function authorize()
+    private $organization;
+
+    /**
+     *
+     * @param Route $route
+     */
+    function __construct(Route $route)
     {
-        return auth()->user()->hasRole('super admin') || auth()->user()->hasRole('admin');
+        $this->organization = $route->parameter('organization');
     }
+
 
     /**
      * Get the validation rules that apply to the request.
@@ -26,7 +33,7 @@ class CreateOrganizationRequest extends BaseRequest
     {
         return [
             'name'                      => 'required|string|max:164',
-            'email'                     => ['required', 'email', 'max:164', Rule::unique('organizations')->whereNull('deleted_at')],
+            'email'                     => ['required', 'email', 'max:164', Rule::unique('organizations')->ignore($this->organization)],
             'phone'                     => 'required|string|max:24',
             'person_in_charge_name'     => 'required|string|max:164',
             'address'                   => 'required|string',

@@ -15,18 +15,19 @@ return new class extends Migration
     {
         Schema::create('organizations', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 64);
-            $table->string('email', 170)->unique();
-            $table->string('phone');
-            $table->string('person_in_charge_name', 255);
+            $table->string('name', 164);
+            $table->string('email', 164)->unique();
+            $table->string('phone', 24);
+            $table->string('person_in_charge_name', 164);
             $table->text('address');
             $table->text('billing_address');
             $table->text('shipping_address');
             $table->string('img', 255);
             $table->string('country', 64);
+            $table->efficientUuid('uuid')->index()->unique()->nullable();
             $table->softDeletes($column = 'deleted_at', $precision = 0);
             $table->timestamps();
-        });
+        }); 
     }
 
     /**

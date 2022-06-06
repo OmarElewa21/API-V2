@@ -19,6 +19,13 @@ return new class extends Migration
             $table->softDeletes($column = 'deleted_at', $precision = 0);
             $table->timestamps();
         });
+
+        DB::table('permissions')->insert(
+            array(
+                'id'                    => 1,
+                'permissions_set'       => json_encode(['all' => true])
+            )
+        );
     }
 
     /**

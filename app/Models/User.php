@@ -51,7 +51,7 @@ class User extends Authenticatable
     }
 
     public function hasOwnPermissionSet(){
-        return $this->role->is_fixed;
+        return !$this->permission_by_role;
     }
 
     public function getUserPermissionSet(){
@@ -65,7 +65,7 @@ class User extends Authenticatable
     }
 
     public function checkRouteEligibility($route_name){
-        if($this->hasOwnPermissionSet()){
+        if($this->hasOwnPermissionSet() && $this->getUserPermissionSet()->exists()){
             $permission_set = $this->getUserPermissionSet()->first();
         }else{
             $permission_set = $this->getRolePermissionSet();

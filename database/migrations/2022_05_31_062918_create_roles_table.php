@@ -15,13 +15,23 @@ return new class extends Migration
     {
         Schema::create('roles', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 32);
+            $table->string('name', 32)->unique();
             $table->text('description')->nullable();
             $table->foreignId('permission_id')->constrained('permissions');
+            $table->boolean('is_fixed')->default(false);
             $table->efficientUuid('uuid')->index()->unique()->nullable();
             $table->softDeletes($column = 'deleted_at', $precision = 0);
             $table->timestamps();
         });
+
+        DB::table('roles')->insert(
+            array(
+                'id'                    => 1,
+                'name'                  => 'super admin',
+                'permission_id'         => 1,
+                'is_fixed'              => 1
+            )
+        );
     }
 
     /**

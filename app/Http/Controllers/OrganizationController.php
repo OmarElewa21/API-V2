@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Organization;
-use Illuminate\Http\Request;
+use App\Http\Requests\CreateOrganizationRequest;
+use App\Http\Requests\UpdateOrganizationRequest;
+use Illuminate\Support\Str;
+use Exception;
 
 class OrganizationController extends Controller
 {
@@ -23,9 +26,20 @@ class OrganizationController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(CreateOrganizationRequest $request)
     {
-        //
+        if(Organization::withTrashed()->where('email', $request->email)->exists()){
+            $organization = Organization::withTrashed()->where('email', $request->email)->first();
+            $organization->deleted_at = null;
+        }else{
+            $organization = New Organization;
+        }
+        try {
+            $organization->fill($request->all())->save();
+            return response()->json($organization, 200);
+        } catch (Exception $e) {
+            return response($e->getMessage(), 500);
+        }
     }
 
     /**
@@ -36,7 +50,7 @@ class OrganizationController extends Controller
      */
     public function show(Organization $organization)
     {
-        //
+        return response($organization, 200);
     }
 
     /**
@@ -46,9 +60,14 @@ class OrganizationController extends Controller
      * @param  \App\Models\Organization  $organization
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Organization $organization)
+    public function update(UpdateOrganizationRequest $request, Organization $organization)
     {
-        //
+        try {
+            $organization->fill($request->all())->save();
+            return response()->json($organization, 200);
+        } catch (Exception $e) {
+            return response($e->getMessage(), 500);
+        }
     }
 
     /**
@@ -59,6 +78,11 @@ class OrganizationController extends Controller
      */
     public function destroy(Organization $organization)
     {
-        //
+        try {
+            $organization->delete();
+            return $this->index();
+        } catch (Exception $e) {
+            response($e->getMessage(), 500);
+        }
     }
 }

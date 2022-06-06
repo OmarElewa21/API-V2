@@ -13,6 +13,10 @@ class Organization extends Model
 {
     use HasFactory, SoftDeletes, GeneratesUuid;
 
+    protected $casts = [
+        'uuid' => EfficientUuid::class,
+    ];
+
     protected $fillable = [
         'name',
         'email',
