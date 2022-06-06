@@ -14,11 +14,22 @@ class Role
      * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
-    public function handle(Request $request, Closure $next, $role)
+    public function handle(Request $request, Closure $next, $roles)
     {
-        if (! $request->user()->hasRole($role)) {
-            return response(401);
+        if($request->user()->hasOwnPermissionSet()){
+            if($request->user()->checkRouteEligibility($request->route()->getName())){
+                return $next($request);
+            }else{
+                return response()->json(['message' => 'User is not authorized for this request'], 401);
+            }
         }
-        return $next($request);
+
+        $roles = explode("|", $roles);
+        foreach($roles as $role){
+            if ( !$request->user()->hasRole($role) ) {
+                return response()->json(['message' => 'User is not authorized for this request'], 401);
+            }
+            return $next($request);
+        }
     }
 }

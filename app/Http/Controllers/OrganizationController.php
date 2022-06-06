@@ -14,17 +14,7 @@ class OrganizationController extends Controller
      */
     public function index()
     {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
+        return response(Organization::get(), 200);
     }
 
     /**
@@ -45,17 +35,6 @@ class OrganizationController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function show(Organization $organization)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Organization  $organization
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Organization $organization)
     {
         //
     }

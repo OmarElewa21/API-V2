@@ -12,17 +12,12 @@ use Dyrynda\Database\Casts\EfficientUuid;
 use Dyrynda\Database\Support\GeneratesUuid;
 
 use Illuminate\Support\Str;
-
+use Illuminate\Support\Arr;
 
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes, GeneratesUuid;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'email',
@@ -32,21 +27,11 @@ class User extends Authenticatable
         'permission_by_role',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'uuid' => EfficientUuid::class,
@@ -63,5 +48,39 @@ class User extends Authenticatable
 
     public function hasRole($role){
         return Str::lower($this->role->name) === Str::lower($role);
+    }
+
+    public function hasOwnPermissionSet(){
+        return $this->role->is_fixed;
+    }
+
+    public function getUserPermissionSet(){
+        return $this->belongsToMany(
+            Permission::class, 'user_permissions',
+            'user_id', 'permission_id');
+    }
+
+    public function getRolePermissionSet(){
+        return $this->role->permission;
+    }
+
+    public function checkRouteEligibility($route_name){
+        if($this->hasOwnPermissionSet()){
+            $permission_set = $this->getUserPermissionSet()->first();
+        }else{
+            $permission_set = $this->getRolePermissionSet();
+        }
+
+        if(Arr::exists($permission_set, 'all') && $permission_set['all'] == true){
+            return true;
+        }
+        return true;
+        switch ($route_name) {
+            case 'roles.index':
+                return Arr::exists($permission_set, 'roles') && $permission_set['roles']['view'] == true;
+                break;
+            default:
+                break;
+        }
     }
 }

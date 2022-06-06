@@ -3,11 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Http\Exceptions\HttpResponseException;
 
-
-class SaveRoleRequest extends FormRequest
+class SaveRoleRequest extends BaseRequest
 {
      /**
      * Determine if the user is authorized to make this request.
@@ -30,14 +27,5 @@ class SaveRoleRequest extends FormRequest
             'name'              => 'required|string|max:32',
             'permission_set'    => 'required|array'
         ];
-    }
-
-    /**
-     * Overwrite validation return
-     *
-     * @return HttpResponseException
-     */
-    protected function failedValidation(Validator $validator) {
-        throw new HttpResponseException(response()->json($validator->errors(), 422));
     }
 }

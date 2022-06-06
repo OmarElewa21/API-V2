@@ -3,12 +3,11 @@
 namespace App\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Rule;
+use App\Http\Requests\BaseRequest;
 
-class CreateAdminRequest extends FormRequest
+class CreateAdminRequest extends BaseRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -38,14 +37,5 @@ class CreateAdminRequest extends FormRequest
                                         ->symbols()
                                         ->uncompromised()
         ];
-    }
-
-    /**
-     * Overwrite validation return
-     *
-     * @return HttpResponseException
-     */
-    protected function failedValidation(Validator $validator) {
-        throw new HttpResponseException(response()->json($validator->errors(), 422));
     }
 }
