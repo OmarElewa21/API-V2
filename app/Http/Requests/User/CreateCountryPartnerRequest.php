@@ -6,7 +6,7 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Rule;
 use App\Http\Requests\BaseRequest;
 
-class CreateAdminRequest extends BaseRequest
+class CreateCountryPartnerRequest extends BaseRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -15,7 +15,7 @@ class CreateAdminRequest extends BaseRequest
      */
     public function authorize()
     {
-        return auth()->user()->hasRole('super admin');
+        return auth()->user()->hasRole('super admin') || auth()->user()->hasRole('admin');
     }
 
     /**
@@ -34,7 +34,9 @@ class CreateAdminRequest extends BaseRequest
                                         ->letters()
                                         ->numbers()
                                         ->symbols()
-                                        ->uncompromised()
+                                        ->uncompromised(),
+            'organisation'      => 'required|exists:organizations,name',
+            'country'           => 'required|string|max:64',
         ];
     }
 }

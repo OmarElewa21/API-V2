@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\User;
 
-use App\Models\CountryPartner;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\User;
 
 class CountryPartnerController extends Controller
 {
@@ -14,17 +15,7 @@ class CountryPartnerController extends Controller
      */
     public function index()
     {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
+        return response(User::countryPartners()->get(), 200);
     }
 
     /**
@@ -49,16 +40,6 @@ class CountryPartnerController extends Controller
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\CountryPartner  $countryPartner
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(CountryPartner $countryPartner)
-    {
-        //
-    }
 
     /**
      * Update the specified resource in storage.

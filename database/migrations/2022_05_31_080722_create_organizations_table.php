@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('organizations', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 164);
+            $table->string('name', 164)->unique();
             $table->string('email', 164)->unique();
             $table->string('phone', 24);
             $table->string('person_in_charge_name', 164);

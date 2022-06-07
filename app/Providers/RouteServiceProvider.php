@@ -40,6 +40,9 @@ class RouteServiceProvider extends ServiceProvider
         Route::bind('admin', function ($value) {
             return \App\Models\User::whereUuid($value)->firstOrFail();
         });
+        Route::bind('country_partner', function ($value) {
+            return \App\Models\User::whereUuid($value)->firstOrFail();
+        });
         Route::bind('role', function ($value) {
             return \App\Models\Role::whereUuid($value)->firstOrFail();
         });

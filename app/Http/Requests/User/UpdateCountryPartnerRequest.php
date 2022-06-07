@@ -2,11 +2,10 @@
 
 namespace App\Http\Requests\User;
 
-use Illuminate\Routing\Route;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Rule;
 
-class UpdateAdminRequest extends CreateAdminRequest
+class UpdateCountryPartnerRequest extends CreateCountryPartnerRequest
 {
     /**
      * @var User
@@ -19,9 +18,8 @@ class UpdateAdminRequest extends CreateAdminRequest
      */
     function __construct(Route $route)
     {
-        $this->user = $route->parameter('admin');
+        $this->user = $route->parameter('country_partner');
     }
-
 
     /**
      * Get the validation rules that apply to the request.
@@ -39,7 +37,9 @@ class UpdateAdminRequest extends CreateAdminRequest
                                         ->letters()
                                         ->numbers()
                                         ->symbols()
-                                        ->uncompromised()
+                                        ->uncompromised(),
+            'organisation'      => 'required|exists:organizations,name',
+            'country'           => 'required|string|max:64',
         ];
     }
 }

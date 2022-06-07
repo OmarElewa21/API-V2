@@ -42,6 +42,11 @@ class User extends Authenticatable
         return $query->whereRelation('role', 'name', 'admin');
     }
 
+    public function scopeCountryPartners($query)
+    {
+        return $query->whereRelation('role', 'name', 'country parnter');
+    }
+
     public function role(){
         return $this->belongsTo(Role::class)->withTrashed();
     }

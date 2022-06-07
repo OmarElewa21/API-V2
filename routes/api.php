@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\User\AdminsController;
+use App\Http\Controllers\User\CountryPartnerController;
 use App\Http\Controllers\OrganizationController;
 
 
@@ -31,5 +32,6 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
 
     Route::group(['middleware' => ['role:super admin|admin']], function() {
         Route::apiResource('organizations', OrganizationController::class);
+        Route::apiResource('users/country_partners', CountryPartnerController::class);
     });
 });
