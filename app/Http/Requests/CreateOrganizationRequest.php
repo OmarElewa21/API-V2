@@ -24,7 +24,7 @@ class CreateOrganizationRequest extends BaseRequest
     public function rules()
     {
         return [
-            'name'                      => 'required|string|max:164',
+            'name'                      => ['required', 'string', 'max:164', Rule::unique('organizations')->whereNull('deleted_at')],
             'email'                     => ['required', 'email', 'max:164', Rule::unique('organizations')->whereNull('deleted_at')],
             'phone'                     => 'required|string|max:24',
             'person_in_charge_name'     => 'required|string|max:164',
