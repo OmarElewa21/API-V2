@@ -35,11 +35,12 @@ class UpdateAdminRequest extends CreateAdminRequest
             'role'              => 'required|exists:roles,name',
             'username'          => ['required', 'string', 'max:64', Rule::unique('users')->ignore($this->user)],
             'email'             => ['required', 'email', 'max:64', Rule::unique('users')->ignore($this->user)],
-            'password'          => Password::min(8)
+            'password'          => ['required',
+                                    Password::min(8)
                                         ->letters()
                                         ->numbers()
                                         ->symbols()
-                                        ->uncompromised()
+                                        ->uncompromised(), 'confirmed'],
         ];
     }
 }

@@ -21,6 +21,8 @@ use App\Http\Controllers\OrganizationController;
 */
 
 Route::post('login', [UsersController::class,"login"]);
+Route::post('send_reset_link', [UsersController::class,"sendResetLink"]);
+Route::post('change_password', [UsersController::class,"changePassword"]);
 
 Route::group(['middleware' => ['auth:sanctum']], function() {
     Route::post('logout', [UsersController::class,"logout"]);

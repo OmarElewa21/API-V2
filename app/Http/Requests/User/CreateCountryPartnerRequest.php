@@ -30,11 +30,12 @@ class CreateCountryPartnerRequest extends BaseRequest
             'role'              => 'required|exists:roles,name',
             'username'          => ['required', 'string', 'max:64', Rule::unique('users')->whereNull('deleted_at')],
             'email'             => ['required', 'email', 'max:64', Rule::unique('users')->whereNull('deleted_at')],
-            'password'          => Password::min(8)
+            'password'          => ['required',
+                                    Password::min(8)
                                         ->letters()
                                         ->numbers()
                                         ->symbols()
-                                        ->uncompromised(),
+                                        ->uncompromised(), 'confirmed'],
             'organization'      => 'required|exists:organizations,name',
             'country'           => 'required|string|max:64',
         ];

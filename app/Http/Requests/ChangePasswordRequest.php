@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Requests\User;
+namespace App\Http\Requests;
 
-use Illuminate\Validation\Rules\Password;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Http\Requests\BaseRequest;
+use Illuminate\Validation\Rules\Password;
 
-class CreateAdminRequest extends BaseRequest
+class ChangePasswordRequest extends BaseRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -15,7 +15,7 @@ class CreateAdminRequest extends BaseRequest
      */
     public function authorize()
     {
-        return auth()->user()->hasRole('super admin');
+        return true;
     }
 
     /**
@@ -26,16 +26,14 @@ class CreateAdminRequest extends BaseRequest
     public function rules()
     {
         return [
-            'name'              => 'required|string|max:160',
-            'role'              => 'required|exists:roles,name',
-            'username'          => ['required', 'string', 'max:64', Rule::unique('users')->whereNull('deleted_at')],
-            'email'             => ['required', 'email', 'max:64', Rule::unique('users')->whereNull('deleted_at')],
+            'username'          => 'required|string|max:64|exists:users',
             'password'          => ['required',
                                     Password::min(8)
                                         ->letters()
                                         ->numbers()
                                         ->symbols()
                                         ->uncompromised(), 'confirmed'],
+            'user_key'          => 'required|string|max:10|exists:password_resets'
         ];
     }
 }
