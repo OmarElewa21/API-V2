@@ -9,7 +9,6 @@ use App\Models\Role;
 use App\Http\Requests\User\CreateAdminRequest;
 use App\Http\Requests\User\UpdateAdminRequest;
 
-
 class AdminsController extends Controller
 {
     /**

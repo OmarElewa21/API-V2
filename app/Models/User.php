@@ -44,7 +44,7 @@ class User extends Authenticatable
 
     public function scopeCountryPartners($query)
     {
-        return $query->whereRelation('role', 'name', 'country parnter');
+        return $query->whereRelation('role', 'name', 'country partner');
     }
 
     public function role(){
@@ -57,6 +57,10 @@ class User extends Authenticatable
 
     public function hasOwnPermissionSet(){
         return !$this->permission_by_role;
+    }
+
+    public function getCountryPartner(){
+        return CountryPartner::find($this->id);
     }
 
     public function getUserPermissionSet(){
