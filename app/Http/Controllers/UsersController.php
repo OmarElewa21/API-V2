@@ -59,13 +59,19 @@ class UsersController extends Controller
     }
 
     public function sendResetLink(Request $request){
+        if(filter_var($request->identifier, FILTER_VALIDATE_EMAIL)){
+            $identifier = 'email';
+        }else{
+            $identifier = 'username';
+        }
+
         if($this->secret_key !== $request->secret_key){
             return response()->json(['message' => 'Unauthorized Request'], 401);
         }
-        if(User::where('username', $request->username)->doesntExist()){
+        if(User::where($identifier, $request->identifier)->doesntExist()){
             return response()->json(['message' => "Username doesn't exists"], 404); 
         }else{
-            $user = User::where('username', $request->username)->first();
+            $user = User::where($identifier, $request->identifier)->first();
         }
 
         if(PasswordReset::where('username', $request->username)->exists()){
@@ -74,13 +80,13 @@ class UsersController extends Controller
 
         $user_key = Str::random(10);
         PasswordReset::create([
-            'username'      => $request->username,
+            'username'      => $user->username,
             'user_key'      => $user_key,
             'created_at'    => now()->toDateTimeString()
         ]);
 
         $link = 'https://simcc.org/reset_password?username='. 
-                    $request->username . '&' . 'user_key=' . $user_key;
+                    $user->username . '&' . 'user_key=' . $user_key;
 
         try {
             Mail::to($user)->send(new ResetPassword($link));
