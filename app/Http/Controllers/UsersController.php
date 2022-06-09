@@ -4,17 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
-use App\Models\PasswordReset;
 use Exception;
 
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\ResetPassword;
-use App\Http\Requests\ChangePasswordRequest;
 
 class UsersController extends Controller
 {
-    private $secret_key = "8A0B0DC579F3DA6A417409BFB9071FDA663457F347B735D621FC9B3AA90796D3";
 
     public function login(Request $request)
     {
@@ -25,23 +19,24 @@ class UsersController extends Controller
         ]);
 
         // Check if there is a record with given username
-        if( User::where("username", $request->username)->doesntExist() ){
-            return response()->json(["message" => "User not found"], 404);
+        if( !User::where("username", $request->username)->exists() ){
+            return response()->json(["message" => "User not found"], 401);
         }
 
         // Auth attempt for given credintials
         if(!auth()->attempt(request(['username', 'password']))){
-            return response()->json(["message" => "Invalid credentials"], 422);
+            return response()->json(["message" => "Invalid credintials"], 422);
         }
         
-        $user = User::where("username", $request->username)->with(['role', 'role.permission'])->first();      // get user
-        $authToken = $user->createToken("auth_token")->plainTextToken;                                        // generate token
+        $user = User::where("username", $request->username)->with(['role', 'role.permission'])->first();       // get user
+        $authToken = $user->createToken("auth_token")->plainTextToken;                      // generate token
 
         return response()->json([
             "user"    =>   $user,
             "token"   =>   $authToken
         ], 200);
     }
+
 
     public function logout()
     {
@@ -52,49 +47,39 @@ class UsersController extends Controller
         return response()->json(["message" => "User logged out successfully"], 200);
     }
 
-    public function sendResetLink(Request $request){
-        if($this->secret_key !== $request->secret_key){
-            return response()->json(['message' => 'Unauthorized Request'], 401);
+    /**
+     * Display a listing of the users.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        try{
+            
+        } catch(Exception $e) {
+
         }
-        if(User::where('username', $request->username)->doesntExist()){
-            return response()->json(['message' => "Username doesn't exists"], 404); 
-        }else{
-            $user = User::where('username', $request->username)->first();
-        }
-
-        if(PasswordReset::where('username', $request->username)->exists()){
-            PasswordReset::where('username', $request->username)->delete();
-        }
-
-        $user_key = Str::random(10);
-        PasswordReset::create([
-            'username'      => $request->username,
-            'user_key'      => $user_key,
-            'created_at'    => now()->toDateTimeString()
-        ]);
-
-        $link = 'https://simcc.org/reset_password?username='. 
-                    $request->username . '&' . 'user_key=' . $user_key;
-
-        try {
-            Mail::to($user)->send(new ResetPassword($link));
-        } catch (Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
-        }
-
-        return response()->json(['message' => 'Mail sent successfully'], 200);
     }
 
-    public function changePassword(ChangePasswordRequest $request){
-        $user = User::where('username', $request->username)->firstOrFail();
-        if(PasswordReset::where('username', $request->username)->value('user_key') !== $request->user_key){
-            return response()->json(['message' => 'user key and username doesnnot match'], 401);
-        }
-        $user->update([
-            'password'  => bcrypt($request->password),
-        ]);
-        PasswordReset::where('username', $request->username)->delete();
-        return response()->json(['message' => 'Password changed successfully'], 200);
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        //
     }
 
     /**
