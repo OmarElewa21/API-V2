@@ -54,6 +54,9 @@ class RouteServiceProvider extends ServiceProvider
         Route::bind('organization', function ($value) {
             return \App\Models\Organization::whereUuid($value)->firstOrFail();
         });
+        Route::bind('school', function ($value) {
+            return \App\Models\School::whereUuid($value)->firstOrFail();
+        });
     }
 
     /**

@@ -15,13 +15,13 @@ return new class extends Migration
     {
         Schema::create('countries', function (Blueprint $table) {
             $table->id();
-            $table->string('dial')->max(3);
-            $table->string('country_abbr')->max(32);
-            $table->string('currency_name')->max(16);
-            $table->string('country_short')->max(16);
-            $table->string('currency_code')->max(8);
-            $table->string('currency_country_name')->max(32);
-            $table->string('name')->max(32);
+            $table->string('dial', 3);
+            $table->string('country_abbr', 32);
+            $table->string('currency_name', 32);
+            $table->string('country_short', 64);
+            $table->string('currency_code', 8);
+            $table->string('currency_country_name', 64);
+            $table->string('name', 64);
         });
 
         DB::insert("INSERT INTO `countries` (`id`, `dial`, `country_abbr`, `currency_name`, `country_short`, `currency_code`, `currency_country_name`, `name`) VALUES

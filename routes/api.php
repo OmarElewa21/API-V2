@@ -8,6 +8,7 @@ use App\Http\Controllers\User\AdminsController;
 use App\Http\Controllers\User\CountryPartnerController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\CountryController;
+use App\Http\Controllers\SchoolController;
 
 
 /*
@@ -27,7 +28,7 @@ Route::post('change_password', [UsersController::class,"changePassword"]);
 
 Route::group(['middleware' => ['auth:sanctum']], function() {
     Route::post('logout', [UsersController::class,"logout"]);
-    Route::resource('country', CountryController::class)->only('index', 'show');
+    Route::resource('countries', CountryController::class)->only('index', 'show');
 
     Route::group(['middleware' => ['role:super admin']], function() {
         Route::apiResource('users/admins', AdminsController::class);
@@ -37,5 +38,6 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
     Route::group(['middleware' => ['role:super admin|admin']], function() {
         Route::apiResource('organizations', OrganizationController::class);
         Route::apiResource('users/country_partners', CountryPartnerController::class);
+        Route::apiResource('schools', SchoolController::class);
     });
 });
