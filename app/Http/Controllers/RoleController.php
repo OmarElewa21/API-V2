@@ -18,7 +18,7 @@ class RoleController extends Controller
      */
     public function index()
     {
-        return response(Role::with('permission')->get(), 200);
+        return response(Role::get(), 200);
     }
 
 
@@ -47,7 +47,7 @@ class RoleController extends Controller
             return response($e->getMessage(), 500);
         }
 
-        return response($role->load('permission'), 200);
+        return response($role, 200);
     }
 
 
@@ -59,7 +59,7 @@ class RoleController extends Controller
      */
     public function show(Role $role)
     {
-        return response($role->load('permission'), 200);
+        return response($role, 200);
     }
 
 
@@ -85,7 +85,7 @@ class RoleController extends Controller
         } catch (Exception $e) {
             return response($e->getMessage(), 500);
         }
-        return response()->json($role->load('permission'), 200);
+        return response()->json($role, 200);
     }
 
     

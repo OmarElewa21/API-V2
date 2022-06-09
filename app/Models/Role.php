@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Dyrynda\Database\Casts\EfficientUuid;
 use Dyrynda\Database\Support\GeneratesUuid;
+use App\Http\Scopes\RoleScope;
 
 class Role extends Model
 {
@@ -31,11 +32,15 @@ class Role extends Model
         });
     }
 
-    public function users()
+    protected static function booted()
     {
-        return $this->hasMany(User::class);
+        static::addGlobalScope(new RoleScope);
     }
 
+    public function users(){
+        return $this->hasMany(User::class);
+    }
+    
     public function permission(){
         return $this->belongsTo(Permission::class)->withTrashed();
     }
