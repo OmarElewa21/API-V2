@@ -17,7 +17,7 @@ class OrganizationController extends Controller
      */
     public function index()
     {
-        return response(Organization::get(), 200);
+        return response(Organization::with('country')->get(), 200);
     }
 
     /**
@@ -36,7 +36,7 @@ class OrganizationController extends Controller
         }
         try {
             $organization->fill($request->all())->save();
-            return response()->json($organization, 200);
+            return response()->json($organization->load('country'), 200);
         } catch (Exception $e) {
             return response($e->getMessage(), 500);
         }
@@ -50,7 +50,7 @@ class OrganizationController extends Controller
      */
     public function show(Organization $organization)
     {
-        return response($organization, 200);
+        return response($organization->load('country'), 200);
     }
 
     /**
@@ -64,7 +64,7 @@ class OrganizationController extends Controller
     {
         try {
             $organization->fill($request->all())->save();
-            return response()->json($organization, 200);
+            return response()->json($organization->load('country'), 200);
         } catch (Exception $e) {
             return response($e->getMessage(), 500);
         }

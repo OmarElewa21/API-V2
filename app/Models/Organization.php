@@ -26,6 +26,10 @@ class Organization extends Model
         'billing_address',
         'shipping_address',
         'img',
-        'country'
+        'country_id'
     ];
+
+    public function country(){
+        return $this->belongsTo(Country::class);
+    }
 }

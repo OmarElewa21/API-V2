@@ -54,7 +54,7 @@ class CountryPartnerController extends Controller
             $countryPartner->fill([
                 'user_id'           => $user->id,
                 'organization_id'   => Organization::where('name', $request->organization)->value('id'),
-                'country'           => $request->country
+                'country_id'        => $request->country_id
             ])->save();
             return response($countryPartner->load('user'), 200);
         } catch (Exception $e) {
@@ -92,7 +92,7 @@ class CountryPartnerController extends Controller
         ]);
         $countryPartner->update([
             'organization_id'   => Organization::where('name', $request->organization)->value('id'),
-            'country'           => $request->country
+            'country_id'        => $request->country_id
         ]);
         return response($countryPartner, 200);
     }

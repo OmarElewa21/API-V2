@@ -39,7 +39,7 @@ class UpdateOrganizationRequest extends CreateOrganizationRequest
             'billing_address'           => 'required|string',
             'shipping_address'          => 'required|string',
             'img'                       => 'required|string|max:255',
-            'country'                   => 'required|string|max:64',
+            'country_id'                => 'required|digits_between:2,251|exists:countries,id'
         ];
     }
 }

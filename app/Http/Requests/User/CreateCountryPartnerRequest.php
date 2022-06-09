@@ -37,7 +37,7 @@ class CreateCountryPartnerRequest extends BaseRequest
                                         ->symbols()
                                         ->uncompromised(), 'confirmed'],
             'organization'      => 'required|exists:organizations,name',
-            'country'           => 'required|string|max:64',
+            'country_id'        => 'required|digits_between:2,251|exists:countries,id'
         ];
     }
 }
