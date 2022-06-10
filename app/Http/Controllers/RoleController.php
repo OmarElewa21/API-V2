@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Role;
 use App\Models\Permission;
+use Illuminate\Support\Facades\DB;
 use App\Http\Requests\SaveRoleRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Exception;
-use Illuminate\Support\Facades\DB;
+
+use Illuminate\Support\Str;
 
 class RoleController extends Controller
 {

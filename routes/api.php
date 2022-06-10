@@ -40,5 +40,6 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
         Route::apiResource('organizations', OrganizationController::class);
         Route::apiResource('users/country_partners', CountryPartnerController::class);
         Route::apiResource('schools', SchoolController::class);
+        Route::delete('schools/action/mass_delete', [SchoolController::class, "massDelete"]);
     });
 });
