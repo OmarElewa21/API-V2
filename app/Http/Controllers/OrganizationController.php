@@ -68,7 +68,14 @@ class OrganizationController extends Controller
      */
     public function show(Organization $organization)
     {
-        return response($organization->load('country'), 200);
+        return response()->json(
+            $organization->load([
+                    'country:id,name', 'country_partners' => function($query){
+                        $query->withoutGlobalScopes([UserScope::class])->select('user_id', 'organization_id');
+                    },
+                    'country_partners.user:id,uuid,name'
+                ])->loadCount('country_partners'), 
+            200);
     }
 
     /**
