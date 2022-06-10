@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Role;
 use App\Http\Requests\User\CreateAdminRequest;
 use App\Http\Requests\User\UpdateAdminRequest;
+use Illuminate\Support\Facades\DB;
 
 class AdminsController extends Controller
 {
@@ -29,25 +30,26 @@ class AdminsController extends Controller
      */
     public function store(CreateAdminRequest $request)
     {
-        if(User::withTrashed()->where('email', $request->email)->exists()){
-            $user = User::withTrashed()->where('email', $request->email)->first();
-            
-            if(User::withTrashed()->whereNot('id', $user->id)->where('username', $request->username)->exists()){
-                // check if request username already exists and is not for the same user
-                return response()->json(['username' => ['username aleardy exists']], 422);
+        DB::beginTransaction();
+        foreach($request->all() as $key=>$data){
+            try {
+                User::updateOrCreate(
+                    [
+                        'name'          => $data['name'],
+                        'username'      => $data['username'],
+                        'email'         => $data['email'],
+                        'role_id'       => Role::where('name', $data['role'])->value('id'),
+                        'password'      => bcrypt($data['password']),
+                    ],
+                    ['username', 'email']
+                );
+            } catch (Exception $e) {
+                DB::rollBack();
+                return response($e->getMessage(), 500);
             }
-            $user->deleted_at = null;
-        }else{
-            $user = new User;
         }
-        $user->fill([
-            'name'          => $request->name,
-            'username'      => $request->username,
-            'email'         => $request->email,
-            'role_id'       => Role::where('name', $request->role)->value('id'),
-            'password'      => bcrypt($request->password),
-        ])->save();
-        return response($user, 200);
+        DB::commit();
+        return $this->index();
     }
 
     /**

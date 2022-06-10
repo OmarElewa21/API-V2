@@ -42,7 +42,7 @@ class OrganizationController extends Controller
         DB::beginTransaction();
         foreach($request->all() as $key=>$data){
             try {
-                Organization::upsert(
+                Organization::updateOrCreate(
                     array_merge($data, ['deleted_at' => null]),
                     ['name', 'email']
                 );

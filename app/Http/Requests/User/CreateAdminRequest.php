@@ -8,6 +8,12 @@ use App\Http\Requests\CreateBaseRequest;
 
 class CreateAdminRequest extends CreateBaseRequest
 {
+    function __construct()
+    {
+        $this->key = 'admin';
+        $this->unique_fields = ['username', 'email'];
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -19,23 +25,21 @@ class CreateAdminRequest extends CreateBaseRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, mixed>
+     * @return arr of rules
      */
-    public function rules()
+    protected function validationRules($key)
     {
         return [
-            'name'              => 'required|string|max:160',
-            'role'              => 'required|exists:roles,name',
-            'username'          => ['required', 'string', 'max:64', Rule::unique('users')->whereNull('deleted_at')],
-            'email'             => ['required', 'email', 'max:64', Rule::unique('users')->whereNull('deleted_at')],
-            'password'          => ['required',
-                                    Password::min(8)
-                                        ->letters()
-                                        ->numbers()
-                                        ->symbols()
-                                        ->uncompromised(), 'confirmed'],
+            $key.'.name'        => 'required|string|max:160',
+            $key.'.role'        => 'required|exists:roles,name',
+            $key.'.username'    => ['required', 'string', 'max:64', Rule::unique('users', 'username')->whereNull('deleted_at')],
+            $key.'.email'       => ['required', 'email', 'max:64', Rule::unique('users', 'email')->whereNull('deleted_at')],
+            $key.'.password'    => ['required',
+                                        Password::min(8)
+                                            ->letters()
+                                            ->numbers()
+                                            ->symbols()
+                                            ->uncompromised(), 'confirmed']
         ];
     }
 }

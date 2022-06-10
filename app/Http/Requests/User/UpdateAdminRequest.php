@@ -2,11 +2,15 @@
 
 namespace App\Http\Requests\User;
 
-use Illuminate\Routing\Route;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Routing\Route;
 use Illuminate\Validation\Rule;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
-class UpdateAdminRequest extends CreateAdminRequest
+
+class UpdateAdminRequest extends FormRequest
 {
     /**
      * @var User
@@ -22,6 +26,15 @@ class UpdateAdminRequest extends CreateAdminRequest
         $this->user = $route->parameter('admin');
     }
 
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
+    public function authorize()
+    {
+        return auth()->user()->hasRole('super admin');
+    }
 
     /**
      * Get the validation rules that apply to the request.
@@ -42,5 +55,14 @@ class UpdateAdminRequest extends CreateAdminRequest
                                         ->symbols()
                                         ->uncompromised(), 'confirmed'],
         ];
+    }
+
+    /**
+     * Overwrite validation return
+     *
+     * @return HttpResponseException
+     */
+    protected function failedValidation(Validator $validator) {
+        throw new HttpResponseException(response()->json($validator->errors(), 422));
     }
 }
