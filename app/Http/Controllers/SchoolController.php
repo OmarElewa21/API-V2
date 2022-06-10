@@ -7,6 +7,7 @@ use App\Http\Requests\CreateSchoolRequest;
 use App\Http\Requests\UpdateSchoolRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Exception;
 
 use Illuminate\Support\Str;
 
