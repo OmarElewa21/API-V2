@@ -70,7 +70,7 @@ class BaseRequest extends FormRequest
                 $list_check[] = $data[$field_check];
             }
             if(count($list_check) > count(array_unique($list_check))){
-                $validator->errors()->add($this->key, $field_check . ' has duplicates, please review ' . $field_check . ' field accross you submitted data');
+                $validator->errors()->add($this->key, $field_check . ' has duplicates, please review ' . $field_check . ' field across you submitted data');
             }
         }
     }
