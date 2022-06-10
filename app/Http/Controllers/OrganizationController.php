@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Builder;
 use Exception;
 use App\Http\Scopes\UserScope;
+use Illuminate\Support\Facades\DB;
 
 class OrganizationController extends Controller
 {
@@ -38,26 +39,20 @@ class OrganizationController extends Controller
      */
     public function store(CreateOrganizationRequest $request)
     {
-        if(Organization::withTrashed()->where('email', $request->email)->exists()){
-            $organization = Organization::withTrashed()->where('email', $request->email)->first();
-            $organization->deleted_at = null;
-        }else{
-            $organization = New Organization;
+        DB::beginTransaction();
+        foreach($request->all() as $key=>$data){
+            try {
+                Organization::upsert(
+                    array_merge($data, ['deleted_at' => null]),
+                    ['name', 'email']
+                );
+            } catch (Exception $e) {
+                DB::rollBack();
+                return response($e->getMessage(), 500);
+            }
         }
-        try {
-            $organization->fill($request->all())->save();
-            return response()->json(
-                $organization->load([
-                        'country:id,name', 'country_partners' => function($query){
-                            $query->withoutGlobalScopes([UserScope::class])->select('user_id', 'organization_id');
-                        },
-                        'country_partners.user:id,uuid,name'
-                    ])->loadCount('country_partners'), 
-                200);
-
-        } catch (Exception $e) {
-            return response($e->getMessage(), 500);
-        }
+        DB::commit();
+        return $this->index();
     }
 
     /**

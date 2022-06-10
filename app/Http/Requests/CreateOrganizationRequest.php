@@ -3,9 +3,17 @@
 namespace App\Http\Requests;
 
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Arr;
 
 class CreateOrganizationRequest extends BaseRequest
 {
+    function __construct()
+    {
+        $this->key = 'organization';
+        $this->unique_fields = ['name', 'email'];
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -17,22 +25,20 @@ class CreateOrganizationRequest extends BaseRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, mixed>
+     * @return arr of rules
      */
-    public function rules()
+    protected function validationRules($key)
     {
         return [
-            'name'                      => ['required', 'string', 'max:164', Rule::unique('organizations')->whereNull('deleted_at')],
-            'email'                     => ['required', 'email', 'max:164', Rule::unique('organizations')->whereNull('deleted_at')],
-            'phone'                     => 'required|string|max:24',
-            'person_in_charge_name'     => 'required|string|max:164',
-            'address'                   => 'required|string',
-            'billing_address'           => 'required|string',
-            'shipping_address'          => 'required|string',
-            'img'                       => 'required|string|max:255',
-            'country_id'                => 'required|digits_between:2,251|exists:countries,id'
+            $key.'.name'                      => ['required', 'string', 'max:164', Rule::unique('organizations', 'name')->whereNull('deleted_at')],
+            $key.'.email'                     => ['required', 'email', 'max:164', Rule::unique('organizations', 'email')->whereNull('deleted_at')],
+            $key.'.phone'                     => 'required|string|max:24',
+            $key.'.person_in_charge_name'     => 'required|string|max:164',
+            $key.'.address'                   => 'required|string',
+            $key.'.billing_address'           => 'required|string',
+            $key.'.shipping_address'          => 'required|string',
+            $key.'.img'                       => 'required|string|max:255',
+            $key.'.country_id'                => 'required|digits_between:2,251|exists:countries,id'
         ];
     }
 }
