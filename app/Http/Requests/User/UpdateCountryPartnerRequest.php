@@ -3,10 +3,13 @@
 namespace App\Http\Requests\User;
 
 use Illuminate\Validation\Rules\Password;
-use Illuminate\Validation\Rule;
 use Illuminate\Routing\Route;
+use Illuminate\Validation\Rule;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
-class UpdateCountryPartnerRequest extends CreateCountryPartnerRequest
+class UpdateCountryPartnerRequest extends FormRequest
 {
     /**
      * @var country_partner
@@ -20,6 +23,16 @@ class UpdateCountryPartnerRequest extends CreateCountryPartnerRequest
     function __construct(Route $route)
     {
         $this->country_partner = $route->parameter('country_partner');
+    }
+
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
+    public function authorize()
+    {
+        return auth()->user()->hasRole('super admin') || auth()->user()->hasRole('admin');
     }
 
     /**
@@ -43,5 +56,14 @@ class UpdateCountryPartnerRequest extends CreateCountryPartnerRequest
             'organization'      => 'required|exists:organizations,name',
             'country_id'        => 'required|digits_between:2,251|exists:countries,id'
         ];
+    }
+
+    /**
+     * Overwrite validation return
+     *
+     * @return HttpResponseException
+     */
+    protected function failedValidation(Validator $validator) {
+        throw new HttpResponseException(response()->json($validator->errors(), 422));
     }
 }

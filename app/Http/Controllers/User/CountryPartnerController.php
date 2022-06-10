@@ -10,6 +10,7 @@ use App\Models\Organization;
 use App\Models\CountryPartner;
 use App\Http\Requests\User\CreateCountryPartnerRequest;
 use App\Http\Requests\User\UpdateCountryPartnerRequest;
+use Illuminate\Support\Facades\DB;
 
 class CountryPartnerController extends Controller
 {
@@ -31,35 +32,59 @@ class CountryPartnerController extends Controller
      */
     public function store(CreateCountryPartnerRequest $request)
     {
-        if(User::withTrashed()->where('email', $request->email)->exists()){
-            $user = User::withTrashed()->where('email', $request->email)->first();
-            
-            if(User::withTrashed()->whereNot('id', $user->id)->where('username', $request->username)->exists()){
-                // check if request username already exists and is not for the same user
-                return response()->json(['username' => ['username aleardy exists']], 422);
+        DB::beginTransaction();
+        foreach($request->all() as $key=>$data){
+            try {
+                if(User::withTrashed()->where('username', $data['username'])->orWhere('email', $data['email'])->exists()){
+                    $user = User::withTrashed()->where('username', $data['username'])->orWhere('email', $data['email'])->firstOrFail();
+                    $user->update(
+                        [
+                            'username'      => $data['username'],
+                            'email'         => $data['email'],
+                            'name'          => $data['name'],
+                            'role_id'       => Role::where('name', $data['role'])->value('id'),
+                            'password'      => bcrypt($data['password']),
+                            'deleted_at'    => null
+                        ]
+                    );
+                }else{
+                    User::Create(
+                        [
+                            'username'      => $data['username'],
+                            'email'         => $data['email'],
+                            'name'          => $data['name'],
+                            'role_id'       => Role::where('name', $data['role'])->value('id'),
+                            'password'      => bcrypt($data['password']),
+                        ]
+                    );
+                }
+                if(CountryPartner::withTrashed()->where('user_id', User::where('username', $data['username'])->value('id'))->exists()){
+                    $countryPartner = CountryPartner::withTrashed()->where('user_id', User::where('username', $data['username'])->value('id'))->firstOrFail();
+                    $countryPartner->update(
+                        [
+                            'organization_id'   => Organization::where('name', $data['organization'])->value('id'),
+                            'country_id'        => $data['country_id'],
+                            'deleted_at'        => null
+                        ]
+                    );
+                }else{
+                    CountryPartner::create(
+                        [
+                            'user_id'           => User::where('username', $data['username'])->value('id'),
+                            'organization_id'   => Organization::where('name', $data['organization'])->value('id'),
+                            'country_id'        => $data['country_id'],
+                            'deleted_at'        => null
+                        ]
+                    );
+                }
+                
+            } catch (Exception $e) {
+                DB::rollBack();
+                return response($e->getMessage(), 500);
             }
-            $user->deleted_at = null;
-        }else{
-            $user = new User;
         }
-        $countryPartner = new CountryPartner;
-        try {
-            $user->fill([
-                'name'          => $request->name,
-                'username'      => $request->username,
-                'email'         => $request->email,
-                'role_id'       => Role::where('name', $request->role)->value('id'),
-                'password'      => bcrypt($request->password),
-            ])->save();
-            $countryPartner->fill([
-                'user_id'           => $user->id,
-                'organization_id'   => Organization::where('name', $request->organization)->value('id'),
-                'country_id'        => $request->country_id
-            ])->save();
-            return response($countryPartner->load('user'), 200);
-        } catch (Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
-        }
+        DB::commit();
+        return $this->index();
     }
 
     /**

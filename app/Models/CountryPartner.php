@@ -15,7 +15,7 @@ class CountryPartner extends Model
 
     protected $primaryKey = 'user_id';
 
-    protected $fillable = ['user_id', 'organization_id', 'country_id'];
+    protected $fillable = ['user_id', 'organization_id', 'country_id', 'deleted_at'];
 
     protected static function booted()
     {

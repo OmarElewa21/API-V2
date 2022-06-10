@@ -10,6 +10,8 @@ use App\Http\Requests\User\CreateAdminRequest;
 use App\Http\Requests\User\UpdateAdminRequest;
 use Illuminate\Support\Facades\DB;
 
+use Illuminate\Support\Str;
+
 class AdminsController extends Controller
 {
     /**
@@ -33,16 +35,29 @@ class AdminsController extends Controller
         DB::beginTransaction();
         foreach($request->all() as $key=>$data){
             try {
-                User::updateOrCreate(
-                    [
-                        'name'          => $data['name'],
-                        'username'      => $data['username'],
-                        'email'         => $data['email'],
-                        'role_id'       => Role::where('name', $data['role'])->value('id'),
-                        'password'      => bcrypt($data['password']),
-                    ],
-                    ['username', 'email']
-                );
+                if(User::withTrashed()->where('username', $data['username'])->orWhere('email', $data['email'])->exists()){
+                    $user = User::withTrashed()->where('username', $data['username'])->orWhere('email', $data['email'])->firstOrFail();
+                    $user->update(
+                        [
+                            'username'      => $data['username'],
+                            'email'         => $data['email'],
+                            'name'          => $data['name'],
+                            'role_id'       => Role::where('name', $data['role'])->value('id'),
+                            'password'      => bcrypt($data['password']),
+                            'deleted_at'    => null
+                        ]
+                    );
+                }else{
+                    User::Create(
+                        [
+                            'username'      => $data['username'],
+                            'email'         => $data['email'],
+                            'name'          => $data['name'],
+                            'role_id'       => Role::where('name', $data['role'])->value('id'),
+                            'password'      => bcrypt($data['password']),
+                        ]
+                    );
+                }
             } catch (Exception $e) {
                 DB::rollBack();
                 return response($e->getMessage(), 500);
