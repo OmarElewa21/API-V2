@@ -33,6 +33,7 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
     Route::group(['middleware' => ['role:super admin']], function() {
         Route::apiResource('users/admins', AdminsController::class);
         Route::apiResource('roles', RoleController::class);
+        Route::delete('roles/action/mass_delete', [RoleController::class, "massDelete"]);
     });
 
     Route::group(['middleware' => ['role:super admin|admin']], function() {

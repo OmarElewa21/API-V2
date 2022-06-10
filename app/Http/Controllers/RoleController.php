@@ -8,6 +8,7 @@ use App\Http\Requests\SaveRoleRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class RoleController extends Controller
 {
@@ -109,5 +110,34 @@ class RoleController extends Controller
         } catch (Exception $e) {
             return response($e->getMessage(), 500);
         }
+    }
+
+    /**
+     * Remove multiple roles.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function massDelete(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            foreach($request->all() as $role_uuid){
+                if(Str::isUuid($role_uuid) && Role::whereUuid($role_uuid)->exists()){
+                    $role = Role::whereUuid($role_uuid)->firstOrFail();
+                    if($role->is_fixed){
+                        throw new Exception("Forbidden to delete a fixed role");
+                    }
+                    $role->delete();
+                }else{
+                    throw new Exception("data is not valid");
+                }
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response($e->getMessage(), 500);
+        }
+        DB::commit();
+        return $this->index();
     }
 }
