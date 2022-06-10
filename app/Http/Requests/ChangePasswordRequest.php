@@ -6,7 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
-class ChangePasswordRequest extends BaseRequest
+class ChangePasswordRequest extends CreateBaseRequest
 {
     /**
      * Determine if the user is authorized to make this request.

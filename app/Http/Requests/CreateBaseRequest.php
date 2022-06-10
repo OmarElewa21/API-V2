@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Validator as Validate;
 
 use Illuminate\Support\Str;
 
-class BaseRequest extends FormRequest
+class CreateBaseRequest extends FormRequest
 {
     protected $key = '';
     protected $unique_fields = '';

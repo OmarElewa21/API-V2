@@ -6,7 +6,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Arr;
 
-class CreateOrganizationRequest extends BaseRequest
+class CreateOrganizationRequest extends CreateBaseRequest
 {
     function __construct()
     {

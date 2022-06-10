@@ -4,9 +4,9 @@ namespace App\Http\Requests\User;
 
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Rule;
-use App\Http\Requests\BaseRequest;
+use App\Http\Requests\CreateBaseRequest;
 
-class CreateCountryPartnerRequest extends BaseRequest
+class CreateCountryPartnerRequest extends CreateBaseRequest
 {
     /**
      * Determine if the user is authorized to make this request.
