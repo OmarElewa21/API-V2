@@ -73,6 +73,9 @@ class RoleController extends Controller
     public function update(SaveRoleRequest $request, Role $role)
     {
         try{
+            if($role->is_fixed){
+                return response()->json(['message' => 'Role is fixed and cannot be updated'], 403);
+            }
             $role->update([
                 'name'          => $request->name,
                 'description'   => $request->description,
@@ -98,6 +101,9 @@ class RoleController extends Controller
     public function destroy(Role $role)
     {
         try {
+            if($role->is_fixed){
+                return response()->json(['message' => 'Role is fixed and cannot be deleted'], 403);
+            }
             $role->delete();
             return $this->index();
         } catch (Exception $e) {

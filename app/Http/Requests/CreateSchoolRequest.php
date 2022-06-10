@@ -4,6 +4,11 @@ namespace App\Http\Requests;
 
 class CreateSchoolRequest extends CreateBaseRequest
 {
+    function __construct()
+    {
+        $this->key = 'school';
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -15,19 +20,17 @@ class CreateSchoolRequest extends CreateBaseRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, mixed>
+     * @return arr of rules
      */
-    public function rules()
+    protected function validationRules($key)
     {
         return [
-            'name'                  => 'required|string|max:164',
-            'address'               => 'required|string|max:240',
-            'postal_code'           => 'required|string|max:16',
-            'phone'                 => 'required|string|max:24',
-            'country_id'            => 'required|digits_between:2,251|exists:countries,id',
-            'is_tuition_centre'     => 'required|boolean',
+            $key.'.name'                => 'required|string|max:164',
+            $key.'.address'             => 'required|string|max:240',
+            $key.'.postal_code'         => 'required|string|max:16',
+            $key.'.phone'               => 'required|string|max:24',
+            $key.'.country_id'          => 'required|digits_between:2,251|exists:countries,id',
+            $key.'.is_tuition_centre'   => 'required|boolean'
         ];
     }
 }

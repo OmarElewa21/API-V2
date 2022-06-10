@@ -26,7 +26,8 @@ class Organization extends Model
         'billing_address',
         'shipping_address',
         'img',
-        'country_id'
+        'country_id',
+        'deleted_at'
     ];
 
     public function country(){

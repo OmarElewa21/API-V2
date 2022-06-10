@@ -42,10 +42,16 @@ class OrganizationController extends Controller
         DB::beginTransaction();
         foreach($request->all() as $key=>$data){
             try {
-                Organization::updateOrCreate(
-                    array_merge($data, ['deleted_at' => null]),
-                    ['name', 'email']
-                );
+                if(Organization::withTrashed()->where('name', $data['name'])->orWhere('email', $data['email'])->exists()){
+                    $organization = Organization::withTrashed()->where('name', $data['name'])->orWhere('email', $data['email'])->firstOrFail();
+                    $organization->update(
+                        array_merge($data, ['deleted_at' => null])
+                    );
+                }else{
+                    Organization::create(
+                        array_merge($data, ['deleted_at' => null])
+                    );
+                }
             } catch (Exception $e) {
                 DB::rollBack();
                 return response($e->getMessage(), 500);

@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 class CreateBaseRequest extends FormRequest
 {
     protected $key = '';
-    protected $unique_fields = '';
+    protected $unique_fields = [];
 
     /**
      * Overwrite validation return

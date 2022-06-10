@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\School;
 use App\Http\Requests\CreateSchoolRequest;
 use App\Http\Requests\UpdateSchoolRequest;
+use Illuminate\Support\Facades\DB;
 
 class SchoolController extends Controller
 {
@@ -26,9 +27,17 @@ class SchoolController extends Controller
      */
     public function store(CreateSchoolRequest $request)
     {
-        $school = New School;
-        $school->fill($request->all())->save();
-        return response($school->load('country'), 200);
+        DB::beginTransaction();
+        foreach($request->all() as $key=>$data){
+            try {
+                School::create($data)->save();
+            } catch (Exception $e) {
+                DB::rollBack();
+                return response($e->getMessage(), 500);
+            }
+        }
+        DB::commit();
+        return $this->index();
     }
 
     /**
