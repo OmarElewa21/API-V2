@@ -32,4 +32,8 @@ class Organization extends Model
     public function country(){
         return $this->belongsTo(Country::class);
     }
+
+    public function country_partners(){
+        return $this->hasMany(CountryPartner::class);
+    }
 }

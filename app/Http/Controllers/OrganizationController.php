@@ -6,7 +6,9 @@ use App\Models\Organization;
 use App\Http\Requests\CreateOrganizationRequest;
 use App\Http\Requests\UpdateOrganizationRequest;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Builder;
 use Exception;
+use App\Http\Scopes\UserScope;
 
 class OrganizationController extends Controller
 {
@@ -17,7 +19,15 @@ class OrganizationController extends Controller
      */
     public function index()
     {
-        return response(Organization::with('country')->get(), 200);
+        $organizations = Organization::with([
+                'country:id,name',
+                'country_partners' => function($query){
+                    $query->withoutGlobalScopes([UserScope::class])->select('user_id', 'organization_id');
+                },
+                'country_partners.user:id,uuid,name'
+            ])->withCount('country_partners')->get();
+    
+        return response($organizations, 200);
     }
 
     /**
@@ -36,7 +46,15 @@ class OrganizationController extends Controller
         }
         try {
             $organization->fill($request->all())->save();
-            return response()->json($organization->load('country'), 200);
+            return response()->json(
+                $organization->load([
+                        'country:id,name', 'country_partners' => function($query){
+                            $query->withoutGlobalScopes([UserScope::class])->select('user_id', 'organization_id');
+                        },
+                        'country_partners.user:id,uuid,name'
+                    ])->loadCount('country_partners'), 
+                200);
+
         } catch (Exception $e) {
             return response($e->getMessage(), 500);
         }
@@ -64,7 +82,15 @@ class OrganizationController extends Controller
     {
         try {
             $organization->fill($request->all())->save();
-            return response()->json($organization->load('country'), 200);
+            return response()->json(
+                $organization->load([
+                        'country:id,name', 'country_partners' => function($query){
+                            $query->withoutGlobalScopes([UserScope::class])->select('user_id', 'organization_id');
+                        },
+                        'country_partners.user:id,uuid,name'
+                    ])->loadCount('country_partners'), 
+                200);
+
         } catch (Exception $e) {
             return response($e->getMessage(), 500);
         }
