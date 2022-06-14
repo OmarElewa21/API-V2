@@ -7,6 +7,9 @@ use App\Models\Teacher;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\Request;
+use App\Http\Requests\User\CreateTeacherRequest;
+use App\Http\Requests\User\UpdateTeacherRequest;
+use Illuminate\Support\Facades\DB;
 
 class TeacherController extends Controller
 {
@@ -26,9 +29,62 @@ class TeacherController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(CreateTeacherRequest $request)
     {
-        //
+        DB::beginTransaction();
+        foreach($request->all() as $key=>$data){
+            try {
+                if(User::withTrashed()->where('username', $data['username'])->orWhere('email', $data['email'])->exists()){
+                    $user = User::withTrashed()->where('username', $data['username'])->orWhere('email', $data['email'])->firstOrFail();
+                    $user->update(
+                        [
+                            'username'      => $data['username'],
+                            'email'         => $data['email'],
+                            'name'          => $data['name'],
+                            'role_id'       => Role::where('name', $data['role'])->value('id'),
+                            'password'      => bcrypt($data['password']),
+                            'deleted_at'    => null
+                        ]
+                    );
+                }else{
+                    User::Create(
+                        [
+                            'username'      => $data['username'],
+                            'email'         => $data['email'],
+                            'name'          => $data['name'],
+                            'role_id'       => Role::where('name', $data['role'])->value('id'),
+                            'password'      => bcrypt($data['password']),
+                        ]
+                    );
+                }
+                if(Teacher::withTrashed()->where('user_id', User::where('username', $data['username'])->value('id'))->exists()){
+                    $teacher = Teacher::withTrashed()->where('user_id', User::where('username', $data['username'])->value('id'))->firstOrFail();
+                    $teacher->update(
+                        [
+                            'country_partner_id'    => $data['country_partner_id'],
+                            'school_id'             => $data['school_id'],
+                            'country_id'            => $data['country_id'],
+                            'deleted_at'            => null
+                        ]
+                    );
+                }else{
+                    Teacher::create(
+                        [
+                            'user_id'               => User::where('username', $data['username'])->value('id'),
+                            'country_partner_id'    => $data['country_partner_id'],
+                            'school_id'             => $data['school_id'],
+                            'country_id'            => $data['country_id'],
+                        ]
+                    );
+                }
+                
+            } catch (Exception $e) {
+                DB::rollBack();
+                return response($e->getMessage(), 500);
+            }
+        }
+        DB::commit();
+        return $this->index();
     }
 
     /**
@@ -49,7 +105,7 @@ class TeacherController extends Controller
      * @param  \App\Models\Teacher  $teacher
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Teacher $teacher)
+    public function update(UpdateTeacherRequest $request, Teacher $teacher)
     {
         //
     }

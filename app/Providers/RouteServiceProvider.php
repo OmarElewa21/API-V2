@@ -53,7 +53,7 @@ class RouteServiceProvider extends ServiceProvider
             if($user->hasRole('teacher')){
                 return $user->getCountryPartner();
             }else{
-                return response()->json(['message' => 'user is not a country partner'], 401);
+                return response()->json(['message' => 'user is not a teacher'], 401);
             }
         });
         Route::bind('role', function ($value) {

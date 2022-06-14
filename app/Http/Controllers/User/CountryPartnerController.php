@@ -73,7 +73,6 @@ class CountryPartnerController extends Controller
                             'user_id'           => User::where('username', $data['username'])->value('id'),
                             'organization_id'   => Organization::where('name', $data['organization'])->value('id'),
                             'country_id'        => $data['country_id'],
-                            'deleted_at'        => null
                         ]
                     );
                 }
