@@ -4,10 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Http\Scopes\UserScope;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Http\Scopes\UserScope;
 
-class CountryPartner extends Model
+class Teacher extends Model
 {
     use HasFactory, SoftDeletes;
 
@@ -15,7 +15,7 @@ class CountryPartner extends Model
 
     protected $primaryKey = 'user_id';
 
-    protected $fillable = ['user_id', 'organization_id', 'country_id', 'deleted_at'];
+    protected $fillable = ['user_id', 'country_partner_id', 'country_id', 'school_id', 'deleted_at'];
 
     protected static function booted()
     {
@@ -35,8 +35,12 @@ class CountryPartner extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function organization(){
-        return $this->belongsTo(Organization::class);
+    public function school(){
+        return $this->belongsTo(School::class);
+    }
+
+    public function coutry_partner(){
+        return $this->belongsTo(CountryPartner::class, 'user_id', 'country_partner_id');
     }
 
     public function country(){
