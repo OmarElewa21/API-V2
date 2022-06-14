@@ -44,7 +44,8 @@ class CountryPartnerController extends Controller
                             'name'          => $data['name'],
                             'role_id'       => Role::where('name', $data['role'])->value('id'),
                             'password'      => bcrypt($data['password']),
-                            'deleted_at'    => null
+                            'deleted_at'    => null,
+                            'updated_by'    => auth()->id()
                         ]
                     );
                 }else{
@@ -55,6 +56,7 @@ class CountryPartnerController extends Controller
                             'name'          => $data['name'],
                             'role_id'       => Role::where('name', $data['role'])->value('id'),
                             'password'      => bcrypt($data['password']),
+                            'created_by'    => auth()->id()
                         ]
                     );
                 }
@@ -113,6 +115,7 @@ class CountryPartnerController extends Controller
             'email'         => $request->email,
             'role_id'       => Role::where('name', $request->role)->value('id'),
             'password'      => bcrypt($request->password),
+            'updated_by'    => auth()->id()
         ]);
         $countryPartner->update([
             'organization_id'   => Organization::where('name', $request->organization)->value('id'),

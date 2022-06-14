@@ -45,7 +45,8 @@ class RoleController extends Controller
             $role->fill([
                 'name'          => Str::lower($request->name),
                 'description'   => $request->description,
-                'permission_id' => $permission->id
+                'permission_id' => $permission->id,
+                'created_by'    => auth()->id()
             ])->save();
         } catch (Exception $e) {
             $permission->forceDelete();
@@ -84,7 +85,8 @@ class RoleController extends Controller
             $role->update([
                 'name'          => $request->name,
                 'description'   => $request->description,
-                'permission_id' => $role->permission->id
+                'permission_id' => $role->permission->id,
+                'updated_by'    => auth()->id()
             ]);
             $role->permission->update([
                 'permissions_set'   =>  $request->permission_set

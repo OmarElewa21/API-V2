@@ -19,6 +19,8 @@ class School extends Model
         'phone',
         'country_id',
         'is_tuition_centre',
+        'created_by',
+        'updated_by'
     ];
 
     protected $casts = [

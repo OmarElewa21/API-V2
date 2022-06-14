@@ -45,11 +45,11 @@ class OrganizationController extends Controller
                 if(Organization::withTrashed()->where('name', $data['name'])->orWhere('email', $data['email'])->exists()){
                     $organization = Organization::withTrashed()->where('name', $data['name'])->orWhere('email', $data['email'])->firstOrFail();
                     $organization->update(
-                        array_merge($data, ['deleted_at' => null])
+                        array_merge($data, ['deleted_at' => null, 'updated_by' => auth()->id()])
                     );
                 }else{
                     Organization::create(
-                        array_merge($data, ['deleted_at' => null])
+                        array_merge($data, ['created_by' => auth()->id()])
                     );
                 }
             } catch (Exception $e) {
@@ -89,7 +89,7 @@ class OrganizationController extends Controller
     public function update(UpdateOrganizationRequest $request, Organization $organization)
     {
         try {
-            $organization->fill($request->all())->save();
+            $organization->fill(array_merge($request->all(), ['updated_by' => auth()->id()]))->save();
             return response()->json(
                 $organization->load([
                         'country:id,name', 'country_partners' => function($query){
