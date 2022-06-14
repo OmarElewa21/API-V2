@@ -38,8 +38,11 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
         Route::delete('schools/action/mass_delete', [App\Http\Controllers\SchoolController::class, "massDelete"]);
     });
 
-    Route::group(['middleware' => ['role:super admin|admin|country partner']], function() {
+    Route::middleware('role:super admin|admin|country partner')
+        ->apiResource('users/country_partner.country_partner_assistants', App\Http\Controllers\User\CountryPartnerAssistantController::class)->shallow();
+
+    Route::group(['middleware' => ['role:super admin|admin|country partner|country partner assistant']], function() {
         Route::apiResource('users/teachers', App\Http\Controllers\User\TeacherController::class);
-        Route::apiResource('users/country_partner.country_partner_assistants', App\Http\Controllers\User\CountryPartnerAssistantController::class)->shallow();
+        Route::apiResource('users/school_managers', App\Http\Controllers\User\SchoolManagerController::class);
     });
 });

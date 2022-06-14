@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Http\Scopes\UserScope;
 
-class Teacher extends Model
+class SchoolManager extends Model
 {
     use HasFactory, SoftDeletes;
 
@@ -26,8 +26,8 @@ class Teacher extends Model
     {
         parent::boot();
 
-        static::deleting(function($teacher) {
-            $teacher->user()->delete();
+        static::deleting(function($schoolManager) {
+            $schoolManager->user()->delete();
         });
     }
 

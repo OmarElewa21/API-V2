@@ -84,6 +84,10 @@ class User extends Authenticatable
         return $this->hasOne(CountryPartnerAssistant::class);
     }
 
+    public function schoolManager(){
+        return $this->hasOne(schoolManager::class);
+    }
+
     public function getUserPermissionSet(){
         return $this->belongsToMany(
             Permission::class, 'user_permissions',
