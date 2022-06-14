@@ -48,6 +48,14 @@ class RouteServiceProvider extends ServiceProvider
                 return response()->json(['message' => 'user is not a country partner'], 401);
             }
         });
+        Route::bind('teacher', function ($value) {
+            $user = \App\Models\User::whereUuid($value)->firstOrFail();
+            if($user->hasRole('teacher')){
+                return $user->getCountryPartner();
+            }else{
+                return response()->json(['message' => 'user is not a country partner'], 401);
+            }
+        });
         Route::bind('role', function ($value) {
             return \App\Models\Role::whereUuid($value)->firstOrFail();
         });

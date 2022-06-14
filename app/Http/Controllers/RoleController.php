@@ -32,6 +32,9 @@ class RoleController extends Controller
      */
     public function store(SaveRoleRequest $request)
     {
+        if(Role::where('name', $request->name)->exists()){
+            return response()->json(['errors' => 'role already exists'], 409);
+        }
         $permission = new Permission;
         $permission->fill([
             'permissions_set'   =>  $request->permission_set
