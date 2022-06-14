@@ -25,11 +25,9 @@ class Role
         }
 
         $roles = explode("|", $roles);
-        foreach($roles as $role){
-            if ( !$request->user()->hasRole($role) ) {
-                return response()->json(['message' => 'User is not authorized for this request'], 401);
-            }
+        if($request->user()->hasRole($roles)){
             return $next($request);
         }
+        return response()->json(['message' => 'User is not authorized for this request'], 401);
     }
 }

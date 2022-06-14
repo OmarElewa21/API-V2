@@ -21,7 +21,7 @@ class CreateTeacherRequest extends CreateBaseRequest
      */
     public function authorize()
     {
-        return auth()->user()->hasRole('super admin') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('country partner');
+        return auth()->user()->hasRole(['super admin', 'admin', 'country partner']);
     }
 
     /**

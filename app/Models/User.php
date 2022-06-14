@@ -52,8 +52,18 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class)->withTrashed();
     }
 
-    public function hasRole($role){
-        return Str::lower($this->role->name) === Str::lower($role);
+    public function hasRole($roles){
+        if(gettype($roles) === 'string'){
+            return Str::lower($this->role->name) === Str::lower($roles);
+        }else if(gettype($roles) === 'array'){
+            foreach($roles as $role){
+                if(Str::lower($this->role->name) === Str::lower($role)){
+                    return true;
+                }
+            }
+            return false;
+        }
+        return false;
     }
 
     public function hasOwnPermissionSet(){
