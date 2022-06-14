@@ -3,31 +3,33 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use App\Models\Teacher;
+use App\Models\CountryPartnerAssistant;
+use App\Models\CountryPartner;
 use App\Models\User;
 use App\Models\Role;
-use App\Http\Requests\User\CreateTeacherRequest;
-use App\Http\Requests\User\UpdateTeacherRequest;
+use App\Http\Requests\User\CreateCountryPartnerAssistantRequest;
+use App\Http\Requests\User\UpdateCountryPartnerAssistantRequest;
 use Illuminate\Support\Facades\DB;
 
-class TeacherController extends Controller
+class CountryPartnerAssistantController extends Controller
 {
     /**
-     * Display a listing of the teachers.
+     * Display a listing of the country partner assistant.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(CountryPartner $countryPartner)
     {
-        return response(Teacher::get(), 200);
+        return response($countryPartner->load('countryPartnerAssistants')->loadCount('countryPartnerAssistants'), 200);
     }
 
     /**
-     * Store a newly created resource in teachers.
+     * Store a newly created country partner assistants in storage.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(CreateTeacherRequest $request)
+    public function store(CountryPartner $countryPartner, CreateCountryPartnerAssistantRequest $request)
     {
         DB::beginTransaction();
         foreach($request->all() as $key=>$data){
@@ -57,22 +59,20 @@ class TeacherController extends Controller
                         ]
                     );
                 }
-                if(Teacher::withTrashed()->where('user_id', User::where('username', $data['username'])->value('id'))->exists()){
-                    $teacher = Teacher::withTrashed()->where('user_id', User::where('username', $data['username'])->value('id'))->firstOrFail();
+                if(CountryPartnerAssistant::withTrashed()->where('user_id', User::where('username', $data['username'])->value('id'))->exists()){
+                    $teacher = CountryPartnerAssistant::withTrashed()->where('user_id', User::where('username', $data['username'])->value('id'))->firstOrFail();
                     $teacher->update(
                         [
-                            'country_partner_id'    => $data['country_partner_id'],
-                            'school_id'             => $data['school_id'],
+                            'country_partner_id'    => $countryPartner->user_id,
                             'country_id'            => $data['country_id'],
                             'deleted_at'            => null
                         ]
                     );
                 }else{
-                    Teacher::create(
+                    CountryPartnerAssistant::create(
                         [
                             'user_id'               => User::where('username', $data['username'])->value('id'),
-                            'country_partner_id'    => $data['country_partner_id'],
-                            'school_id'             => $data['school_id'],
+                            'country_partner_id'    => $countryPartner->user_id,
                             'country_id'            => $data['country_id'],
                         ]
                     );
@@ -84,30 +84,30 @@ class TeacherController extends Controller
             }
         }
         DB::commit();
-        return $this->index();
+        return $this->index($countryPartner);
     }
 
     /**
-     * Display the specified teachers.
+     * Display the specified country partner assistant.
      *
-     * @param  \App\Models\Teacher  $teacher
+     * @param  \App\Models\CountryPartnerAssistant  $CountryPartnerAssistant
      * @return \Illuminate\Http\Response
      */
-    public function show(Teacher $teacher)
+    public function show(CountryPartnerAssistant $CountryPartnerAssistant, CountryPartner $countryPartner)
     {
-        return response($teacher, 200);
+        return response($CountryPartnerAssistant, 200);
     }
 
     /**
-     * Update the specified resource in teachers.
+     * Update the specified country partner assistant in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Teacher  $teacher
+     * @param  \App\Models\CountryPartnerAssistant  $country_partner_assistant
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateTeacherRequest $request, Teacher $teacher)
+    public function update(UpdateCountryPartnerAssistantRequest $request, CountryPartnerAssistant $CountryPartnerAssistant)
     {
-        $teacher->user->update([
+        $CountryPartnerAssistant->user->update([
             'name'          => $request->name,
             'username'      => $request->username,
             'email'         => $request->email,
@@ -115,23 +115,21 @@ class TeacherController extends Controller
             'password'      => bcrypt($request->password),
             'updated_by'    => auth()->id()
         ]);
-        $teacher->update([
-            'country_partner_id'    => $request->country_partner_id,
-            'school_id'             => $request->school_id,
+        $CountryPartnerAssistant->update([
             'country_id'            => $request->country_id,
         ]);
-        return response($teacher, 200);
+        return response($CountryPartnerAssistant, 200);
     }
 
     /**
-     * Remove the specified resource from teachers.
+     * Remove the specified country partner assistant from storage.
      *
-     * @param  \App\Models\Teacher  $teacher
+     * @param  \App\Models\CountryPartnerAssistant  $country_partner_assistant
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Teacher $teacher)
+    public function destroy(CountryPartnerAssistant $CountryPartnerAssistant)
     {
-        $teacher->delete();
-        return $this->index();
+        $CountryPartnerAssistant->delete();
+        return $this->index($CountryPartnerAssistant->countryPartner);
     }
 }
