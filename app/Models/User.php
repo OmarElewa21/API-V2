@@ -85,7 +85,7 @@ class User extends Authenticatable
     }
 
     public function schoolManager(){
-        return $this->hasOne(schoolManager::class);
+        return $this->hasOne(SchoolManager::class);
     }
 
     public function getUserPermissionSet(){
