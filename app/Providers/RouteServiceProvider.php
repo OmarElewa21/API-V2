@@ -43,7 +43,7 @@ class RouteServiceProvider extends ServiceProvider
         Route::bind('country_partner', function ($value) {
             $user = \App\Models\User::whereUuid($value)->firstOrFail();
             if($user->hasRole('country partner')){
-                return $user->getCountryPartner();
+                return $user->countryPartner;
             }else{
                 return response()->json(['message' => 'user is not a country partner'], 401);
             }
@@ -51,7 +51,7 @@ class RouteServiceProvider extends ServiceProvider
         Route::bind('teacher', function ($value) {
             $user = \App\Models\User::whereUuid($value)->firstOrFail();
             if($user->hasRole('teacher')){
-                return $user->getCountryPartner();
+                return $user->teacher;
             }else{
                 return response()->json(['message' => 'user is not a teacher'], 401);
             }

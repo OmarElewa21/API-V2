@@ -95,7 +95,7 @@ class TeacherController extends Controller
      */
     public function show(Teacher $teacher)
     {
-        //
+        return response($teacher, 200);
     }
 
     /**
@@ -107,7 +107,19 @@ class TeacherController extends Controller
      */
     public function update(UpdateTeacherRequest $request, Teacher $teacher)
     {
-        //
+        $teacher->user->update([
+            'name'          => $request->name,
+            'username'      => $request->username,
+            'email'         => $request->email,
+            'role_id'       => Role::where('name', $request->role)->value('id'),
+            'password'      => bcrypt($request->password),
+        ]);
+        $teacher->update([
+            'country_partner_id'    => $request->country_partner_id,
+            'school_id'             => $request->school_id,
+            'country_id'            => $request->country_id,
+        ]);
+        return response($teacher, 200);
     }
 
     /**
@@ -118,6 +130,7 @@ class TeacherController extends Controller
      */
     public function destroy(Teacher $teacher)
     {
-        //
+        $teacher->delete();
+        return $this->index();
     }
 }

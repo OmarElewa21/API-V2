@@ -60,8 +60,12 @@ class User extends Authenticatable
         return !$this->permission_by_role;
     }
 
-    public function getCountryPartner(){
-        return CountryPartner::find($this->id);
+    public function countryPartner(){
+        return $this->hasOne(CountryPartner::class);
+    }
+
+    public function teacher(){
+        return $this->hasOne(Teacher::class);
     }
 
     public function getUserPermissionSet(){
