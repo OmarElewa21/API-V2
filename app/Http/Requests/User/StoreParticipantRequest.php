@@ -32,7 +32,7 @@ class StoreParticipantRequest extends CreateBaseRequest
             $key.'.class'               => 'required|string|max:32',
             $key.'.grade'               => 'required|string|max:32',
             $key.'.user_id'             => ['required', Rule::exists('users', 'id')->whereNull('deleted_at')],
-            $key.'.school_id'           => [Rule::exists('schools', 'id')->whereNull('deleted_at')],
+            $key.'.school_id'           => [Rule::exists('schools', 'id')->whereNull('deleted_at')->where('is_tuition_centre', 0)],
             $key.'.tuition_centre_id'   => [Rule::exists('schools', 'id')->whereNull('deleted_at')->where('is_tuition_centre', 1)],
             $key.'.country_id'          => 'required|digits_between:2,251|exists:countries,id'
         ];
