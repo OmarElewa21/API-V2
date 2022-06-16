@@ -62,7 +62,11 @@ class CreateBaseRequest extends FormRequest
         return [];
     }
 
-
+    /**
+     * Check if request data has same inputs for the unique fields
+     * 
+     * @param  \Illuminate\Validation\Validator  $validator
+     */
     protected function checkUniqueness($validator){
         foreach($this->unique_fields as $field_check){
             $list_check = [];

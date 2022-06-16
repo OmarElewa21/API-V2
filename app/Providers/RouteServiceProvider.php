@@ -68,6 +68,10 @@ class RouteServiceProvider extends ServiceProvider
             }
         });
 
+        Route::bind('participant', function ($value) {
+            return \App\Models\Participant::whereUuid($value)->firstOrFail();
+        });
+
         Route::bind('teacher', function ($value) {
             $user = \App\Models\User::whereUuid($value)->firstOrFail();
             if($user->hasRole('teacher')){

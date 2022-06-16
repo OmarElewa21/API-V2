@@ -4,7 +4,6 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Teacher;
-use App\Models\User;
 use App\Models\Role;
 use App\Http\Requests\User\CreateTeacherRequest;
 use App\Http\Requests\User\UpdateTeacherRequest;
