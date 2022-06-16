@@ -32,7 +32,7 @@ class UpdateParticipantRequest extends FormRequest
             'class'               => 'required|string|max:32',
             'grade'               => 'required|string|max:32',
             'user_id'             => ['required', Rule::exists('users', 'id')->whereNull('deleted_at')],
-            'school_id'           => [Rule::exists('schools', 'id')->whereNull('deleted_at')],
+            'school_id'           => [Rule::exists('schools', 'id')->whereNull('deleted_at')->where('is_tuition_centre', 0)],
             'tuition_centre_id'   => [Rule::exists('schools', 'id')->whereNull('deleted_at')->where('is_tuition_centre', 1)],
             'country_id'          => 'required|digits_between:2,251|exists:countries,id',
             'password'            => ['required',
