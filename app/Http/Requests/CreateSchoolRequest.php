@@ -16,7 +16,7 @@ class CreateSchoolRequest extends CreateBaseRequest
      */
     public function authorize()
     {
-        return auth()->user()->hasRole('super admin') || auth()->user()->hasRole('admin');
+        return auth()->user()->hasRole(['super admin', 'admin', 'country partner', 'country partner assistant']);
     }
 
     /**
