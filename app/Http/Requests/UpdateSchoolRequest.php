@@ -3,9 +3,24 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Illuminate\Routing\Route;
 
 class UpdateSchoolRequest extends CreateSchoolRequest
 {
+    /**
+     * @var school
+     */
+    private $school;
+
+    /**
+     *
+     * @param Route $route
+     */
+    function __construct(Route $route)
+    {
+        $this->school = $route->parameter('school');
+    }
     /**
      * Get the validation rules that apply to the request.
      *
@@ -15,6 +30,8 @@ class UpdateSchoolRequest extends CreateSchoolRequest
     {
         return [
             'name'                => 'required|string|max:164',
+            'email'               => ['required', 'email', 'max:164', Rule::unique('schools', 'email')->ignore($this->school)],
+            'province'            => 'string|max:64',
             'address'             => 'required|string|max:240',
             'postal_code'         => 'required|string|max:16',
             'phone'               => 'required|string|max:24',

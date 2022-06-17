@@ -20,7 +20,7 @@ class SchoolController extends Controller
      */
     public function index()
     {
-        return School::with('country')->get();
+        return School::with('country:id,name')->get();
     }
 
     /**
@@ -34,7 +34,18 @@ class SchoolController extends Controller
         DB::beginTransaction();
         foreach($request->all() as $key=>$data){
             try {
-                School::create($data)->save();
+                if(School::withTrashed()->Where('email', $data['email'])->exists()){
+                    $school = School::withTrashed()->Where('email', $data['email'])->firstOrFail();
+                    $school->update(
+                        array_merge($data,
+                            ['deleted_at' => null, 'updated_by' => auth()->id(), 'deleted_at' => null]
+                        )
+                    );
+                }else{
+                    School::create(
+                        array_merge($data, ['created_by' => auth()->id()])
+                    );
+                }
             } catch (Exception $e) {
                 DB::rollBack();
                 return response($e->getMessage(), 500);
@@ -52,7 +63,7 @@ class SchoolController extends Controller
      */
     public function show(School $school)
     {
-        return response($school->load('country'), 200);
+        return response($school->load('country:id,name'), 200);
     }
 
     /**
@@ -64,8 +75,8 @@ class SchoolController extends Controller
      */
     public function update(UpdateSchoolRequest $request, School $school)
     {
-        $school->fill($request->all())->save();
-        return response($school->load('country'), 200);
+        $school->update($request->all());
+        return response($school->load('country:id,name'), 200);
     }
 
     /**
@@ -76,6 +87,7 @@ class SchoolController extends Controller
      */
     public function destroy(School $school)
     {
+        $school->update(['deleted_by' => auth()->id()]);
         $school->delete();
         return $this->index();
     }
@@ -92,7 +104,9 @@ class SchoolController extends Controller
         try {
             foreach($request->all() as $school_uuid){
                 if(Str::isUuid($school_uuid) && School::whereUuid($school_uuid)->exists()){
-                    School::whereUuid($school_uuid)->delete();
+                    $school = School::whereUuid($school_uuid)->firstOrFail();
+                    $school->update(['deleted_by' => auth()->id()]);
+                    $school->delete();
                 }else{
                     throw new Exception("data is not valid");
                 }

@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Requests;
+use Illuminate\Validation\Rule;
 
 class CreateSchoolRequest extends CreateBaseRequest
 {
@@ -26,8 +27,10 @@ class CreateSchoolRequest extends CreateBaseRequest
     {
         return [
             $key.'.name'                => 'required|string|max:164',
-            $key.'.address'             => 'required|string|max:240',
-            $key.'.postal_code'         => 'required|string|max:16',
+            $key.'.email'               => ['required', 'email', 'max:164', Rule::unique('schools', 'email')->whereNull('deleted_at')],
+            $key.'.province'            => 'string|max:64',
+            $key.'.address'             => 'string|max:240',
+            $key.'.postal_code'         => 'string|max:16',
             $key.'.phone'               => 'required|string|max:24',
             $key.'.country_id'          => 'required|digits_between:2,251|exists:countries,id',
             $key.'.is_tuition_centre'   => 'required|boolean'

@@ -14,13 +14,21 @@ class School extends Model
 
     protected $fillable = [
         'name',
+        'email',
+        'province',
         'address',
         'postal_code',
         'phone',
         'country_id',
         'is_tuition_centre',
         'created_by',
-        'updated_by'
+        'updated_by',
+        'deleted_at',
+        'deleted_by'
+    ];
+
+    protected $hidden = [
+        'id',
     ];
 
     protected $casts = [
@@ -29,5 +37,17 @@ class School extends Model
 
     public function country(){
         return $this->belongsTo(Country::class);
+    }
+
+    public function created_by(){
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updated_by_user(){
+        return $this->belongsTo(User::class, 'updated_by', 'id');
+    }
+
+    public function deleted_by(){
+        return $this->belongsTo(User::class, 'deleted_by', 'id');
     }
 }
