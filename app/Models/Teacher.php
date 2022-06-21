@@ -17,6 +17,8 @@ class Teacher extends Model
 
     protected $fillable = ['user_id', 'country_partner_id', 'country_id', 'school_id', 'deleted_at'];
 
+    protected $hidden = ['user_id', 'school_id'];
+
     protected static function booted()
     {
         static::addGlobalScope(new UserScope);

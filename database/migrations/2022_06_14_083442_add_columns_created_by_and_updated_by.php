@@ -13,18 +13,18 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->unsignedBigInteger('created_by')->nullable();
-            $table->unsignedBigInteger('updated_by')->nullable();
-        });
-        Schema::table('roles', function (Blueprint $table) {
-            $table->unsignedBigInteger('created_by')->nullable();
-            $table->unsignedBigInteger('updated_by')->nullable();
-        });
-        Schema::table('organizations', function (Blueprint $table) {
-            $table->unsignedBigInteger('created_by')->nullable();
-            $table->unsignedBigInteger('updated_by')->nullable();
-        });
+        // Schema::table('users', function (Blueprint $table) {
+        //     $table->unsignedBigInteger('created_by')->nullable();
+        //     $table->unsignedBigInteger('updated_by')->nullable();
+        // });
+        // Schema::table('roles', function (Blueprint $table) {
+        //     $table->unsignedBigInteger('created_by')->nullable();
+        //     $table->unsignedBigInteger('updated_by')->nullable();
+        // });
+        // Schema::table('organizations', function (Blueprint $table) {
+        //     $table->unsignedBigInteger('created_by')->nullable();
+        //     $table->unsignedBigInteger('updated_by')->nullable();
+        // });
         Schema::table('schools', function (Blueprint $table) {
             $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedBigInteger('updated_by')->nullable();

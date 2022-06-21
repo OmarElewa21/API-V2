@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::table('schools', function (Blueprint $table) {
             $table->string('province', 64);
             $table->string('email')->unique();
+            $table->string('status')->default('pending');
             $table->unsignedBigInteger('deleted_by')->nullable();
         });
     }
@@ -30,6 +31,7 @@ return new class extends Migration
         Schema::table('schools', function (Blueprint $table) {
             $table->dropColumn('province');
             $table->dropColumn('email');
+            $table->dropColumn('status');
             $table->dropColumn('deleted_by');
         });
     }

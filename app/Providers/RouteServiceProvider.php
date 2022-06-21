@@ -90,7 +90,7 @@ class RouteServiceProvider extends ServiceProvider
         });
 
         Route::bind('school', function ($value) {
-            return \App\Models\School::whereUuid($value)->firstOrFail();
+            return \App\Models\School::withTrashed()->whereUuid($value)->firstOrFail();
         });
     }
 

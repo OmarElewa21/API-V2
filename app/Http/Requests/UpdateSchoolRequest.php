@@ -34,7 +34,7 @@ class UpdateSchoolRequest extends CreateSchoolRequest
             'province'            => 'string|max:64',
             'address'             => 'required|string|max:240',
             'postal_code'         => 'required|string|max:16',
-            'phone'               => 'required|string|max:24',
+            'phone'               => 'required|string|regex:/^[0-9\+]*$/|max:24',
             'country_id'          => 'required|digits_between:2,251|exists:countries,id',
             'is_tuition_centre'   => 'required|boolean'
         ];

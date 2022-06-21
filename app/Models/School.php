@@ -2,15 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Dyrynda\Database\Casts\EfficientUuid;
 use Dyrynda\Database\Support\GeneratesUuid;
 
-class School extends Model
+class School extends BaseModel
 {
-    use HasFactory, SoftDeletes, GeneratesUuid;
+    use SoftDeletes, GeneratesUuid;
 
     protected $fillable = [
         'name',
@@ -24,30 +22,50 @@ class School extends Model
         'created_by',
         'updated_by',
         'deleted_at',
-        'deleted_by'
+        'deleted_by',
+        'status' 
     ];
 
-    protected $hidden = [
-        'id',
-    ];
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
+    }
 
-    protected $casts = [
-        'uuid' => EfficientUuid::class,
-    ];
-
-    public function country(){
+    public function country()
+    {
         return $this->belongsTo(Country::class);
     }
 
-    public function created_by(){
-        return $this->belongsTo(User::class, 'created_by');
+    public function country_data(){
+        return $this->belongsTo(Country::class);
     }
 
-    public function updated_by_user(){
-        return $this->belongsTo(User::class, 'updated_by', 'id');
+    public function teachers(){
+        return $this->hasMany(Teacher::class);
     }
 
-    public function deleted_by(){
-        return $this->belongsTo(User::class, 'deleted_by', 'id');
+    public static function applyFilter($filterOptions){
+        if(isset($filterOptions['type']) && !is_null($filterOptions['type'])){
+            switch ($filterOptions['type']) {
+                case 'school':
+                    $data = self::where('is_tuition_centre', 0);
+                    break;
+                case 'tuition_centre':
+                    $data = self::where('is_tuition_centre', 1);
+                    break;
+                default:
+                    $data = self::whereIn('is_tuition_centre', [1,0]);               
+                    break;
+            }
+        }else{
+            $data = new School;
+        }
+        if(isset($filterOptions['country']) && !is_null($filterOptions['country'])){
+            $data = $data->where('country_id', $filterOptions['country']);
+        }
+        if(isset($filterOptions['status']) && !is_null($filterOptions['status'])){
+            $data = $data->where('status', $filterOptions['status']);
+        }
+        return $data;
     }
 }

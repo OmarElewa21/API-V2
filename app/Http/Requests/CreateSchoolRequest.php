@@ -31,7 +31,7 @@ class CreateSchoolRequest extends CreateBaseRequest
             $key.'.province'            => 'string|max:64',
             $key.'.address'             => 'string|max:240',
             $key.'.postal_code'         => 'string|max:16',
-            $key.'.phone'               => 'required|string|max:24',
+            $key.'.phone'               => 'required|string|regex:/^[0-9\+]*$/|max:24',                 //Todo limit + to only 1
             $key.'.country_id'          => 'required|digits_between:2,251|exists:countries,id',
             $key.'.is_tuition_centre'   => 'required|boolean'
         ];

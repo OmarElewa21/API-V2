@@ -7,8 +7,9 @@ use App\Http\Requests\CreateSchoolRequest;
 use App\Http\Requests\UpdateSchoolRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Scopes\UserScope;
 use Exception;
-
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
 class SchoolController extends Controller
@@ -18,9 +19,32 @@ class SchoolController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
-        return School::with('country:id,name')->get();
+    public function index(Request $request)
+    {   
+        if($request->has('filterOptions')){
+            $request->validate([
+                'filterOptions'                 => 'array',
+                'filterOptions.type'            => ['string', Rule::in(['school', 'tuition_centre'])],
+                'filterOptions.country'         => 'exists:countries,id',
+                'filterOptions.status'          => ['string', Rule::in(['pending', 'approved', 'rejected', 'deleted'])]
+            ]);
+            $data = School::applyFilter($request->get('filterOptions'));
+        }else{
+            $data = new School;
+        }
+        $data = collect(
+                    $data->withTrashed()
+                        ->with(['country:id,name', 'teachers' => function($teacher) {
+                            $teacher->withoutGlobalScopes([UserScope::class])->select('school_id','user_id');
+                        }, 'teachers.user:id,name,uuid'])
+                        ->withCount('teachers')
+                        ->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5)
+                    )
+                    ->merge([
+                        'pending' => School::pending()->count()
+                    ])
+                    ->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']);
+        return response($data, 200);
     }
 
     /**
@@ -38,7 +62,7 @@ class SchoolController extends Controller
                     $school = School::withTrashed()->Where('email', $data['email'])->firstOrFail();
                     $school->update(
                         array_merge($data,
-                            ['deleted_at' => null, 'updated_by' => auth()->id(), 'deleted_at' => null]
+                            ['deleted_at' => null, 'updated_by' => auth()->id(), 'deleted_by' => null]
                         )
                     );
                 }else{
@@ -52,7 +76,7 @@ class SchoolController extends Controller
             }
         }
         DB::commit();
-        return $this->index();
+        return $this->index(new Request);
     }
 
     /**
@@ -63,7 +87,11 @@ class SchoolController extends Controller
      */
     public function show(School $school)
     {
-        return response($school->load('country:id,name'), 200);
+        return response(
+            $school->load(['country:id,name', 'teachers' => function($teacher) {
+            $teacher->withoutGlobalScopes([UserScope::class])->select('school_id','user_id');
+        }, 'teachers.user:id,name,uuid'])->loadCount('teachers'),
+        200);
     }
 
     /**
@@ -76,7 +104,11 @@ class SchoolController extends Controller
     public function update(UpdateSchoolRequest $request, School $school)
     {
         $school->update($request->all());
-        return response($school->load('country:id,name'), 200);
+        return response(
+            $school->load(['country:id,name', 'teachers' => function($teacher) {
+                $teacher->withoutGlobalScopes([UserScope::class])->select('school_id','user_id');
+            }, 'teachers.user:id,name,uuid'])->loadCount('teachers'),
+            200);
     }
 
     /**
@@ -87,9 +119,9 @@ class SchoolController extends Controller
      */
     public function destroy(School $school)
     {
-        $school->update(['deleted_by' => auth()->id()]);
+        $school->update(['deleted_by' => auth()->id(), 'status' => 'deleted']);
         $school->delete();
-        return $this->index();
+        return $this->index(new Request);
     }
 
     /**
@@ -105,7 +137,7 @@ class SchoolController extends Controller
             foreach($request->all() as $school_uuid){
                 if(Str::isUuid($school_uuid) && School::whereUuid($school_uuid)->exists()){
                     $school = School::whereUuid($school_uuid)->firstOrFail();
-                    $school->update(['deleted_by' => auth()->id()]);
+                    $school->update(['deleted_by' => auth()->id(), 'status' => 'deleted']);
                     $school->delete();
                 }else{
                     throw new Exception("data is not valid");
@@ -116,6 +148,6 @@ class SchoolController extends Controller
             return response($e->getMessage(), 500);
         }
         DB::commit();
-        return $this->index();
+        return $this->index(new Request);
     }
 }
