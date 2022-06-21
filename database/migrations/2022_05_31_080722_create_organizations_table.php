@@ -24,6 +24,8 @@ return new class extends Migration
             $table->text('shipping_address');
             $table->string('img', 255);
             $table->string('country', 64);
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
             $table->efficientUuid('uuid')->index()->unique()->nullable();
             $table->softDeletes($column = 'deleted_at', $precision = 0);
             $table->timestamps();

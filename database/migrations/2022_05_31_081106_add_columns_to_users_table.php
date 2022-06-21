@@ -19,6 +19,8 @@ return new class extends Migration
             $table->boolean('permission_by_role')->default(true);
             $table->efficientUuid('uuid')->index()->unique()->nullable();
             $table->softDeletes($column = 'deleted_at', $precision = 0);
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
         });
 
         DB::table('users')->insert(
@@ -48,6 +50,8 @@ return new class extends Migration
             $table->dropColumn('deleted_at');
             $table->dropColumn('permission_by_role');
             $table->dropColumn('uuid');
+            $table->dropColumn('created_by');
+            $table->dropColumn('updated_by');
         });
     }
 };

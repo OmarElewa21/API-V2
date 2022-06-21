@@ -19,6 +19,8 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->foreignId('permission_id')->constrained('permissions');
             $table->boolean('is_fixed')->default(false);
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
             $table->efficientUuid('uuid')->index()->unique()->nullable();
             $table->softDeletes($column = 'deleted_at', $precision = 0);
             $table->timestamps();

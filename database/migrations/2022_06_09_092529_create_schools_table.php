@@ -21,6 +21,8 @@ return new class extends Migration
             $table->string('phone', 24);
             $table->foreignId('country_id')->constrained('countries');
             $table->boolean('is_tuition_centre')->default(false);
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
             $table->efficientUuid('uuid')->index()->unique()->nullable();
             $table->softDeletes($column = 'deleted_at', $precision = 0);
             $table->timestamps();
