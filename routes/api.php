@@ -37,7 +37,8 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
         ]);
         Route::delete('schools/action/mass_delete', [App\Http\Controllers\SchoolController::class, "massDelete"]);
         Route::post('schools/action/reject/{school}', [App\Http\Controllers\SchoolController::class, "reject"]);
-        
+        Route::post('schools/action/mass_approve', [App\Http\Controllers\SchoolController::class, "massApprove"]);
+
         Route::delete('organizations/action/mass_delete', [App\Http\Controllers\OrganizationController::class, "massDelete"]);
     });
 

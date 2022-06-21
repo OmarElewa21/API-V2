@@ -38,7 +38,7 @@ class BaseModel extends Model
     {
         return Attribute::make(
             get: fn ($value, $attributes) =>
-                $value ? User::find($value)->name . $attributes['updated_by'] : $value
+                $value ? User::find($value)->name . ' - ' . $attributes['updated_by'] : $value
         );
     }
 
@@ -46,7 +46,7 @@ class BaseModel extends Model
     {
         return Attribute::make(
             get: fn ($value, $attributes) =>
-                $value ? User::find($value)->name . $attributes['deleted_by'] : $value
+                $value ? User::find($value)->name . ' - ' . $attributes['deleted_by'] : $value
         );
     }
 }

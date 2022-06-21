@@ -69,23 +69,30 @@ class SchoolController extends Controller
         foreach($request->all() as $key=>$data){
             try {
                 if(School::withTrashed()->Where('email', $data['email'])->exists()){
+                    $merge = ['deleted_at' => null, 'updated_by' => auth()->id(), 'deleted_by' => null];
+                    if(auth()->user()->hasRole(['super admin', 'admin'])){
+                        $merge[] = [
+                            'status' => 'approved',
+                            'approved_by' => auth()->id(),
+                            'approved_at' => now(),
+                        ];
+                    }else{
+                        $merge[] = ['status' => 'pending'];
+                    }
                     $school = School::withTrashed()->Where('email', $data['email'])->firstOrFail();
-                    $school->update(
-                        array_merge($data,
-                            ['deleted_at' => null, 'updated_by' => auth()->id(), 'deleted_by' => null]
-                        )
-                    );
+                    $school->update(array_merge($data, $merge));
                 }else{
-                    School::create(
-                        array_merge(
-                            $data,
-                            [
-                                'created_by' => auth()->id(),
-                                'status'     => auth()->user()->hasRole(['super admin', 'admin']) ? 'approved' : 'pending'
-                            ]    
-                        )
-                    );
+                    $merge = ['created_by' => auth()->id()];
+                    if(auth()->user()->hasRole(['super admin', 'admin'])){
+                        $merge[] = [
+                            'status' => 'approved',
+                            'approved_by' => auth()->id(),
+                            'approved_at' => now()
+                        ];
+                    }
+                    School::create(array_merge($data, $merge));
                 }
+
             } catch (Exception $e) {
                 DB::rollBack();
                 return response($e->getMessage(), 500);
@@ -159,6 +166,36 @@ class SchoolController extends Controller
                     $school = School::whereUuid($school_uuid)->firstOrFail();
                     $school->update(['deleted_by' => auth()->id(), 'status' => 'deleted']);
                     $school->delete();
+                }else{
+                    throw new Exception("data is not valid");
+                }
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response($e->getMessage(), 500);
+        }
+        DB::commit();
+        return $this->index(new Request);
+    }
+
+    /**
+     * approve multiple schools.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function massApprove(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            foreach($request->all() as $school_uuid){
+                if(Str::isUuid($school_uuid) && School::whereUuid($school_uuid)->exists()){
+                    $school = School::whereUuid($school_uuid)->firstOrFail();
+                    $school->update([
+                        'status' => 'approved',
+                        'approved_by' => auth()->id(),
+                        'approved_at' => now()
+                    ]);
                 }else{
                     throw new Exception("data is not valid");
                 }

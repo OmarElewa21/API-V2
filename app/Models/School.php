@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Dyrynda\Database\Support\GeneratesUuid;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class School extends BaseModel
 {
@@ -23,8 +24,15 @@ class School extends BaseModel
         'updated_by',
         'deleted_at',
         'deleted_by',
-        'status' 
+        'status',
+        'approved_by',
+        'approved_at'
     ];
+
+    function __construct(){
+        parent::__construct();
+        $this->hidden[] = 'approved_at';
+    }
 
     public function scopePending($query)
     {
@@ -75,5 +83,13 @@ class School extends BaseModel
             $data = $data->where('status', $filterOptions['status']);
         }
         return $data;
+    }
+
+    protected function approvedBy(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value, $attributes) =>
+                $value ? User::find($value)->name . ' - ' . $attributes['approved_at'] : $value
+        );
     }
 }
