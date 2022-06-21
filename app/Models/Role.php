@@ -25,6 +25,8 @@ class Role extends Model
         'uuid' => EfficientUuid::class,
     ];
 
+    protected $hidden = ['id'];
+
     public static function boot()
     {
         parent::boot();

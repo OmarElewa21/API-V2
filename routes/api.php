@@ -36,6 +36,8 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
             'schools'                   => App\Http\Controllers\SchoolController::class
         ]);
         Route::delete('schools/action/mass_delete', [App\Http\Controllers\SchoolController::class, "massDelete"]);
+        Route::post('schools/action/reject/{school}', [App\Http\Controllers\SchoolController::class, "reject"]);
+
     });
 
     Route::middleware('role:super admin|admin|country partner')

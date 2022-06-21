@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\School;
+use App\Models\Rejection;
 use App\Http\Requests\CreateSchoolRequest;
 use App\Http\Requests\UpdateSchoolRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Scopes\UserScope;
+use App\Http\Scopes\RoleScope;
 use Exception;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
@@ -34,9 +36,17 @@ class SchoolController extends Controller
         }
         $data = collect(
                     $data->withTrashed()
-                        ->with(['country:id,name', 'teachers' => function($teacher) {
-                            $teacher->withoutGlobalScopes([UserScope::class])->select('school_id','user_id');
-                        }, 'teachers.user:id,name,uuid'])
+                        ->with([
+                            'country:id,name',
+                            'teachers' => function($teacher) {
+                                $teacher->withoutGlobalScopes([UserScope::class])->select('school_id','user_id');
+                            },
+                            'teachers.user:id,name,uuid',
+                            'rejections', 'rejections.user:id,uuid,name,role_id',
+                            'rejections.user.role' => function($role){
+                                $role->withoutGlobalScopes([RoleScope::class])->select('id', 'name', 'uuid');
+                            } 
+                            ])
                         ->withCount('teachers')
                         ->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5)
                     )
@@ -94,10 +104,18 @@ class SchoolController extends Controller
     public function show(School $school)
     {
         return response(
-            $school->load(['country:id,name', 'teachers' => function($teacher) {
-            $teacher->withoutGlobalScopes([UserScope::class])->select('school_id','user_id');
-        }, 'teachers.user:id,name,uuid'])->loadCount('teachers'),
-        200);
+            $school->load([
+                'country:id,name',
+                'teachers' => function($teacher) {
+                    $teacher->withoutGlobalScopes([UserScope::class])->select('school_id','user_id');
+                },
+                'teachers.user:id,name,uuid',
+                'rejections', 'rejections.user:id,uuid,name,role_id',
+                'rejections.user.role' => function($role){
+                    $role->withoutGlobalScopes([RoleScope::class])->select('id', 'name', 'uuid');
+                }
+            ])->loadCount('teachers'),
+            200);
     }
 
     /**
@@ -110,11 +128,7 @@ class SchoolController extends Controller
     public function update(UpdateSchoolRequest $request, School $school)
     {
         $school->update($request->all());
-        return response(
-            $school->load(['country:id,name', 'teachers' => function($teacher) {
-                $teacher->withoutGlobalScopes([UserScope::class])->select('school_id','user_id');
-            }, 'teachers.user:id,name,uuid'])->loadCount('teachers'),
-            200);
+        return $this->show($school);
     }
 
     /**
@@ -155,5 +169,24 @@ class SchoolController extends Controller
         }
         DB::commit();
         return $this->index(new Request);
+    }
+
+    public function reject(School $school, Request $request){
+        $request->validate([
+            'reason'        => 'required|string'
+        ]);
+
+        Rejection::create([
+            'created_by'        => auth()->id(),
+            'user_id'           => auth()->id(),
+            'relation_id'       => $school->id,
+            'relation_type'     => 'App\Models\School',
+            'reason'            => $request->reason,
+            'count'             => Rejection::where('relation_type', 'App\Models\School')->where('relation_id', $school->id)->count() + 1,
+            'created_at'        => now()
+        ]);
+
+        $school->update(['status', 'rejected']);
+        return $this->show($school);
     }
 }

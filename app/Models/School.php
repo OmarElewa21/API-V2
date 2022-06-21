@@ -44,6 +44,14 @@ class School extends BaseModel
         return $this->hasMany(Teacher::class);
     }
 
+    public function rejections(){
+        return $this->morphMany(Rejection::class, 'relation');
+    }
+
+    public function rejection(){
+        return $this->morphOne(Rejection::class, 'relation')->ofMany('count', 'max');
+    }
+
     public static function applyFilter($filterOptions){
         if(isset($filterOptions['type']) && !is_null($filterOptions['type'])){
             switch ($filterOptions['type']) {
