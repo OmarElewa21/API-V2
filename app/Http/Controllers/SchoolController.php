@@ -134,7 +134,7 @@ class SchoolController extends Controller
      */
     public function update(UpdateSchoolRequest $request, School $school)
     {
-        $school->update($request->all());
+        $school->update(array_merge($request->all(), ['updated_by' => auth()->id()]));
         return $this->show($school);
     }
 
