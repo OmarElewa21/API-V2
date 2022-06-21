@@ -32,7 +32,7 @@ class CreateOrganizationRequest extends CreateBaseRequest
         return [
             $key.'.name'                      => ['required', 'string', 'max:164', Rule::unique('organizations', 'name')->whereNull('deleted_at')],
             $key.'.email'                     => ['required', 'email', 'max:164', Rule::unique('organizations', 'email')->whereNull('deleted_at')],
-            $key.'.phone'                     => 'required|string|max:24',
+            $key.'.phone'                     => 'required|string|regex:/^[0-9\+]*$/|max:24',
             $key.'.person_in_charge_name'     => 'required|string|max:164',
             $key.'.address'                   => 'required|string',
             $key.'.billing_address'           => 'required|string',

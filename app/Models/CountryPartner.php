@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Http\Scopes\UserScope;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class CountryPartner extends Model
+class CountryPartner extends BaseModel
 {
     use HasFactory, SoftDeletes;
 
@@ -16,6 +16,8 @@ class CountryPartner extends Model
     protected $primaryKey = 'user_id';
 
     protected $fillable = ['user_id', 'organization_id', 'country_id', 'deleted_at'];
+
+    protected $hidden = ['user_id', 'organization_id'];
 
     protected static function booted()
     {

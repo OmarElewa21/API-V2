@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Exception;
 use App\Http\Scopes\UserScope;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 
 class OrganizationController extends Controller
 {
@@ -18,17 +19,28 @@ class OrganizationController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $organizations = Organization::with([
+        if($request->has('filterOptions')){
+            $request->validate([
+                'filterOptions'                 => 'array',
+                'filterOptions.country'         => 'exists:countries,id',
+            ]);
+            $organizations = Organization::applyFilter($request->get('filterOptions'));
+        }else{
+            $organizations = new Organization;
+        }
+        return response(
+            collect($organizations->with([
                 'country:id,name',
                 'country_partners' => function($query){
                     $query->withoutGlobalScopes([UserScope::class])->select('user_id', 'organization_id');
                 },
                 'country_partners.user:id,uuid,name'
-            ])->withCount('country_partners')->get();
-    
-        return response($organizations, 200);
+            ])->withCount('country_partners')
+            ->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5))
+            ->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url'])
+            ,200);    
     }
 
     /**
@@ -45,7 +57,9 @@ class OrganizationController extends Controller
                 if(Organization::withTrashed()->where('name', $data['name'])->orWhere('email', $data['email'])->exists()){
                     $organization = Organization::withTrashed()->where('name', $data['name'])->orWhere('email', $data['email'])->firstOrFail();
                     $organization->update(
-                        array_merge($data, ['deleted_at' => null, 'updated_by' => auth()->id()])
+                        array_merge(
+                        $data,
+                        ['deleted_at' => null, 'updated_by' => auth()->id(), 'deleted_by' => null])
                     );
                 }else{
                     Organization::create(
@@ -58,7 +72,7 @@ class OrganizationController extends Controller
             }
         }
         DB::commit();
-        return $this->index();
+        return $this->index(new Request);
     }
 
     /**
@@ -75,7 +89,7 @@ class OrganizationController extends Controller
                         $query->withoutGlobalScopes([UserScope::class])->select('user_id', 'organization_id');
                     },
                     'country_partners.user:id,uuid,name'
-                ])->loadCount('country_partners'), 
+                ])->loadCount('country_partners')->makeVisible('img'), 
             200);
     }
 
@@ -90,14 +104,7 @@ class OrganizationController extends Controller
     {
         try {
             $organization->fill(array_merge($request->all(), ['updated_by' => auth()->id()]))->save();
-            return response()->json(
-                $organization->load([
-                        'country:id,name', 'country_partners' => function($query){
-                            $query->withoutGlobalScopes([UserScope::class])->select('user_id', 'organization_id');
-                        },
-                        'country_partners.user:id,uuid,name'
-                    ])->loadCount('country_partners'), 
-                200);
+            return $this->show($organization);
 
         } catch (Exception $e) {
             return response($e->getMessage(), 500);
@@ -113,10 +120,38 @@ class OrganizationController extends Controller
     public function destroy(Organization $organization)
     {
         try {
+            $organization->update(['deleted_by' => auth()->id()]);
             $organization->delete();
-            return $this->index();
+            return $this->index(new Request);
         } catch (Exception $e) {
             response($e->getMessage(), 500);
         }
+    }
+
+    /**
+     * Remove multiple organizations.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function massDelete(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            foreach($request->all() as $organization_uuid){
+                if(Str::isUuid($organization_uuid) && Organization::whereUuid($organization_uuid)->exists()){
+                    $organization = Organization::whereUuid($organization_uuid)->firstOrFail();
+                    $organization->update(['deleted_by' => auth()->id()]);
+                    $organization->delete();
+                }else{
+                    throw new Exception("data is not valid");
+                }
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response($e->getMessage(), 500);
+        }
+        DB::commit();
+        return $this->index(new Request);
     }
 }

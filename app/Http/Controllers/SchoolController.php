@@ -171,6 +171,12 @@ class SchoolController extends Controller
         return $this->index(new Request);
     }
 
+    /**
+     * Update status of school to reject and store to rejections
+     * @param  \App\Models\School  $school
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function reject(School $school, Request $request){
         $request->validate([
             'reason'        => 'required|string'

@@ -2,16 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Dyrynda\Database\Casts\EfficientUuid;
 use Dyrynda\Database\Support\GeneratesUuid;
 
 
-class Organization extends Model
+class Organization extends BaseModel
 {
-    use HasFactory, SoftDeletes, GeneratesUuid;
+    use SoftDeletes, GeneratesUuid;
 
     protected $casts = [
         'uuid' => EfficientUuid::class,
@@ -29,8 +28,14 @@ class Organization extends Model
         'country_id',
         'deleted_at',
         'created_by',
-        'updated_by'
+        'updated_by',
+        'deleted_by'
     ];
+
+    function __construct(){
+        parent::__construct();
+        $this->hidden[] = 'img';
+    }
 
     public function country(){
         return $this->belongsTo(Country::class);
@@ -38,5 +43,12 @@ class Organization extends Model
 
     public function country_partners(){
         return $this->hasMany(CountryPartner::class);
+    }
+
+    public static function applyFilter($filterOptions){
+        if(isset($filterOptions['country']) && !is_null($filterOptions['country'])){
+            $data = self::where('country_id', $filterOptions['country']);
+        }
+        return $data;
     }
 }
