@@ -67,7 +67,13 @@ class SchoolController extends Controller
                     );
                 }else{
                     School::create(
-                        array_merge($data, ['created_by' => auth()->id()])
+                        array_merge(
+                            $data,
+                            [
+                                'created_by' => auth()->id(),
+                                'status'     => auth()->user()->hasRole(['super admin', 'admin']) ? 'approved' : 'pending'
+                            ]    
+                        )
                     );
                 }
             } catch (Exception $e) {
