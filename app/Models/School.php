@@ -66,7 +66,7 @@ class School extends BaseModel
                 case 'school':
                     $data = self::where('is_tuition_centre', 0);
                     break;
-                case 'tuition_centre':
+                case 'tuition centre':
                     $data = self::where('is_tuition_centre', 1);
                     break;
                 default:
@@ -83,6 +83,20 @@ class School extends BaseModel
             $data = $data->where('status', $filterOptions['status']);
         }
         return $data;
+    }
+
+    public static function getFilterForFrontEnd(){
+        $filter = School::withTrashed()->Join('countries', 'schools.country_id', '=', 'countries.id')
+                    ->select('schools.status', 'schools.country_id', 'countries.name');
+        return collect([
+            'filterOptions' => [
+                    'type'      => ['school', 'tuition centre'],
+                    'country'   => [
+                        $filter->distinct('country_id')->pluck('name', 'country_id'),
+                    ],
+                    'status'    => $filter->pluck('status')->unique()->values(),
+                ]
+            ]);
     }
 
     protected function approvedBy(): Attribute

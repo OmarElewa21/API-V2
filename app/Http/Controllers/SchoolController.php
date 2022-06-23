@@ -22,11 +22,11 @@ class SchoolController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index(Request $request)
-    {   
+    {
         if($request->has('filterOptions')){
             $request->validate([
                 'filterOptions'                 => 'array',
-                'filterOptions.type'            => ['string', Rule::in(['school', 'tuition_centre'])],
+                'filterOptions.type'            => ['string', Rule::in(['school', 'tuition centre'])],
                 'filterOptions.country'         => 'exists:countries,id',
                 'filterOptions.status'          => ['string', Rule::in(['pending', 'approved', 'rejected', 'deleted'])]
             ]);
@@ -34,10 +34,12 @@ class SchoolController extends Controller
         }else{
             $data = new School;
         }
+        $filterOptions = School::getFilterForFrontEnd();
         $data = collect(
                     $data->withTrashed()
+                        ->join('countries', 'schools.country_id', 'countries.id')
+                        ->select('schools.*', 'countries.name as country')
                         ->with([
-                            'country:id,name',
                             'teachers' => function($teacher) {
                                 $teacher->withoutGlobalScopes([UserScope::class])->select('school_id','user_id');
                             },
@@ -45,7 +47,7 @@ class SchoolController extends Controller
                             'rejections', 'rejections.user:id,uuid,name,role_id',
                             'rejections.user.role' => function($role){
                                 $role->withoutGlobalScopes([RoleScope::class])->select('id', 'name', 'uuid');
-                            } 
+                            }
                             ])
                         ->withCount('teachers')
                         ->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5)
@@ -54,7 +56,7 @@ class SchoolController extends Controller
                         'pending' => School::pending()->count()
                     ])
                     ->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']);
-        return response($data, 200);
+        return response($filterOptions->merge($data), 200);
     }
 
     /**
