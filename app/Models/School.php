@@ -29,9 +29,19 @@ class School extends BaseModel
         'approved_at'
     ];
 
+    protected $appends =['teachers'];
+
     function __construct(){
         parent::__construct();
         $this->hidden[] = 'approved_at';
+    }
+
+    protected function approvedBy(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value, $attributes) =>
+                $value ? User::find($value)->name . ' - ' . $attributes['approved_at'] : $value
+        );
     }
 
     public function scopePending($query)
@@ -41,10 +51,6 @@ class School extends BaseModel
 
     public function country()
     {
-        return $this->belongsTo(Country::class);
-    }
-
-    public function country_data(){
         return $this->belongsTo(Country::class);
     }
 
@@ -58,6 +64,15 @@ class School extends BaseModel
 
     public function rejection(){
         return $this->morphOne(Rejection::class, 'relation')->ofMany('count', 'max');
+    }
+
+    public function getTeachersAttribute()
+    {
+        return $this->teachers()->get()->pluck('user')->map->only(['uuid','name']);
+    }
+
+    public function scopeGetRelatedUserSchoolsBasedOnCountry(){
+        return $this->where('country_id', auth()->user()->getRelatedUser()->country_id);
     }
 
     public static function applyFilter($filterOptions){
@@ -99,11 +114,42 @@ class School extends BaseModel
             ]);
     }
 
-    protected function approvedBy(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value, $attributes) =>
-                $value ? User::find($value)->name . ' - ' . $attributes['approved_at'] : $value
-        );
+    public function checkUpdateEligibility(){
+        $user = auth()->user();
+        if($user->hasRole(['super admin', 'admin'])){
+            return true;
+        }
+        if($user->hasRole(['country partner', 'country partner assistant'])){
+            if($user->getRelatedUser()->country_id !== $this->country_id){
+                return false;
+            }
+            if($this->status === 'pending'){
+                if($this->created_by !== $user->id){
+                    return false;
+                }
+            }
+        }else{
+            if($user->getRelatedUser()->school_id !== $this->id){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public function checkShowEligibility(){
+        $user = auth()->user();
+        if($user->hasRole(['super admin', 'admin'])){
+            return true;
+        }
+        if($user->hasRole(['country partner', 'country partner assistant'])){
+            if($user->getRelatedUser()->country_id !== $this->country_id){
+                return false;
+            }
+        }else{
+            if($user->getRelatedUser()->school_id !== $this->id){
+                return false;
+            }
+        }
+        return true;
     }
 }

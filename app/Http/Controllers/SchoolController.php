@@ -23,6 +23,7 @@ class SchoolController extends Controller
      */
     public function index(Request $request)
     {
+        // Filter data according to payload filterOptions
         if($request->has('filterOptions')){
             $request->validate([
                 'filterOptions'                 => 'array',
@@ -34,16 +35,19 @@ class SchoolController extends Controller
         }else{
             $data = new School;
         }
-        $filterOptions = School::getFilterForFrontEnd();
+
+        $filterOptions = School::getFilterForFrontEnd();        // get collection of availble filter options data 
+        
+        if(auth()->user()->hasRole(['country partner', 'country partner assistant'])){
+            $data = $data->getRelatedUserSchoolsBasedOnCountry();
+        }
+
+        // Get data as a collection
         $data = collect(
                     $data->withTrashed()
                         ->join('countries', 'schools.country_id', 'countries.id')
                         ->select('schools.*', 'countries.name as country')
                         ->with([
-                            'teachers' => function($teacher) {
-                                $teacher->withoutGlobalScopes([UserScope::class])->select('school_id','user_id');
-                            },
-                            'teachers.user:id,name,uuid',
                             'rejections', 'rejections.user:id,uuid,name,role_id',
                             'rejections.user.role' => function($role){
                                 $role->withoutGlobalScopes([RoleScope::class])->select('id', 'name', 'uuid');
@@ -55,7 +59,8 @@ class SchoolController extends Controller
                     ->merge([
                         'pending' => School::pending()->count()
                     ])
-                    ->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']);
+                    ->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']
+                );
         return response($filterOptions->merge($data), 200);
     }
 
@@ -136,8 +141,25 @@ class SchoolController extends Controller
      */
     public function update(UpdateSchoolRequest $request, School $school)
     {
-        $school->update(array_merge($request->all(), ['updated_by' => auth()->id()]));
-        return $this->show($school);
+        if(!$school->checkUpdateEligibility){
+            return response()->json(['message' => 'Not authorized to edit the school'], 401);
+        }
+        if($user->hasRole(['super admin', 'admin'])){
+            $school->update(
+                array_merge(
+                    $request->all(),
+                    ['updated_by' => auth()->id()]
+                )
+            );
+        }else{
+            $school->update(
+                array_merge(
+                    $request->forget('name', 'country_id', 'is_tuition_centre')->all(),
+                    ['updated_by' => auth()->id()]
+                )
+            );
+        }
+        return $this->show($school, true);
     }
 
     /**
@@ -148,6 +170,11 @@ class SchoolController extends Controller
      */
     public function destroy(School $school)
     {
+        if(auth()->user()->hasRole(['country partner', 'country partner assistant'])){
+            if( !($school->created_by === auth()->id() && $school->status === 'pending') ){
+                return response()->json(['message' => 'Not authorized to delete a school'], 401);
+            }
+        }
         $school->update(['deleted_by' => auth()->id(), 'status' => 'deleted']);
         $school->delete();
         return $this->index(new Request);
@@ -232,6 +259,6 @@ class SchoolController extends Controller
         ]);
 
         $school->update(['status', 'rejected']);
-        return $this->show($school);
+        return $this->show($school, true);
     }
 }

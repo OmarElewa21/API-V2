@@ -19,10 +19,7 @@ class Teacher extends Model
 
     protected $hidden = ['user_id', 'school_id'];
 
-    protected static function booted()
-    {
-        static::addGlobalScope(new UserScope);
-    }
+    protected $appends = ['user'];
 
     public static function boot()
     {
@@ -47,5 +44,10 @@ class Teacher extends Model
 
     public function country(){
         return $this->belongsTo(Country::class);
+    }
+
+    public function getUserAttribute()
+    {
+        return $this->user()->first();
     }
 }
