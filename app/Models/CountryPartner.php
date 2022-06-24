@@ -19,11 +19,6 @@ class CountryPartner extends BaseModel
 
     protected $hidden = ['user_id', 'organization_id'];
 
-    protected static function booted()
-    {
-        static::addGlobalScope(new UserScope);
-    }
-
     public static function boot()
     {
         parent::boot();

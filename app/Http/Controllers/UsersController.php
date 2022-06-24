@@ -109,6 +109,16 @@ class UsersController extends Controller
         return response()->json(['message' => 'Password changed successfully'], 200);
     }
 
+     /**
+     * Display the specified resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        return User::allUsers()->get();
+    }
+
     /**
      * Display the specified resource.
      *
@@ -116,17 +126,6 @@ class UsersController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
     {
         //
     }

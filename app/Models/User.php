@@ -10,9 +10,10 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Dyrynda\Database\Casts\EfficientUuid;
 use Dyrynda\Database\Support\GeneratesUuid;
-
+use App\Http\Scopes\UserTypeScope;
 use Illuminate\Support\Str;
 use Illuminate\Support\Arr;
+use Illuminate\Database\Eloquent\Builder;
 
 class User extends Authenticatable
 {
@@ -42,6 +43,11 @@ class User extends Authenticatable
         'uuid' => EfficientUuid::class,
     ];
 
+    public function scopeAllUsers($query)
+    {
+        return $query->whereRelation('role', 'name', '<>', 'super admin');
+    }
+
     public function scopeAdmins($query)
     {
         return $query->whereRelation('role', 'name', 'admin');
@@ -49,7 +55,30 @@ class User extends Authenticatable
 
     public function scopeCountryPartners($query)
     {
-        return $query->whereRelation('role', 'name', 'country partner');
+        return $query->whereRelation('role', 'name', 'country partner')
+                ->join('country_partners as cp', 'cp.user_id', '=', 'users.id')
+                ->select('users.*', 'cp.country_id', 'cp.organization_id');
+    }
+
+    public function scopeCountryPartnersAssitants($query)
+    {
+        return $query->whereRelation('role', 'name', 'country partner assistant')
+                ->join('country_partners_assistants as cpa', 'cpa.user_id', '=', 'users.id')
+                ->select('users.*', 'cpa.country_id', 'cpa.country_partner_id');
+    }
+
+    public function scopeSchoolManagers($query)
+    {
+        return $query->whereRelation('role', 'name', 'school manager')
+                ->join('school_managers as sm', 'sm.user_id', '=', 'users.id')
+                ->select('users.*', 'sm.country_id', 'sm.country_partner_id', 'sm.school_id');
+    }
+
+    public function scopeTeachers($query)
+    {
+        return $query->whereRelation('role', 'name', 'teacher')
+                ->join('teacher as t', 't.user_id', '=', 'users.id')
+                ->select('users.*', 't.country_id', 't.country_partner_id', 't.school_id');
     }
 
     public function role(){
@@ -88,6 +117,26 @@ class User extends Authenticatable
 
     public function schoolManager(){
         return $this->hasOne(SchoolManager::class);
+    }
+
+    public function getRelatedUser(){
+        switch ($this->role->name) {
+            case 'country partner':
+                return $this->countryPartner;
+                break;
+            case 'country partner assistant':
+                return $this->CountryPartnerAssistant;
+                break;
+            case 'school manager':
+                return $this->schoolManager;
+                break;
+            case 'teacher':
+                return $this->teacher;
+                break;
+            default:
+                return null;
+                break;
+        }
     }
 
     public function getUserPermissionSet(){

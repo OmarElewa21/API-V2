@@ -21,12 +21,14 @@ return new class extends Migration
             $table->string('phone', 24);
             $table->foreignId('country_id')->constrained('countries');
             $table->boolean('is_tuition_centre')->default(false);
-            $table->unsignedBigInteger('created_by')->nullable();
-            $table->unsignedBigInteger('updated_by')->nullable();
             $table->string('province', 64);
             $table->string('email')->unique();
             $table->string('status')->default('pending');
-            $table->unsignedBigInteger('deleted_by')->nullable();
+            $table->foreignId('approved_by')->nullable()->constrained('users');
+            $table->dateTime('approved_at')->nullable();
+            $table->foreignId('created_by')->nullable()->constrained('users');
+            $table->foreignId('updated_by')->nullable()->constrained('users');
+            $table->foreignId('deleted_by')->nullable()->constrained('users');
             $table->efficientUuid('uuid')->index()->unique()->nullable();
             $table->softDeletes($column = 'deleted_at', $precision = 0);
             $table->timestamps();

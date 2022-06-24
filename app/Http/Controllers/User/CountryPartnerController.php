@@ -21,6 +21,7 @@ class CountryPartnerController extends Controller
      */
     public function index()
     {
+        return User::countryPartners()->get();
         return response(CountryPartner::get(), 200);
     }
 
