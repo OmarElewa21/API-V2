@@ -29,7 +29,7 @@ class School extends BaseModel
         'approved_at'
     ];
 
-    protected $appends =['teachers'];
+    protected $appends = ['teachers'];
 
     function __construct(){
         parent::__construct();

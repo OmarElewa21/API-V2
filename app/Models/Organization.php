@@ -4,17 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Dyrynda\Database\Casts\EfficientUuid;
 use Dyrynda\Database\Support\GeneratesUuid;
-
 
 class Organization extends BaseModel
 {
     use SoftDeletes, GeneratesUuid;
-
-    protected $casts = [
-        'uuid' => EfficientUuid::class,
-    ];
 
     protected $fillable = [
         'name',
@@ -37,19 +31,12 @@ class Organization extends BaseModel
         $this->hidden[] = 'img';
     }
 
-    protected $appends =['country_partners'];
-
-    public function getCountryPartnersAttribute()
-    {
-        return $this->country_partners()->get()->pluck('user')->map->only(['uuid','name']);
-    }
-
     public function country(){
         return $this->belongsTo(Country::class);
     }
 
     public function country_partners(){
-        return $this->hasMany(CountryPartner::class);
+        return $this->hasManyThrough(User::class, CountryPartner::class, 'organization_id', 'id', 'id', 'user_id');
     }
 
     public static function applyFilter($filterOptions){

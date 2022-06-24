@@ -5,13 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Http\Scopes\UserScope;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CountryPartner extends BaseModel
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     public $incrementing = false;
+
+    public $timestamps = false;
 
     protected $primaryKey = 'user_id';
 

@@ -19,18 +19,15 @@ class BaseModel extends Model
     ];
 
     protected $casts = [
-        'created_at'    => 'date:Y-m-d H:i:s',
-        'updated_at'    => 'date:Y-m-d H:i:s',
-        'deleted_at'    => 'date:Y-m-d H:i:s',
         'uuid'          => EfficientUuid::class,
     ];
-    
+
     
     protected function createdBy(): Attribute
     {
         return Attribute::make(
             get: fn ($value, $attributes) =>
-                $value ? User::find($value)->name . ' - ' . $attributes['created_at'] : $value
+                $value ? User::find($value)->name . ' (' . date('d/m/y H:i', strtotime($attributes['created_at'])) . ')' : $value
         );
     }
 
@@ -38,7 +35,7 @@ class BaseModel extends Model
     {
         return Attribute::make(
             get: fn ($value, $attributes) =>
-                $value ? User::find($value)->name . ' - ' . $attributes['updated_by'] : $value
+                $value ? User::find($value)->name . ' (' . date('d/m/y H:i', strtotime($attributes['updated_at'])) . ')' : $value
         );
     }
 
@@ -46,7 +43,7 @@ class BaseModel extends Model
     {
         return Attribute::make(
             get: fn ($value, $attributes) =>
-                $value ? User::find($value)->name . ' - ' . $attributes['deleted_by'] : $value
+                $value ? User::find($value)->name . ' (' . date('d/m/y H:i', strtotime($attributes['deleted_at'])) . ')' : $value
         );
     }
 }

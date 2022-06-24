@@ -36,11 +36,6 @@ class Role extends Model
         });
     }
 
-    protected static function booted()
-    {
-        static::addGlobalScope(new RoleScope);
-    }
-
     public function users(){
         return $this->hasMany(User::class);
     }

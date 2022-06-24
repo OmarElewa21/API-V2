@@ -45,8 +45,8 @@ class UpdateCountryPartnerRequest extends FormRequest
         return [
             'name'              => 'required|string|max:160',
             'role'              => 'required|exists:roles,name',
-            'username'          => ['required', 'string', 'max:64', Rule::unique('users')->ignore($this->country_partner->user)],
-            'email'             => ['required', 'email', 'max:64', Rule::unique('users')->ignore($this->country_partner->user)],
+            'username'          => ['required', 'string', 'max:64', Rule::unique('users')->ignore($this->country_partner)],
+            'email'             => ['required', 'email', 'max:64', Rule::unique('users')->ignore($this->country_partner)],
             'password'          => ['required',
                                     Password::min(8)
                                         ->letters()

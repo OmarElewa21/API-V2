@@ -14,6 +14,8 @@ use App\Http\Scopes\UserTypeScope;
 use Illuminate\Support\Str;
 use Illuminate\Support\Arr;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use DateTimeInterface;
 
 class User extends Authenticatable
 {
@@ -35,13 +37,46 @@ class User extends Authenticatable
         'id',
         'password',
         'remember_token',
-        'role_id'
+        'role_id',
+        'laravel_through_key',
+        'created_at',
+        'updated_at',
+        'deleted_at'
     ];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
         'uuid' => EfficientUuid::class,
     ];
+
+    protected function serializeDate(DateTimeInterface $date)
+    {
+        return $date->format('d/m/y H:i');
+    }
+
+    protected function createdBy(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value, $attributes) =>
+                $value ? User::find($value)->name . ' (' . date('d/m/y H:i', strtotime($attributes['created_at'])) . ')' : $value
+        );
+    }
+
+    protected function updatedBy(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value, $attributes) =>
+                $value ? User::find($value)->name . ' (' . date('d/m/y H:i', strtotime($attributes['updated_at'])) . ')' : $value
+        );
+    }
+
+    protected function deletedBy(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value, $attributes) =>
+                $value ? User::find($value)->name . ' (' . date('d/m/y H:i', strtotime($attributes['deleted_at'])) . ')' : $value
+        );
+    }
 
     public function scopeAllUsers($query)
     {
@@ -104,7 +139,8 @@ class User extends Authenticatable
     }
 
     public function countryPartner(){
-        return $this->hasOne(CountryPartner::class);
+        return self::where('id', $this->id)->join('country_partners as cp', 'cp.user_id', '=', 'users.id')
+                        ->select('users.*', 'cp.country_id', 'cp.organization_id');
     }
 
     public function teacher(){
@@ -117,26 +153,6 @@ class User extends Authenticatable
 
     public function schoolManager(){
         return $this->hasOne(SchoolManager::class);
-    }
-
-    public function getRelatedUser(){
-        switch ($this->role->name) {
-            case 'country partner':
-                return $this->countryPartner;
-                break;
-            case 'country partner assistant':
-                return $this->CountryPartnerAssistant;
-                break;
-            case 'school manager':
-                return $this->schoolManager;
-                break;
-            case 'teacher':
-                return $this->teacher;
-                break;
-            default:
-                return null;
-                break;
-        }
     }
 
     public function getUserPermissionSet(){

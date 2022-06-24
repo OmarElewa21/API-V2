@@ -34,6 +34,7 @@ class OrganizationController extends Controller
                 $organizations
                 ->join('countries', 'organizations.country_id', 'countries.id')
                 ->select('organizations.*', 'countries.name as country')
+                ->with('country_partners:uuid,name')
                 ->withCount('country_partners')
                 ->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5)
             )->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url'])

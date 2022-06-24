@@ -21,8 +21,7 @@ class CountryPartnerController extends Controller
      */
     public function index()
     {
-        return User::countryPartners()->get();
-        return response(CountryPartner::get(), 200);
+        return response(User::countryPartners()->get(), 200);
     }
 
     /**
@@ -61,13 +60,12 @@ class CountryPartnerController extends Controller
                         ]
                     );
                 }
-                if(CountryPartner::withTrashed()->where('user_id', User::where('username', $data['username'])->value('id'))->exists()){
-                    $countryPartner = CountryPartner::withTrashed()->where('user_id', User::where('username', $data['username'])->value('id'))->firstOrFail();
+                if(CountryPartner::where('user_id', User::where('username', $data['username'])->value('id'))->exists()){
+                    $countryPartner = CountryPartner::where('user_id', User::where('username', $data['username'])->value('id'))->firstOrFail();
                     $countryPartner->update(
                         [
                             'organization_id'   => Organization::where('name', $data['organization'])->value('id'),
                             'country_id'        => $data['country_id'],
-                            'deleted_at'        => null
                         ]
                     );
                 }else{
@@ -95,9 +93,10 @@ class CountryPartnerController extends Controller
      * @param  \App\Models\CountryPartner  $countryPartner
      * @return \Illuminate\Http\Response
      */
-    public function show(CountryPartner $countryPartner)
+    public function show(User $user)
     {
-        return response($countryPartner, 200);
+        $cp = $user->countryPartner()->firstOrFail();
+        return response($cp->load('role:id,uuid,name'), 200);
     }
 
 
@@ -108,9 +107,9 @@ class CountryPartnerController extends Controller
      * @param  \App\Models\CountryPartner  $countryPartner
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateCountryPartnerRequest $request, CountryPartner $countryPartner)
+    public function update(UpdateCountryPartnerRequest $request, User $user)
     {
-        $countryPartner->user->update([
+        $user->update([
             'name'          => $request->name,
             'username'      => $request->username,
             'email'         => $request->email,
@@ -118,11 +117,10 @@ class CountryPartnerController extends Controller
             'password'      => bcrypt($request->password),
             'updated_by'    => auth()->id()
         ]);
-        $countryPartner->update([
+        DB::table('country_partners')->update([
             'organization_id'   => Organization::where('name', $request->organization)->value('id'),
-            'country_id'        => $request->country_id
         ]);
-        return response($countryPartner, 200);
+        return $this->show($user);
     }
 
     /**
