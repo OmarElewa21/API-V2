@@ -37,6 +37,13 @@ class Organization extends BaseModel
         $this->hidden[] = 'img';
     }
 
+    protected $appends =['country_partners'];
+
+    public function getCountryPartnersAttribute()
+    {
+        return $this->country_partners()->get()->pluck('user')->map->only(['uuid','name']);
+    }
+
     public function country(){
         return $this->belongsTo(Country::class);
     }
