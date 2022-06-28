@@ -4,23 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Http\Scopes\UserScope;
 
 class SchoolManager extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     public $incrementing = false;
 
     protected $primaryKey = 'user_id';
 
-    protected $fillable = ['user_id', 'country_partner_id', 'country_id', 'school_id', 'deleted_at'];
+    public $timestamps = false;
 
-    protected static function booted()
-    {
-        static::addGlobalScope(new UserScope);
-    }
+    protected $fillable = ['user_id', 'country_partner_id', 'school_id'];
+
+    protected $hidden = ['user_id', 'country_partner_id', 'school_id'];
 
     public static function boot()
     {
@@ -41,9 +38,5 @@ class SchoolManager extends Model
 
     public function countryPartner(){
         return $this->belongsTo(CountryPartner::class, 'country_partner_id', 'user_id');
-    }
-
-    public function country(){
-        return $this->belongsTo(Country::class);
     }
 }

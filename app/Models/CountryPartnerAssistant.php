@@ -4,12 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Http\Scopes\UserScope;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CountryPartnerAssistant extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     public $incrementing = false;
 
@@ -20,11 +18,6 @@ class CountryPartnerAssistant extends Model
     protected $fillable = ['user_id', 'country_partner_id'];
 
     protected $hidden = ['user_id', 'country_partner_id'];
-
-    protected static function booted()
-    {
-        static::addGlobalScope(new UserScope);
-    }
 
     public static function boot()
     {

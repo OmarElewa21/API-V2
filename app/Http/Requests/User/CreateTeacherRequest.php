@@ -42,7 +42,7 @@ class CreateTeacherRequest extends CreateBaseRequest
                                                 ->uncompromised(), 'confirmed'],
             $key.'.country_partner_id'  => ['required', Rule::exists('country_partners', 'user_id')->whereNull('deleted_at')],
             $key.'.school_id'           => ['required', Rule::exists('schools', 'id')->whereNull('deleted_at')],
-            $key.'.country_id'          => 'required|digits_between:2,251|exists:countries,id'
+            $key.'.country_id'          => 'required|exists:countries,id'
         ];
     }
 }

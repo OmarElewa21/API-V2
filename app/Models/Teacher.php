@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Http\Scopes\UserScope;
 
 class Teacher extends Model
 {
@@ -18,8 +17,6 @@ class Teacher extends Model
     protected $fillable = ['user_id', 'country_partner_id', 'country_id', 'school_id', 'deleted_at'];
 
     protected $hidden = ['user_id', 'school_id'];
-
-    protected $appends = ['user'];
 
     public static function boot()
     {

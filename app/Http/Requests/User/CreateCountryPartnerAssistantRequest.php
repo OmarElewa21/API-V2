@@ -40,7 +40,7 @@ class CreateCountryPartnerAssistantRequest extends CreateBaseRequest
                                                 ->numbers()
                                                 ->symbols()
                                                 ->uncompromised(), 'confirmed'],
-            $key.'.country_id'          => 'required|digits_between:2,251|exists:countries,id'
+            $key.'.country_id'          => 'required|exists:countries,id'
         ];
     }
 }

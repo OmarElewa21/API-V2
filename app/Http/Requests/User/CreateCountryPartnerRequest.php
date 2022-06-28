@@ -41,7 +41,7 @@ class CreateCountryPartnerRequest extends CreateBaseRequest
                                                 ->symbols()
                                                 ->uncompromised(), 'confirmed'],
             $key.'.organization'      => ['required', Rule::exists('organizations', 'name')->whereNull('deleted_at')],
-            $key.'.country_id'        => 'required|digits_between:2,251|exists:countries,id'
+            $key.'.country_id'        => 'required|exists:countries,id'
         ];
     }
 }
