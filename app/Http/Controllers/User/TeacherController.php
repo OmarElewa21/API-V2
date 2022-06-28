@@ -9,19 +9,10 @@ use App\Models\User;
 use App\Http\Requests\User\CreateTeacherRequest;
 use App\Http\Requests\User\UpdateTeacherRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
 
 class TeacherController extends Controller
 {
-    /**
-     * Display a listing of the teachers.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        return response(Teacher::get(), 200);
-    }
-
     /**
      * Store a newly created resource in teachers.
      *
@@ -29,6 +20,7 @@ class TeacherController extends Controller
      */
     public function store(CreateTeacherRequest $request)
     {
+        $collection = new Collection;
         DB::beginTransaction();
         foreach($request->all() as $key=>$data){
             try {
@@ -42,7 +34,9 @@ class TeacherController extends Controller
                             'role_id'       => Role::where('name', $data['role'])->value('id'),
                             'password'      => bcrypt($data['password']),
                             'deleted_at'    => null,
-                            'updated_by'    => auth()->id()
+                            'deleted_by'    => null,
+                            'updated_by'    => auth()->id(),
+                            'status'        => 'enabled'
                         ]
                     );
                 }else{
@@ -53,85 +47,89 @@ class TeacherController extends Controller
                             'name'          => $data['name'],
                             'role_id'       => Role::where('name', $data['role'])->value('id'),
                             'password'      => bcrypt($data['password']),
-                            'created_by'    => auth()->id()
+                            'created_by'    => auth()->id(),
+                            'country_id'    => $data['country_id']
                         ]
                     );
-                }
-                if(Teacher::withTrashed()->where('user_id', User::where('username', $data['username'])->value('id'))->exists()){
-                    $teacher = Teacher::withTrashed()->where('user_id', User::where('username', $data['username'])->value('id'))->firstOrFail();
-                    $teacher->update(
-                        [
-                            'country_partner_id'    => $data['country_partner_id'],
-                            'school_id'             => $data['school_id'],
-                            'country_id'            => $data['country_id'],
-                            'deleted_at'            => null
-                        ]
-                    );
-                }else{
                     Teacher::create(
                         [
                             'user_id'               => User::where('username', $data['username'])->value('id'),
                             'country_partner_id'    => $data['country_partner_id'],
                             'school_id'             => $data['school_id'],
-                            'country_id'            => $data['country_id'],
                         ]
                     );
                 }
-                
+                $collection->push(
+                    User::where('username', $data['username'])
+                    ->leftJoin('roles', 'roles.id', '=', 'users.role_id')
+                    ->leftJoin('countries', 'countries.id', '=', 'users.country_id')
+                    ->leftJoin('personal_access_tokens as pst', function ($join) {
+                            $join->on('users.id', '=', 'pst.tokenable_id')
+                                ->where('pst.tokenable_type', 'App\Models\User');
+                            })
+                    ->select('users.*', 'roles.name as role', 'countries.name as country', 'pst.updated_at as last_login')
+                    ->first());
             } catch (Exception $e) {
                 DB::rollBack();
                 return response($e->getMessage(), 500);
             }
         }
         DB::commit();
-        return $this->index();
+        return $collection;
     }
 
     /**
      * Display the specified teachers.
      *
-     * @param  \App\Models\Teacher  $teacher
+     * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function show(Teacher $teacher)
+    public function show(User $user)
     {
-        return response($teacher, 200);
+        $user = User::withTrashed()->where('username', $user->username)
+                    ->leftJoin('roles', 'roles.id', '=', 'users.role_id')
+                    ->leftJoin('countries', 'countries.id', '=', 'users.country_id')
+                    ->leftJoin('personal_access_tokens as pst', function ($join) {
+                            $join->on('users.id', '=', 'pst.tokenable_id')
+                                ->where('pst.tokenable_type', 'App\Models\User');
+                            })
+                    ->select('users.*', 'roles.name as role', 'countries.name as country', 'pst.updated_at as last_login')
+                    ->firstOrFail();
+        return response($user, 200);
     }
 
     /**
      * Update the specified resource in teachers.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Teacher  $teacher
+     * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateTeacherRequest $request, Teacher $teacher)
+    public function update(UpdateTeacherRequest $request, User $user)
     {
-        $teacher->user->update([
+        $user->update([
             'name'          => $request->name,
             'username'      => $request->username,
             'email'         => $request->email,
-            'role_id'       => Role::where('name', $request->role)->value('id'),
             'password'      => bcrypt($request->password),
             'updated_by'    => auth()->id()
         ]);
-        $teacher->update([
-            'country_partner_id'    => $request->country_partner_id,
-            'school_id'             => $request->school_id,
-            'country_id'            => $request->country_id,
-        ]);
-        return response($teacher, 200);
+        return $this->show($user);
     }
 
     /**
-     * Remove the specified resource from teachers.
+     * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Teacher  $teacher
+     * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Teacher $teacher)
+    public function destroy(User $user)
     {
-        $teacher->delete();
-        return $this->index();
+        $user->update([
+            'status'     => 'deleted',
+            'deleted_by' => auth()->id()
+        ]);
+        $user->delete();
+        return $this->show($user);
     }
 }

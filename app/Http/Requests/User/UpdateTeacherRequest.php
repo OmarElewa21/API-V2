@@ -32,7 +32,7 @@ class UpdateTeacherRequest extends FormRequest
      */
     public function authorize()
     {
-        return auth()->user()->hasRole(['super admin', 'admin', 'country partner']);
+        return auth()->user()->hasRole(['super admin', 'admin', 'country partner', 'country partner assistant', 'school manager']);
     }
 
     /**
@@ -44,18 +44,14 @@ class UpdateTeacherRequest extends FormRequest
     {
         return [
             'name'                  => 'required|string|max:160',
-            'role'                  => 'required|exists:roles,name',
-            'username'              => ['required', 'string', 'max:64', Rule::unique('users')->ignore($this->teacher->user)],
-            'email'                 => ['required', 'email', 'max:64', Rule::unique('users')->ignore($this->teacher->user)],
+            'username'              => ['required', 'string', 'max:64', Rule::unique('users')->ignore($this->teacher)],
+            'email'                 => ['required', 'email', 'max:64', Rule::unique('users')->ignore($this->teacher)],
             'password'              => ['required',
                                         Password::min(8)
                                             ->letters()
                                             ->numbers()
                                             ->symbols()
                                             ->uncompromised(), 'confirmed'],
-            'country_partner_id'    => ['required', Rule::exists('country_partners', 'user_id')->whereNull('deleted_at')],
-            'school_id'             => ['required', Rule::exists('schools', 'id')->whereNull('deleted_at')],
-            'country_id'            => 'required|digits_between:2,251|exists:countries,id'
         ];
     }
 

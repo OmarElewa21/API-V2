@@ -103,7 +103,7 @@ class SchoolManagerController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\SchoolManager  $schoolManager
+     * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
     public function update(UpdateSchoolManagerRequest $request, User $user)

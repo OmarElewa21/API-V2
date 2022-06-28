@@ -55,7 +55,7 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
     });
 
     Route::middleware('role:super admin|admin|country partner|country partner assistant|school manager')
-        ->apiResource('users/teachers', App\Http\Controllers\User\TeacherController::class);
+        ->apiResource('teachers', App\Http\Controllers\User\TeacherController::class)->except('index');
 
     Route::group(['middleware' => 'role:super admin|admin|country partner|country partner assistant|school manager|teacher'], function() {
         Route::apiResource('participants', App\Http\Controllers\User\ParticipantController::class);
