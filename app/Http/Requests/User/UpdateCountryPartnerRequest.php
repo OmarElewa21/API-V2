@@ -44,7 +44,6 @@ class UpdateCountryPartnerRequest extends FormRequest
     {
         return [
             'name'              => 'required|string|max:160',
-            'role'              => 'required|exists:roles,name',
             'username'          => ['required', 'string', 'max:64', Rule::unique('users')->ignore($this->country_partner)],
             'email'             => ['required', 'email', 'max:64', Rule::unique('users')->ignore($this->country_partner)],
             'password'          => ['required',
@@ -52,9 +51,7 @@ class UpdateCountryPartnerRequest extends FormRequest
                                         ->letters()
                                         ->numbers()
                                         ->symbols()
-                                        ->uncompromised(), 'confirmed'],
-            'organization'      => 'required|exists:organizations,name',
-            'country_id'        => 'required|digits_between:2,251|exists:countries,id'
+                                        ->uncompromised(), 'confirmed']
         ];
     }
 

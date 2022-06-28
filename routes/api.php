@@ -23,20 +23,22 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
     Route::post('logout', [UsersController::class,"logout"]);
     Route::resource('countries', App\Http\Controllers\CountryController::class)->only('index', 'show');
 
+    Route::middleware('role:super admin|admin|country partner|country partner assistant|school manager')
+        ->get('users', [App\Http\Controllers\UsersController::class, 'index'])->name('users.index');
+
     Route::group(['middleware' => ['role:super admin']], function() {
-        Route::get('users', [App\Http\Controllers\UsersController::class, 'index'])->name('users.index');
         Route::apiResource('admins', App\Http\Controllers\User\AdminsController::class)->except('index');
-        
-        Route::apiResource('roles', App\Http\Controllers\RoleController::class);
-        Route::delete('roles/action/mass_delete', [App\Http\Controllers\RoleController::class, "massDelete"]);
     });
 
     Route::group(['middleware' => ['role:super admin|admin']], function() {
-        Route::apiResource('admin/users', App\Http\Controllers\UsersController::class);
+        Route::apiResource('country_partners', App\Http\Controllers\User\CountryPartnerController::class)->except('index');
         Route::apiResources([
             'organizations'             => App\Http\Controllers\OrganizationController::class,
-            'users/country_partners'    => App\Http\Controllers\User\CountryPartnerController::class,
+            'roles'                     => App\Http\Controllers\RoleController::class
         ]);
+
+        Route::delete('roles/action/mass_delete', [App\Http\Controllers\RoleController::class, "massDelete"]);
+
         Route::delete('schools/action/mass_delete', [App\Http\Controllers\SchoolController::class, "massDelete"]);
         Route::post('schools/action/reject/{school}', [App\Http\Controllers\SchoolController::class, "reject"]);
         Route::post('schools/action/mass_approve', [App\Http\Controllers\SchoolController::class, "massApprove"]);

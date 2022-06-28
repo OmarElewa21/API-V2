@@ -235,6 +235,6 @@ class User extends Authenticatable
         if(isset($filterOptions['status']) && !is_null($filterOptions['status'])){
             $data = $data->where('status', $filterOptions['status']);
         }
-        return $data;
+        return $data->withTrashed();
     }
 }

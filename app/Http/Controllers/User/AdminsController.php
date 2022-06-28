@@ -36,7 +36,8 @@ class AdminsController extends Controller
                             'password'      => bcrypt($data['password']),
                             'updated_by'    => auth()->id(),
                             'deleted_at'    => null,
-                            'deleted_by'    => null
+                            'deleted_by'    => null,
+                            'status'        => 'enabled'
                         ]
                     );
                 }else{
@@ -79,8 +80,14 @@ class AdminsController extends Controller
     public function show(User $user)
     {
         $user = User::withTrashed()->where('username', $user->username)
-                ->join('roles', 'roles.id', '=', 'users.role_id')
-                ->select('users.*', 'roles.name as role')->firstOrFail();
+                ->leftJoin('roles', 'roles.id', '=', 'users.role_id')
+                ->leftJoin('countries', 'countries.id', '=', 'users.country_id')
+                ->leftJoin('personal_access_tokens as pst', function ($join) {
+                        $join->on('users.id', '=', 'pst.tokenable_id')
+                            ->where('pst.tokenable_type', 'App\Models\User');
+                        })
+                ->select('users.*', 'roles.name as role', 'countries.name as country', 'pst.updated_at as last_login')
+                ->firstOrFail();
         return response($user, 200);
     }
 

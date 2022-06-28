@@ -11,19 +11,10 @@ use App\Models\CountryPartner;
 use App\Http\Requests\User\CreateCountryPartnerRequest;
 use App\Http\Requests\User\UpdateCountryPartnerRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
 
 class CountryPartnerController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        return response(User::countryPartners()->get(), 200);
-    }
-
     /**
      * Store a newly created resource in storage.
      *
@@ -33,6 +24,7 @@ class CountryPartnerController extends Controller
     public function store(CreateCountryPartnerRequest $request)
     {
         DB::beginTransaction();
+        $collection = new Collection;
         foreach($request->all() as $key=>$data){
             try {
                 if(User::withTrashed()->where('username', $data['username'])->orWhere('email', $data['email'])->exists()){
@@ -42,10 +34,11 @@ class CountryPartnerController extends Controller
                             'username'      => $data['username'],
                             'email'         => $data['email'],
                             'name'          => $data['name'],
-                            'role_id'       => Role::where('name', $data['role'])->value('id'),
                             'password'      => bcrypt($data['password']),
                             'deleted_at'    => null,
-                            'updated_by'    => auth()->id()
+                            'deleted_by'    => null,
+                            'updated_by'    => auth()->id(),
+                            'status'        => 'enabled'
                         ]
                     );
                 }else{
@@ -60,42 +53,50 @@ class CountryPartnerController extends Controller
                             'country_id'    => $data['country_id']
                         ]
                     );
-                }
-                if(CountryPartner::where('user_id', User::where('username', $data['username'])->value('id'))->exists()){
-                    $countryPartner = CountryPartner::where('user_id', User::where('username', $data['username'])->value('id'))->firstOrFail();
-                    $countryPartner->update(
-                        [
-                            'organization_id'   => Organization::where('name', $data['organization'])->value('id'),
-                        ]
-                    );
-                }else{
                     CountryPartner::create(
                         [
                             'user_id'           => User::where('username', $data['username'])->value('id'),
-                            'organization_id'   => Organization::where('name', $data['organization'])->value('id'),
+                            'organization_id'   => Organization::where('name', $data['organization'])->value('id')
                         ]
                     );
                 }
-                
+                $collection->push(
+                    User::where('username', $data['username'])
+                    ->leftJoin('roles', 'roles.id', '=', 'users.role_id')
+                    ->leftJoin('countries', 'countries.id', '=', 'users.country_id')
+                    ->leftJoin('personal_access_tokens as pst', function ($join) {
+                            $join->on('users.id', '=', 'pst.tokenable_id')
+                                ->where('pst.tokenable_type', 'App\Models\User');
+                            })
+                    ->select('users.*', 'roles.name as role', 'countries.name as country', 'pst.updated_at as last_login')
+                    ->first());
             } catch (Exception $e) {
                 DB::rollBack();
                 return response($e->getMessage(), 500);
             }
         }
         DB::commit();
-        return $this->index();
+        return $collection;
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\CountryPartner  $countryPartner
+     * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
     public function show(User $user)
     {
-        $cp = $user->countryPartner()->firstOrFail();
-        return response($cp->load('role:id,uuid,name'), 200);
+        $user = User::withTrashed()->where('username', $user->username)
+                    ->leftJoin('roles', 'roles.id', '=', 'users.role_id')
+                    ->leftJoin('countries', 'countries.id', '=', 'users.country_id')
+                    ->leftJoin('personal_access_tokens as pst', function ($join) {
+                            $join->on('users.id', '=', 'pst.tokenable_id')
+                                ->where('pst.tokenable_type', 'App\Models\User');
+                            })
+                    ->select('users.*', 'roles.name as role', 'countries.name as country', 'pst.updated_at as last_login')
+                    ->firstOrFail();
+        return response($user, 200);
     }
 
 
@@ -103,7 +104,7 @@ class CountryPartnerController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\CountryPartner  $countryPartner
+     * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
     public function update(UpdateCountryPartnerRequest $request, User $user)
@@ -112,12 +113,8 @@ class CountryPartnerController extends Controller
             'name'          => $request->name,
             'username'      => $request->username,
             'email'         => $request->email,
-            'role_id'       => Role::where('name', $request->role)->value('id'),
             'password'      => bcrypt($request->password),
             'updated_by'    => auth()->id()
-        ]);
-        DB::table('country_partners')->update([
-            'organization_id'   => Organization::where('name', $request->organization)->value('id'),
         ]);
         return $this->show($user);
     }
@@ -125,12 +122,16 @@ class CountryPartnerController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\CountryPartner  $countryPartner
+     * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function destroy(CountryPartner $countryPartner)
+    public function destroy(User $user)
     {
-        $countryPartner->delete();
-        return $this->index();
+        $user->update([
+            'status'     => 'deleted',
+            'deleted_by' => auth()->id()
+        ]);
+        $user->delete();
+        return $this->show($user);
     }
 }

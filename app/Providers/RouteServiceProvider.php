@@ -38,11 +38,11 @@ class RouteServiceProvider extends ServiceProvider
         });
 
         Route::bind('admin', function ($value) {
-            return \App\Models\User::whereUuid($value)->firstOrFail();
+            return \App\Models\User::withTrashed()->whereUuid($value)->firstOrFail();
         });
 
         Route::bind('country_partner', function ($value) {
-            $user = \App\Models\User::whereUuid($value)->firstOrFail();
+            $user = \App\Models\User::withTrashed()->whereUuid($value)->firstOrFail();
             if($user->hasRole('country partner')){
                 return $user;
             }else{
@@ -51,34 +51,34 @@ class RouteServiceProvider extends ServiceProvider
         });
         
         Route::bind('country_partner_assistant', function ($value) {
-            $user = \App\Models\User::whereUuid($value)->firstOrFail();
+            $user = \App\Models\User::withTrashed()->whereUuid($value)->firstOrFail();
             if($user->hasRole('country partner assistant')){
-                return $user->CountryPartnerAssistant;
+                return $user;
             }else{
-                return response()->json(['message' => 'user is not a country partner assistant'], 401);
+                return abort(403, 'User Is Not A Country Partner Assistant');
             }
         });
 
         Route::bind('school_manager', function ($value) {
-            $user = \App\Models\User::whereUuid($value)->firstOrFail();
+            $user = \App\Models\User::withTrashed()->whereUuid($value)->firstOrFail();
             if($user->hasRole('school manager')){
-                return $user->schoolManager;
+                return $user;
             }else{
-                return response()->json(['message' => 'user is not a country partner assistant'], 401);
+                return abort(403, 'User Is Not A School Manager');
+            }
+        });
+
+        Route::bind('teacher', function ($value) {
+            $user = \App\Models\User::withTrashed()->whereUuid($value)->firstOrFail();
+            if($user->hasRole('teacher')){
+                return $user;
+            }else{
+                return abort(403, 'User Is Not A Teacher');
             }
         });
 
         Route::bind('participant', function ($value) {
             return \App\Models\Participant::whereUuid($value)->firstOrFail();
-        });
-
-        Route::bind('teacher', function ($value) {
-            $user = \App\Models\User::whereUuid($value)->firstOrFail();
-            if($user->hasRole('teacher')){
-                return $user->teacher;
-            }else{
-                return response()->json(['message' => 'user is not a teacher'], 401);
-            }
         });
 
         Route::bind('role', function ($value) {

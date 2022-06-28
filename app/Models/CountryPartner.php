@@ -16,7 +16,7 @@ class CountryPartner extends BaseModel
 
     protected $primaryKey = 'user_id';
 
-    protected $fillable = ['user_id', 'organization_id', 'deleted_at'];
+    protected $fillable = ['user_id', 'organization_id'];
 
     protected $hidden = ['user_id', 'organization_id'];
 
@@ -35,10 +35,6 @@ class CountryPartner extends BaseModel
 
     public function organization(){
         return $this->belongsTo(Organization::class);
-    }
-
-    public function country(){
-        return $this->belongsTo(Country::class);
     }
 
     public function countryPartnerAssistants(){

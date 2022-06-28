@@ -161,7 +161,7 @@ class UsersController extends Controller
             ]);
             $data = User::applyFilter($request->get('filterOptions'));
         }else{
-            $data = new User;
+            $data = User::withTrashed();
         }
         $filterOptions = User::getFilterForFrontEnd($data);
         
