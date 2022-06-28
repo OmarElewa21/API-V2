@@ -40,7 +40,7 @@ class CreateSchoolManagerRequest extends CreateBaseRequest
                                                 ->numbers()
                                                 ->symbols()
                                                 ->uncompromised(), 'confirmed'],
-            $key.'.country_partner_id'  => ['required', Rule::exists('users', 'id')->whereNull('deleted_at')],
+            $key.'.country_partner_id'  => ['required', Rule::exists('country_partners', 'user_id')],
             $key.'.school_id'           => ['required', Rule::exists('schools', 'id')->whereNull('deleted_at')],
             $key.'.country_id'          => 'required|exists:countries,id'
         ];

@@ -49,7 +49,8 @@ class CountryPartnerAssistantController extends Controller
                             'name'          => $data['name'],
                             'role_id'       => Role::where('name', $data['role'])->value('id'),
                             'password'      => bcrypt($data['password']),
-                            'created_by'    => auth()->id()
+                            'created_by'    => auth()->id(),
+                            'country_id'    => $data['country_id']
                         ]
                     );
                     CountryPartnerAssistant::create(

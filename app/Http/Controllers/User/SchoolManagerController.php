@@ -48,7 +48,8 @@ class SchoolManagerController extends Controller
                             'name'          => $data['name'],
                             'role_id'       => Role::where('name', $data['role'])->value('id'),
                             'password'      => bcrypt($data['password']),
-                            'created_by'    => auth()->id()
+                            'created_by'    => auth()->id(),
+                            'country_id'    => $data['country_id']
                         ]
                     );
                     SchoolManager::create(
@@ -79,14 +80,23 @@ class SchoolManagerController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified user.
      *
-     * @param  \App\Models\SchoolManager  $schoolManager
+     * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function show(SchoolManager $schoolManager)
+    public function show(User $user)
     {
-        return response($schoolManager, 200);
+        $user = User::withTrashed()->where('username', $user->username)
+                    ->leftJoin('roles', 'roles.id', '=', 'users.role_id')
+                    ->leftJoin('countries', 'countries.id', '=', 'users.country_id')
+                    ->leftJoin('personal_access_tokens as pst', function ($join) {
+                            $join->on('users.id', '=', 'pst.tokenable_id')
+                                ->where('pst.tokenable_type', 'App\Models\User');
+                            })
+                    ->select('users.*', 'roles.name as role', 'countries.name as country', 'pst.updated_at as last_login')
+                    ->firstOrFail();
+        return response($user, 200);
     }
 
     /**
@@ -96,33 +106,31 @@ class SchoolManagerController extends Controller
      * @param  \App\Models\SchoolManager  $schoolManager
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateSchoolManagerRequest $request, SchoolManager $schoolManager)
+    public function update(UpdateSchoolManagerRequest $request, User $user)
     {
-        $schoolManager->user->update([
+        $user->update([
             'name'          => $request->name,
             'username'      => $request->username,
             'email'         => $request->email,
-            'role_id'       => Role::where('name', $request->role)->value('id'),
             'password'      => bcrypt($request->password),
             'updated_by'    => auth()->id()
         ]);
-        $schoolManager->update([
-            'country_partner_id'    => $request->country_partner_id,
-            'school_id'             => $request->school_id,
-            'country_id'            => $request->country_id,
-        ]);
-        return response($schoolManager, 200);
+        return $this->show($user);
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\SchoolManager  $schoolManager
+     * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function destroy(SchoolManager $schoolManager)
+    public function destroy(User $user)
     {
-        $schoolManager->delete();
-        return $this->index();
+        $user->update([
+            'status'     => 'deleted',
+            'deleted_by' => auth()->id()
+        ]);
+        $user->delete();
+        return $this->show($user);
     }
 }
