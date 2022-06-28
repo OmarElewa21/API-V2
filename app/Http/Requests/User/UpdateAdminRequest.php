@@ -45,7 +45,6 @@ class UpdateAdminRequest extends FormRequest
     {
         return [
             'name'              => 'required|string|max:160',
-            'role'              => 'required|exists:roles,name',
             'username'          => ['required', 'string', 'max:64', Rule::unique('users')->ignore($this->user)],
             'email'             => ['required', 'email', 'max:64', Rule::unique('users')->ignore($this->user)],
             'password'          => ['required',

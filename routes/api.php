@@ -24,7 +24,9 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
     Route::resource('countries', App\Http\Controllers\CountryController::class)->only('index', 'show');
 
     Route::group(['middleware' => ['role:super admin']], function() {
-        Route::apiResource('users/admins', App\Http\Controllers\User\AdminsController::class);
+        Route::get('users', [App\Http\Controllers\UsersController::class, 'index'])->name('users.index');
+        Route::apiResource('admins', App\Http\Controllers\User\AdminsController::class)->except('index');
+        
         Route::apiResource('roles', App\Http\Controllers\RoleController::class);
         Route::delete('roles/action/mass_delete', [App\Http\Controllers\RoleController::class, "massDelete"]);
     });

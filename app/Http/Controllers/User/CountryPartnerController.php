@@ -56,7 +56,8 @@ class CountryPartnerController extends Controller
                             'name'          => $data['name'],
                             'role_id'       => Role::where('name', $data['role'])->value('id'),
                             'password'      => bcrypt($data['password']),
-                            'created_by'    => auth()->id()
+                            'created_by'    => auth()->id(),
+                            'country_id'    => $data['country_id']
                         ]
                     );
                 }
@@ -65,7 +66,6 @@ class CountryPartnerController extends Controller
                     $countryPartner->update(
                         [
                             'organization_id'   => Organization::where('name', $data['organization'])->value('id'),
-                            'country_id'        => $data['country_id'],
                         ]
                     );
                 }else{
@@ -73,7 +73,6 @@ class CountryPartnerController extends Controller
                         [
                             'user_id'           => User::where('username', $data['username'])->value('id'),
                             'organization_id'   => Organization::where('name', $data['organization'])->value('id'),
-                            'country_id'        => $data['country_id'],
                         ]
                     );
                 }

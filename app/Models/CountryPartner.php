@@ -16,7 +16,7 @@ class CountryPartner extends BaseModel
 
     protected $primaryKey = 'user_id';
 
-    protected $fillable = ['user_id', 'organization_id', 'country_id', 'deleted_at'];
+    protected $fillable = ['user_id', 'organization_id', 'deleted_at'];
 
     protected $hidden = ['user_id', 'organization_id'];
 

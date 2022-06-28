@@ -10,12 +10,13 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Dyrynda\Database\Casts\EfficientUuid;
 use Dyrynda\Database\Support\GeneratesUuid;
-use App\Http\Scopes\UserTypeScope;
 use Illuminate\Support\Str;
 use Illuminate\Support\Arr;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use DateTimeInterface;
+use Illuminate\Support\Facades\DB;
+use App\Http\Scopes\ExtendUser;
 
 class User extends Authenticatable
 {
@@ -30,7 +31,10 @@ class User extends Authenticatable
         'permission_by_role',
         'deleted_at',
         'created_by',
-        'updated_by'
+        'updated_by',
+        'deleted_by',
+        'status',
+        'country_id'
     ];
 
     protected $hidden = [
@@ -48,11 +52,6 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'uuid' => EfficientUuid::class,
     ];
-
-    protected function serializeDate(DateTimeInterface $date)
-    {
-        return $date->format('d/m/y H:i');
-    }
 
     protected function createdBy(): Attribute
     {
@@ -78,11 +77,6 @@ class User extends Authenticatable
         );
     }
 
-    public function scopeAllUsers($query)
-    {
-        return $query->whereRelation('role', 'name', '<>', 'super admin');
-    }
-
     public function scopeAdmins($query)
     {
         return $query->whereRelation('role', 'name', 'admin');
@@ -98,7 +92,7 @@ class User extends Authenticatable
     public function scopeCountryPartnersAssitants($query)
     {
         return $query->whereRelation('role', 'name', 'country partner assistant')
-                ->join('country_partners_assistants as cpa', 'cpa.user_id', '=', 'users.id')
+                ->join('country_partner_assistants as cpa', 'cpa.user_id', '=', 'users.id')
                 ->select('users.*', 'cpa.country_id', 'cpa.country_partner_id');
     }
 
@@ -112,12 +106,38 @@ class User extends Authenticatable
     public function scopeTeachers($query)
     {
         return $query->whereRelation('role', 'name', 'teacher')
-                ->join('teacher as t', 't.user_id', '=', 'users.id')
+                ->join('teachers as t', 't.user_id', '=', 'users.id')
                 ->select('users.*', 't.country_id', 't.country_partner_id', 't.school_id');
     }
 
     public function role(){
         return $this->belongsTo(Role::class)->withTrashed();
+    }
+
+    public function countryPartner(){
+        return $this->hasOne(CountryPartner::class);
+    }
+
+    public function teacher(){
+        return $this->hasOne(Teacher::class);
+    }
+
+    public function CountryPartnerAssistant(){
+        return $this->hasOne(CountryPartnerAssistant::class);
+    }
+
+    public function schoolManager(){
+        return $this->hasOne(SchoolManager::class);
+    }
+
+    public function country(){
+        return $this->hasOne(Country::class);
+    }
+
+    public function getUserPermissionSet(){
+        return $this->belongsToMany(
+            Permission::class, 'user_permissions',
+            'user_id', 'permission_id');
     }
 
     public function hasRole($roles){
@@ -136,29 +156,6 @@ class User extends Authenticatable
 
     public function hasOwnPermissionSet(){
         return !$this->permission_by_role;
-    }
-
-    public function countryPartner(){
-        return self::where('id', $this->id)->join('country_partners as cp', 'cp.user_id', '=', 'users.id')
-                        ->select('users.*', 'cp.country_id', 'cp.organization_id');
-    }
-
-    public function teacher(){
-        return $this->hasOne(Teacher::class);
-    }
-
-    public function CountryPartnerAssistant(){
-        return $this->hasOne(CountryPartnerAssistant::class);
-    }
-
-    public function schoolManager(){
-        return $this->hasOne(SchoolManager::class);
-    }
-
-    public function getUserPermissionSet(){
-        return $this->belongsToMany(
-            Permission::class, 'user_permissions',
-            'user_id', 'permission_id');
     }
 
     public function getRolePermissionSet(){
@@ -183,5 +180,61 @@ class User extends Authenticatable
             default:
                 break;
         }
+    }
+
+    public static function getFilterForFrontEnd($users){
+        $filter = $users
+                    ->leftJoin('roles as r', function ($join) {
+                        $join->on('users.role_id', '=', 'r.id')->where('r.name', '<>', 'super admin');
+                    })
+                    ->leftJoin('countries as c', 'users.country_id', '=', 'c.id')
+                    ->select('users.status', 'users.country_id', 'r.name as role', 'c.name as country_name');
+        return collect([
+            'filterOptions' => [
+                    'role'      => $filter->pluck('role')->unique()
+                                        ->filter(function ($value, $key) {
+                                            return !is_null($value);
+                                        })->values(),
+                    'country'   => $filter->pluck('country_name', 'country_id')->unique()
+                                        ->filter(function ($value, $key) {
+                                            return !is_null($value);
+                                        }),
+                    'status'    => $filter->pluck('status')->unique()->values()
+                ]
+            ]);
+    }
+
+    public static function applyFilter($filterOptions){
+        if(isset($filterOptions['role']) && !is_null($filterOptions['role'])){
+            switch ($filterOptions['role']) {
+                case 'admin':
+                    $data = self::whereRelation('role', 'name', 'admin');
+                    break;
+                case 'country partner':
+                    $data = self::whereRelation('role', 'name', 'country partner');
+                    break;
+                case 'country partner assistant':
+                    $data = self::whereRelation('role', 'name', 'country partner assistant');
+                    break;
+                case 'school manager':
+                    $data = self::whereRelation('role', 'name', 'school manager');
+                    break;
+                case 'teacher':
+                    $data = self::whereRelation('role', 'name', 'teacher');
+                    break;
+                default:
+                    $data = new User;               
+                    break;
+            }
+        }else{
+            $data = new User;
+        }
+        if(isset($filterOptions['country']) && !is_null($filterOptions['country'])){
+            $data = $data->where('country_id', $filterOptions['country']);
+        }
+        if(isset($filterOptions['status']) && !is_null($filterOptions['status'])){
+            $data = $data->where('status', $filterOptions['status']);
+        }
+        return $data;
     }
 }

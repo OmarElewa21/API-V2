@@ -22,6 +22,7 @@ return new class extends Migration
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->foreignId('deleted_by')->nullable()->constrained('users');
+            $table->foreignId('country_id')->nullable()->constrained('countries');
             $table->string('status')->default('enabled');
         });
 
@@ -57,6 +58,8 @@ return new class extends Migration
             $table->dropForeign(['deleted_by']);
             $table->dropColumn('created_by');
             $table->dropColumn('updated_by');
+            $table->dropForeign(['country_id']);
+            $table->dropColumn('country_id');
             $table->dropColumn('status');
         });
     }

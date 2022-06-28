@@ -16,7 +16,6 @@ return new class extends Migration
         Schema::create('country_partner_assistants', function (Blueprint $table) {
             $table->foreignId('user_id')->constrained('users')->onUpdate('cascade')->onDelete('cascade');
             $table->foreignId('country_partner_id')->constrained('users');
-            $table->foreignId('country_id')->constrained('countries');
         });
     }
 

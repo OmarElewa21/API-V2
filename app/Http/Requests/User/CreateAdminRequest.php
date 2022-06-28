@@ -31,7 +31,7 @@ class CreateAdminRequest extends CreateBaseRequest
     {
         return [
             $key.'.name'        => 'required|string|max:160',
-            $key.'.role'        => 'required|exists:roles,name',
+            $key.'.role'        => 'required|string|in:admin',
             $key.'.username'    => ['required', 'string', 'max:64', Rule::unique('users', 'username')->whereNull('deleted_at')],
             $key.'.email'       => ['required', 'email', 'max:64', Rule::unique('users', 'email')->whereNull('deleted_at')],
             $key.'.password'    => ['required',
