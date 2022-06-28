@@ -33,10 +33,10 @@ class SchoolController extends Controller
             ]);
             $data = School::applyFilter($request->get('filterOptions'));
         }else{
-            $data = new School;
+            $data = School::withTrashed();
         }
 
-        $filterOptions = School::getFilterForFrontEnd();        // get collection of availble filter options data 
+        $filterOptions = School::getFilterForFrontEnd($data);        // get collection of availble filter options data 
         
         if(auth()->user()->hasRole(['country partner', 'country partner assistant'])){
             $data = $data->getRelatedUserSchoolsBasedOnCountry();
@@ -45,7 +45,6 @@ class SchoolController extends Controller
         // Get data as a collection
         $data = collect(
                     $data->withTrashed()
-                        ->join('countries', 'schools.country_id', 'countries.id')
                         ->select('schools.*', 'countries.name as country')
                         ->with([
                             'rejections', 'rejections.user:id,uuid,name,role_id',
@@ -57,7 +56,7 @@ class SchoolController extends Controller
                         ->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5)
                     )
                     ->merge([
-                        'pending' => School::pending()->count()
+                        'pending' => $data->pending()->count()
                     ])
                     ->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']
                 );
@@ -78,24 +77,24 @@ class SchoolController extends Controller
                 if(School::withTrashed()->Where('email', $data['email'])->exists()){
                     $merge = ['deleted_at' => null, 'updated_by' => auth()->id(), 'deleted_by' => null];
                     if(auth()->user()->hasRole(['super admin', 'admin'])){
-                        $merge[] = [
+                        $merge = array_merge($merge, [
                             'status' => 'approved',
                             'approved_by' => auth()->id(),
                             'approved_at' => now(),
-                        ];
+                        ]);
                     }else{
-                        $merge[] = ['status' => 'pending'];
+                        $merge = array_merge($merge, ['status' => 'pending']);
                     }
                     $school = School::withTrashed()->Where('email', $data['email'])->firstOrFail();
                     $school->update(array_merge($data, $merge));
                 }else{
                     $merge = ['created_by' => auth()->id()];
                     if(auth()->user()->hasRole(['super admin', 'admin'])){
-                        $merge[] = [
+                        $merge = array_merge($merge, [
                             'status' => 'approved',
                             'approved_by' => auth()->id(),
-                            'approved_at' => now()
-                        ];
+                            'approved_at' => now(),
+                        ]);
                     }
                     School::create(array_merge($data, $merge));
                 }
@@ -117,19 +116,18 @@ class SchoolController extends Controller
      */
     public function show(School $school)
     {
-        return response(
-            $school->load([
-                'country:id,name',
-                'teachers' => function($teacher) {
-                    $teacher->withoutGlobalScopes([UserScope::class])->select('school_id','user_id');
-                },
-                'teachers.user:id,name,uuid',
-                'rejections', 'rejections.user:id,uuid,name,role_id',
-                'rejections.user.role' => function($role){
-                    $role->withoutGlobalScopes([RoleScope::class])->select('id', 'name', 'uuid');
-                }
-            ])->loadCount('teachers'),
-            200);
+        $school = School::withTrashed()->whereUuid($school->uuid)
+                    ->Join('countries', 'schools.country_id', '=', 'countries.id')
+                    ->select('schools.*', 'countries.name as country')
+                    ->with([
+                        'rejections', 'rejections.user:id,uuid,name,role_id',
+                        'rejections.user.role' => function($role){
+                            $role->withoutGlobalScopes([RoleScope::class])->select('id', 'name', 'uuid');
+                        }
+                        ])
+                    ->withCount('teachers')
+                    ->firstOrFail();
+        return response($school, 200);
     }
 
     /**
@@ -141,25 +139,33 @@ class SchoolController extends Controller
      */
     public function update(UpdateSchoolRequest $request, School $school)
     {
-        if(!$school->checkUpdateEligibility){
-            return response()->json(['message' => 'Not authorized to edit the school'], 401);
-        }
-        if($user->hasRole(['super admin', 'admin'])){
-            $school->update(
-                array_merge(
-                    $request->all(),
-                    ['updated_by' => auth()->id()]
-                )
-            );
-        }else{
-            $school->update(
-                array_merge(
-                    $request->forget('name', 'country_id', 'is_tuition_centre')->all(),
-                    ['updated_by' => auth()->id()]
-                )
-            );
-        }
+        $school->update(
+            array_merge(
+                $request->except('name', 'country_id', 'is_tuition_centre'),
+                ['updated_by' => auth()->id()]
+            )
+        );
         return $this->show($school, true);
+
+        // if(!$school->checkUpdateEligibility){
+        //     return response()->json(['message' => 'Not authorized to edit the school'], 401);
+        // }
+        // if($user->hasRole(['super admin', 'admin'])){
+        //     $school->update(
+        //         array_merge(
+        //             $request->all(),
+        //             ['updated_by' => auth()->id()]
+        //         )
+        //     );
+        // }else{
+        //     $school->update(
+        //         array_merge(
+        //             $request->forget('name', 'country_id', 'is_tuition_centre')->all(),
+        //             ['updated_by' => auth()->id()]
+        //         )
+        //     );
+        // }
+        // return $this->show($school, true);
     }
 
     /**
@@ -170,6 +176,9 @@ class SchoolController extends Controller
      */
     public function destroy(School $school)
     {
+        if(!is_null($school->deleted_at)){
+            return response()->json(['message' => 'School is deleted'], 404);
+        }
         if(auth()->user()->hasRole(['country partner', 'country partner assistant'])){
             if( !($school->created_by === auth()->id() && $school->status === 'pending') ){
                 return response()->json(['message' => 'Not authorized to delete a school'], 401);
@@ -201,7 +210,7 @@ class SchoolController extends Controller
             }
         } catch (Exception $e) {
             DB::rollBack();
-            return response($e->getMessage(), 500);
+            return response()->json(["message" => $e->getMessage()], 500);
         }
         DB::commit();
         return $this->index(new Request);

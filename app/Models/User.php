@@ -205,29 +205,28 @@ class User extends Authenticatable
     }
 
     public static function applyFilter($filterOptions){
+        $data = User::withTrashed();
+        
         if(isset($filterOptions['role']) && !is_null($filterOptions['role'])){
             switch ($filterOptions['role']) {
                 case 'admin':
-                    $data = self::whereRelation('role', 'name', 'admin');
+                    $data = $data->whereRelation('role', 'name', 'admin');
                     break;
                 case 'country partner':
-                    $data = self::whereRelation('role', 'name', 'country partner');
+                    $data = $data->whereRelation('role', 'name', 'country partner');
                     break;
                 case 'country partner assistant':
-                    $data = self::whereRelation('role', 'name', 'country partner assistant');
+                    $data = $data->whereRelation('role', 'name', 'country partner assistant');
                     break;
                 case 'school manager':
-                    $data = self::whereRelation('role', 'name', 'school manager');
+                    $data = $data->whereRelation('role', 'name', 'school manager');
                     break;
                 case 'teacher':
-                    $data = self::whereRelation('role', 'name', 'teacher');
+                    $data = $data->whereRelation('role', 'name', 'teacher');
                     break;
                 default:
-                    $data = new User;               
                     break;
             }
-        }else{
-            $data = new User;
         }
         if(isset($filterOptions['country']) && !is_null($filterOptions['country'])){
             $data = $data->where('country_id', $filterOptions['country']);
@@ -235,6 +234,6 @@ class User extends Authenticatable
         if(isset($filterOptions['status']) && !is_null($filterOptions['status'])){
             $data = $data->where('status', $filterOptions['status']);
         }
-        return $data->withTrashed();
+        return $data;
     }
 }

@@ -29,14 +29,11 @@ class UpdateSchoolRequest extends CreateSchoolRequest
     public function rules()
     {
         return [
-            'name'                => 'required|string|max:164',
             'email'               => ['required', 'email', 'max:164', Rule::unique('schools', 'email')->ignore($this->school)],
             'province'            => 'string|max:64',
-            'address'             => 'required|string|max:240',
-            'postal_code'         => 'required|string|max:16',
+            'address'             => 'string|max:240',
+            'postal_code'         => 'string|max:16',
             'phone'               => 'required|string|regex:/^[0-9\+]*$/|max:24',
-            'country_id'          => 'required|digits_between:2,251|exists:countries,id',
-            'is_tuition_centre'   => 'required|boolean'
         ];
     }
 

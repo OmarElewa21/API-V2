@@ -29,12 +29,12 @@ class School extends BaseModel
         'approved_at'
     ];
 
-    protected $appends = ['teachers'];
-
     function __construct(){
         parent::__construct();
         $this->hidden[] = 'approved_at';
     }
+
+    protected $appends = ['teachers'];
 
     protected function approvedBy(): Attribute
     {
@@ -76,20 +76,20 @@ class School extends BaseModel
     }
 
     public static function applyFilter($filterOptions){
+        $data = School::withTrashed();
+
         if(isset($filterOptions['type']) && !is_null($filterOptions['type'])){
             switch ($filterOptions['type']) {
                 case 'school':
-                    $data = self::where('is_tuition_centre', 0);
+                    $data = $data->where('is_tuition_centre', 0);
                     break;
                 case 'tuition centre':
-                    $data = self::where('is_tuition_centre', 1);
+                    $data = $data->where('is_tuition_centre', 1);
                     break;
                 default:
-                    $data = self::whereIn('is_tuition_centre', [1,0]);               
+                    $data = $data->whereIn('is_tuition_centre', [1,0]);               
                     break;
             }
-        }else{
-            $data = new School;
         }
         if(isset($filterOptions['country']) && !is_null($filterOptions['country'])){
             $data = $data->where('country_id', $filterOptions['country']);
@@ -100,12 +100,14 @@ class School extends BaseModel
         return $data;
     }
 
-    public static function getFilterForFrontEnd(){
-        $filter = School::withTrashed()->Join('countries', 'schools.country_id', '=', 'countries.id')
+    public static function getFilterForFrontEnd($schools){
+        $filter = $schools->Join('countries', 'schools.country_id', '=', 'countries.id')
                     ->select('schools.status', 'schools.country_id', 'countries.name');
+        
         return collect([
             'filterOptions' => [
-                    'type'      => ['school', 'tuition centre'],
+                    'type'      => [$filter->selectRaw("CASE WHEN is_tuition_centre=1 THEN 'tuition centre' ELSE 'school' END AS type")
+                                        ->pluck('type')->unique()->values()],
                     'country'   => [
                         $filter->distinct('country_id')->pluck('name', 'country_id'),
                     ],

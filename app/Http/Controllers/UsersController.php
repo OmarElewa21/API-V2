@@ -113,13 +113,11 @@ class UsersController extends Controller
     /************************************ Index Section *************************************************/
     protected function indexForSuperAdmin($data){
         return $data->whereRelation('role', 'name', '<>', 'super admin')
-                ->leftJoin('roles', 'roles.id', '=', 'users.role_id')
-                ->leftJoin('countries', 'countries.id', '=', 'users.country_id')
                 ->leftJoin('personal_access_tokens as pst', function ($join) {
                     $join->on('users.id', '=', 'pst.tokenable_id')
                         ->where('pst.tokenable_type', 'App\Models\User');
                 })
-                ->select('users.*', 'roles.name as role', 'countries.name as country', 'pst.updated_at as last_login');
+                ->select('users.*', 'r.name as role', 'c.name as country', 'pst.updated_at as last_login');
     }
 
     protected function indexForAdmin($data){

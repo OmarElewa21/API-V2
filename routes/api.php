@@ -51,7 +51,7 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
 
     Route::group(['middleware' => 'role:super admin|admin|country partner|country partner assistant'], function() {
         Route::apiResource('school_managers', App\Http\Controllers\User\SchoolManagerController::class)->except('index');
-        Route::middleware('SchoolRouteEligibilty')->apiResource('schools', App\Http\Controllers\SchoolController::class);
+        Route::apiResource('schools', App\Http\Controllers\SchoolController::class);
     });
 
     Route::middleware('role:super admin|admin|country partner|country partner assistant|school manager')
@@ -60,8 +60,4 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
     Route::group(['middleware' => 'role:super admin|admin|country partner|country partner assistant|school manager|teacher'], function() {
         Route::apiResource('participants', App\Http\Controllers\User\ParticipantController::class);
     });
-
-    Route::middleware(['role:school manager|teacher', 'SchoolRouteEligibilty'])
-        ->resource('schools', App\Http\Controllers\SchoolController::class)->only('update', 'show');
-
 });
