@@ -184,37 +184,75 @@ class UsersController extends Controller
     }
 
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
+    public function mass_enable(Request $request)
     {
-        //
+        DB::beginTransaction();
+        try {
+            foreach($request->all() as $user_uuid){
+                if(Str::isUuid($user_uuid) && User::withTrashed()->whereUuid($user_uuid)->exists()){
+                    $user = User::withTrashed()->whereUuid($user_uuid)->firstOrFail();
+                    $user->update([
+                        'status'        => 'enabled',
+                        'deleted_at'    => null,
+                        'deleted_by'    => null
+                    ]);
+                }else{
+                    throw new Exception("data is not valid");
+                }
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json(["message" => $e->getMessage()], 500);
+        }
+        DB::commit();
+        return $this->index(new Request);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
+    public function mass_disable(Request $request)
     {
-        //
+        DB::beginTransaction();
+        try {
+            foreach($request->all() as $user_uuid){
+                if(Str::isUuid($user_uuid) && User::withTrashed()->whereUuid($user_uuid)->exists()){
+                    $user = User::withTrashed()->whereUuid($user_uuid)->firstOrFail();
+                    $user->update([
+                        'status'        => 'disabled',
+                        'deleted_at'    => null,
+                        'deleted_by'    => null
+                    ]);
+                }else{
+                    throw new Exception("data is not valid");
+                }
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json(["message" => $e->getMessage()], 500);
+        }
+        DB::commit();
+        return $this->index(new Request);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
+    public function mass_delete(Request $request)
     {
-        //
+        DB::beginTransaction();
+        try {
+            foreach($request->all() as $user_uuid){
+                if(Str::isUuid($user_uuid) && User::whereUuid($user_uuid)->exists()){
+                    $user = User::whereUuid($user_uuid)->firstOrFail();
+                    $user->update([
+                        'status'        => 'deleted',
+                        'deleted_by'    => auth()->id()    
+                    ]);
+                    $user->delete();
+                }else{
+                    throw new Exception("data is not valid");
+                }
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json(["message" => $e->getMessage()], 500);
+        }
+        DB::commit();
+        return $this->index(new Request);
     }
 }

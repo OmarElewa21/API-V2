@@ -39,6 +39,10 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
 
         Route::delete('roles/action/mass_delete', [App\Http\Controllers\RoleController::class, "massDelete"]);
 
+        Route::post('users/action/mass_enable', [App\Http\Controllers\UsersController::class, 'mass_enable']);
+        Route::post('users/action/mass_disable', [App\Http\Controllers\UsersController::class, 'mass_disable']);
+        Route::delete('users/action/mass_delete', [App\Http\Controllers\UsersController::class, 'mass_delete']);
+
         Route::delete('schools/action/mass_delete', [App\Http\Controllers\SchoolController::class, "massDelete"]);
         Route::post('schools/action/reject/{school}', [App\Http\Controllers\SchoolController::class, "reject"]);
         Route::post('schools/action/mass_approve', [App\Http\Controllers\SchoolController::class, "massApprove"]);

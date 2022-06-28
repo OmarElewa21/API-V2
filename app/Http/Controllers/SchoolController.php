@@ -240,7 +240,7 @@ class SchoolController extends Controller
             }
         } catch (Exception $e) {
             DB::rollBack();
-            return response($e->getMessage(), 500);
+            return response()->json(["message" => $e->getMessage()], 500);
         }
         DB::commit();
         return $this->index(new Request);
