@@ -12,9 +12,9 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 class UpdateCountryPartnerAssistantRequest extends FormRequest
 {
     /**
-     * @var CountryPartnerAssistant
+     * @var cp_assistant
      */
-    private $CountryPartnerAssistant;
+    private $cp_assistant;
 
     /**
      *
@@ -22,7 +22,7 @@ class UpdateCountryPartnerAssistantRequest extends FormRequest
      */
     function __construct(Route $route)
     {
-        $this->teacher = $route->parameter('country_partner_assistant');
+        $this->cp_assistant = $route->parameter('country_partner_assistant');
     }
 
     /**
@@ -44,16 +44,14 @@ class UpdateCountryPartnerAssistantRequest extends FormRequest
     {
         return [
             'name'                  => 'required|string|max:160',
-            'role'                  => 'required|exists:roles,name',
-            'username'              => ['required', 'string', 'max:64', Rule::unique('users')->ignore($this->teacher->user)],
-            'email'                 => ['required', 'email', 'max:64', Rule::unique('users')->ignore($this->teacher->user)],
+            'username'              => ['required', 'string', 'max:64', Rule::unique('users')->ignore($this->cp_assistant)],
+            'email'                 => ['required', 'email', 'max:64', Rule::unique('users')->ignore($this->cp_assistant)],
             'password'              => ['required',
                                         Password::min(8)
                                             ->letters()
                                             ->numbers()
                                             ->symbols()
                                             ->uncompromised(), 'confirmed'],
-            'country_id'            => 'required|digits_between:2,251|exists:countries,id'
         ];
     }
 

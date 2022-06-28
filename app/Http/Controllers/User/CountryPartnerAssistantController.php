@@ -10,27 +10,19 @@ use App\Models\Role;
 use App\Http\Requests\User\CreateCountryPartnerAssistantRequest;
 use App\Http\Requests\User\UpdateCountryPartnerAssistantRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
 
 class CountryPartnerAssistantController extends Controller
 {
-    /**
-     * Display a listing of the country partner assistant.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(CountryPartner $countryPartner)
-    {
-        return response($countryPartner->load('countryPartnerAssistants')->loadCount('countryPartnerAssistants'), 200);
-    }
-
     /**
      * Store a newly created country partner assistants in storage.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(CountryPartner $countryPartner, CreateCountryPartnerAssistantRequest $request)
+    public function store(User $cp, CreateCountryPartnerAssistantRequest $request)
     {
+        $collection = new Collection;
         DB::beginTransaction();
         foreach($request->all() as $key=>$data){
             try {
@@ -44,7 +36,9 @@ class CountryPartnerAssistantController extends Controller
                             'role_id'       => Role::where('name', $data['role'])->value('id'),
                             'password'      => bcrypt($data['password']),
                             'deleted_at'    => null,
-                            'updated_by'    => auth()->id()
+                            'deleted_by'    => null,
+                            'updated_by'    => auth()->id(),
+                            'status'        => 'enabled'
                         ]
                     );
                 }else{
@@ -58,78 +52,84 @@ class CountryPartnerAssistantController extends Controller
                             'created_by'    => auth()->id()
                         ]
                     );
-                }
-                if(CountryPartnerAssistant::withTrashed()->where('user_id', User::where('username', $data['username'])->value('id'))->exists()){
-                    $teacher = CountryPartnerAssistant::withTrashed()->where('user_id', User::where('username', $data['username'])->value('id'))->firstOrFail();
-                    $teacher->update(
-                        [
-                            'country_partner_id'    => $countryPartner->user_id,
-                            'country_id'            => $data['country_id'],
-                            'deleted_at'            => null
-                        ]
-                    );
-                }else{
                     CountryPartnerAssistant::create(
                         [
                             'user_id'               => User::where('username', $data['username'])->value('id'),
-                            'country_partner_id'    => $countryPartner->user_id,
-                            'country_id'            => $data['country_id'],
+                            'country_partner_id'    => $cp->id,
                         ]
                     );
-                }
-                
+                } 
+                $collection->push(
+                    User::where('username', $data['username'])
+                    ->leftJoin('roles', 'roles.id', '=', 'users.role_id')
+                    ->leftJoin('countries', 'countries.id', '=', 'users.country_id')
+                    ->leftJoin('personal_access_tokens as pst', function ($join) {
+                            $join->on('users.id', '=', 'pst.tokenable_id')
+                                ->where('pst.tokenable_type', 'App\Models\User');
+                            })
+                    ->select('users.*', 'roles.name as role', 'countries.name as country', 'pst.updated_at as last_login')
+                    ->first());
             } catch (Exception $e) {
                 DB::rollBack();
                 return response($e->getMessage(), 500);
             }
         }
         DB::commit();
-        return $this->index($countryPartner);
+        return $collection;
     }
 
     /**
      * Display the specified country partner assistant.
      *
-     * @param  \App\Models\CountryPartnerAssistant  $CountryPartnerAssistant
+     * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function show(CountryPartnerAssistant $CountryPartnerAssistant, CountryPartner $countryPartner)
+    public function show(User $user)
     {
-        return response($CountryPartnerAssistant, 200);
+        $user = User::withTrashed()->where('username', $user->username)
+                    ->leftJoin('roles', 'roles.id', '=', 'users.role_id')
+                    ->leftJoin('countries', 'countries.id', '=', 'users.country_id')
+                    ->leftJoin('personal_access_tokens as pst', function ($join) {
+                            $join->on('users.id', '=', 'pst.tokenable_id')
+                                ->where('pst.tokenable_type', 'App\Models\User');
+                            })
+                    ->select('users.*', 'roles.name as role', 'countries.name as country', 'pst.updated_at as last_login')
+                    ->firstOrFail();
+        return response($user, 200);
     }
 
     /**
      * Update the specified country partner assistant in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\CountryPartnerAssistant  $country_partner_assistant
+     * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateCountryPartnerAssistantRequest $request, CountryPartnerAssistant $CountryPartnerAssistant)
+    public function update(UpdateCountryPartnerAssistantRequest $request, User $user)
     {
-        $CountryPartnerAssistant->user->update([
+        $user->update([
             'name'          => $request->name,
             'username'      => $request->username,
             'email'         => $request->email,
-            'role_id'       => Role::where('name', $request->role)->value('id'),
             'password'      => bcrypt($request->password),
             'updated_by'    => auth()->id()
         ]);
-        $CountryPartnerAssistant->update([
-            'country_id'            => $request->country_id,
-        ]);
-        return response($CountryPartnerAssistant, 200);
+        return $this->show($user);
     }
 
     /**
      * Remove the specified country partner assistant from storage.
      *
-     * @param  \App\Models\CountryPartnerAssistant  $country_partner_assistant
+     * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function destroy(CountryPartnerAssistant $CountryPartnerAssistant)
+    public function destroy(User $user)
     {
-        $CountryPartnerAssistant->delete();
-        return $this->index($CountryPartnerAssistant->countryPartner);
+        $user->update([
+            'status'     => 'deleted',
+            'deleted_by' => auth()->id()
+        ]);
+        $user->delete();
+        return $this->show($user);
     }
 }

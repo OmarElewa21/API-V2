@@ -15,7 +15,11 @@ class CountryPartnerAssistant extends Model
 
     protected $primaryKey = 'user_id';
 
-    protected $fillable = ['user_id', 'country_partner_id', 'country_id', 'deleted_at'];
+    public $timestamps = false;
+
+    protected $fillable = ['user_id', 'country_partner_id'];
+
+    protected $hidden = ['user_id', 'country_partner_id'];
 
     protected static function booted()
     {
@@ -37,9 +41,5 @@ class CountryPartnerAssistant extends Model
 
     public function countryPartner(){
         return $this->belongsTo(CountryPartner::class, 'country_partner_id', 'user_id');
-    }
-
-    public function country(){
-        return $this->belongsTo(Country::class);
     }
 }

@@ -23,8 +23,8 @@ class CountryPartnerController extends Controller
      */
     public function store(CreateCountryPartnerRequest $request)
     {
-        DB::beginTransaction();
         $collection = new Collection;
+        DB::beginTransaction();
         foreach($request->all() as $key=>$data){
             try {
                 if(User::withTrashed()->where('username', $data['username'])->orWhere('email', $data['email'])->exists()){
