@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\School;
+use App\Models\User;
 use App\Models\Rejection;
 use App\Http\Requests\CreateSchoolRequest;
 use App\Http\Requests\UpdateSchoolRequest;
@@ -23,6 +24,11 @@ class SchoolController extends Controller
      */
     public function index(Request $request)
     {
+        if(auth()->user()->hasRole(['country partner', 'country partner assistant'])){
+            $data = School::withTrashed()->where('country_id', auth()->user()->country_id);
+        }else{
+            $data = School::withTrashed();
+        }
         // Filter data according to payload filterOptions
         if($request->has('filterOptions')){
             $request->validate([
@@ -31,20 +37,14 @@ class SchoolController extends Controller
                 'filterOptions.country'         => 'exists:countries,id',
                 'filterOptions.status'          => ['string', Rule::in(['pending', 'approved', 'rejected', 'deleted'])]
             ]);
-            $data = School::applyFilter($request->get('filterOptions'));
-        }else{
-            $data = School::withTrashed();
+            $data = School::applyFilter($request->get('filterOptions'), $data);
         }
 
         $filterOptions = School::getFilterForFrontEnd($data);        // get collection of availble filter options data 
         
-        if(auth()->user()->hasRole(['country partner', 'country partner assistant'])){
-            $data = $data->getRelatedUserSchoolsBasedOnCountry();
-        }
-
         // Get data as a collection
         $data = collect(
-                    $data->withTrashed()
+                    $data
                         ->select('schools.*', 'countries.name as country')
                         ->with([
                             'rejections', 'rejections.user:id,uuid,name,role_id',
@@ -58,8 +58,7 @@ class SchoolController extends Controller
                     ->merge([
                         'pending' => $data->pending()->count()
                     ])
-                    ->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']
-                );
+                    ->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']);
         return response($filterOptions->merge($data), 200);
     }
 
@@ -130,6 +129,12 @@ class SchoolController extends Controller
         return response($school, 200);
     }
 
+
+    public function showRelated()
+    {
+        return $this->show(auth()->user()->school);
+    }
+
     /**
      * Update the specified resource in storage.
      *
@@ -145,27 +150,18 @@ class SchoolController extends Controller
                 ['updated_by' => auth()->id()]
             )
         );
-        return $this->show($school, true);
+        return $this->show($school);
+    }
 
-        // if(!$school->checkUpdateEligibility){
-        //     return response()->json(['message' => 'Not authorized to edit the school'], 401);
-        // }
-        // if($user->hasRole(['super admin', 'admin'])){
-        //     $school->update(
-        //         array_merge(
-        //             $request->all(),
-        //             ['updated_by' => auth()->id()]
-        //         )
-        //     );
-        // }else{
-        //     $school->update(
-        //         array_merge(
-        //             $request->forget('name', 'country_id', 'is_tuition_centre')->all(),
-        //             ['updated_by' => auth()->id()]
-        //         )
-        //     );
-        // }
-        // return $this->show($school, true);
+    public function updateRelated(UpdateSchoolRequest $request){
+        $school = auth()->user()->school;
+        $school->update(
+            array_merge(
+                $request->except('name', 'country_id', 'is_tuition_centre'),
+                ['updated_by' => auth()->id()]
+            )
+        );
+        return $this->show($school);
     }
 
     /**
@@ -268,6 +264,6 @@ class SchoolController extends Controller
         ]);
 
         $school->update(['status', 'rejected']);
-        return $this->show($school, true);
+        return $this->show($school);
     }
 }

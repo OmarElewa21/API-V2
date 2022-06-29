@@ -58,6 +58,11 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
         Route::apiResource('schools', App\Http\Controllers\SchoolController::class);
     });
 
+    Route::group(['middleware' => 'role:school manager|teacher'], function() {
+        Route::get('school/showRelated', [App\Http\Controllers\SchoolController::class, 'showRelated']);
+        Route::put('school/updateRelated', [App\Http\Controllers\SchoolController::class, 'updateRelated']);
+    });
+
     Route::middleware('role:super admin|admin|country partner|country partner assistant|school manager')
         ->apiResource('teachers', App\Http\Controllers\User\TeacherController::class)->except('index');
 

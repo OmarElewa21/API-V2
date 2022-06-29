@@ -68,16 +68,14 @@ class School extends BaseModel
 
     public function getTeachersAttribute()
     {
-        return $this->teachers()->get()->pluck('user')->map->only(['uuid','name']);
+        return $this->teachers()->joinRelationship('user')->get()->pluck('user')->map->only(['uuid','name']);
     }
 
     public function scopeGetRelatedUserSchoolsBasedOnCountry(){
         return $this->where('country_id', auth()->user()->getRelatedUser()->country_id);
     }
 
-    public static function applyFilter($filterOptions){
-        $data = School::withTrashed();
-
+    public static function applyFilter($filterOptions, $data){
         if(isset($filterOptions['type']) && !is_null($filterOptions['type'])){
             switch ($filterOptions['type']) {
                 case 'school':
@@ -102,15 +100,13 @@ class School extends BaseModel
 
     public static function getFilterForFrontEnd($schools){
         $filter = $schools->Join('countries', 'schools.country_id', '=', 'countries.id')
-                    ->select('schools.status', 'schools.country_id', 'countries.name');
+                        ->select('schools.status', 'schools.country_id', 'countries.name');
         
         return collect([
             'filterOptions' => [
                     'type'      => [$filter->selectRaw("CASE WHEN is_tuition_centre=1 THEN 'tuition centre' ELSE 'school' END AS type")
                                         ->pluck('type')->unique()->values()],
-                    'country'   => [
-                        $filter->distinct('country_id')->pluck('name', 'country_id'),
-                    ],
+                    'country'   => [$filter->distinct('country_id')->pluck('name', 'country_id')],
                     'status'    => $filter->pluck('status')->unique()->values(),
                 ]
             ]);

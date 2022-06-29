@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Kirschbaum\PowerJoins\PowerJoins;
 
 class Teacher extends Model
 {
-    use HasFactory;
+    use HasFactory, PowerJoins;
 
     public $incrementing = false;
 
