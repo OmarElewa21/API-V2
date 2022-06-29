@@ -9,6 +9,7 @@
         "doctrine/dbal": "^3.3",
         "dyrynda/laravel-efficient-uuid": "^4.5",
         "guzzlehttp/guzzle": "^7.2",
+        "kirschbaum-development/eloquent-power-joins": "^2.6",
         "laravel/framework": "^9.11",
         "laravel/sanctum": "^2.14.1",
         "laravel/tinker": "^2.7"

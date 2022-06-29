@@ -17,10 +17,11 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
 use App\Http\Scopes\ExtendUser;
+use Kirschbaum\PowerJoins\PowerJoins;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, GeneratesUuid;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, GeneratesUuid, PowerJoins;
 
     protected $fillable = [
         'name',
@@ -57,7 +58,7 @@ class User extends Authenticatable
     {
         return Attribute::make(
             get: fn ($value, $attributes) =>
-                $value ? User::find($value)->name . ' (' . date('d/m/y H:i', strtotime($attributes['created_at'])) . ')' : $value
+                $value ? User::find($value)->name . ' (' . date('d/m/Y H:i', strtotime($attributes['created_at'])) . ')' : $value
         );
     }
 
@@ -65,7 +66,7 @@ class User extends Authenticatable
     {
         return Attribute::make(
             get: fn ($value, $attributes) =>
-                $value ? User::find($value)->name . ' (' . date('d/m/y H:i', strtotime($attributes['updated_at'])) . ')' : $value
+                $value ? User::find($value)->name . ' (' . date('d/m/Y H:i', strtotime($attributes['updated_at'])) . ')' : $value
         );
     }
 
@@ -73,7 +74,7 @@ class User extends Authenticatable
     {
         return Attribute::make(
             get: fn ($value, $attributes) =>
-                $value ? User::find($value)->name . ' (' . date('d/m/y H:i', strtotime($attributes['deleted_at'])) . ')' : $value
+                $value ? User::find($value)->name . ' (' . date('d/m/Y H:i', strtotime($attributes['deleted_at'])) . ')' : $value
         );
     }
 
@@ -132,6 +133,11 @@ class User extends Authenticatable
 
     public function country(){
         return $this->hasOne(Country::class);
+    }
+
+    public function personal_access(){
+        return $this->hasMany(PersonalAccessToken::class, 'tokenable_id', 'id')
+                ->where('tokenable_type', 'App\Models\User')->latest('last_used_at')->take(1);
     }
 
     public function getUserPermissionSet(){
@@ -204,9 +210,7 @@ class User extends Authenticatable
             ]);
     }
 
-    public static function applyFilter($filterOptions){
-        $data = User::withTrashed();
-        
+    public static function applyFilter($filterOptions, $data){        
         if(isset($filterOptions['role']) && !is_null($filterOptions['role'])){
             switch ($filterOptions['role']) {
                 case 'admin':

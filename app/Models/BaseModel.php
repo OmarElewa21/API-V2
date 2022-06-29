@@ -27,7 +27,7 @@ class BaseModel extends Model
     {
         return Attribute::make(
             get: fn ($value, $attributes) =>
-                $value ? User::find($value)->name . ' (' . date('d/m/y H:i', strtotime($attributes['created_at'])) . ')' : $value
+                $value ? User::find($value)->name . ' (' . date('d/m/Y H:i', strtotime($attributes['created_at'])) . ')' : $value
         );
     }
 
@@ -35,7 +35,7 @@ class BaseModel extends Model
     {
         return Attribute::make(
             get: fn ($value, $attributes) =>
-                $value ? User::find($value)->name . ' (' . date('d/m/y H:i', strtotime($attributes['updated_at'])) . ')' : $value
+                $value ? User::find($value)->name . ' (' . date('d/m/Y H:i', strtotime($attributes['updated_at'])) . ')' : $value
         );
     }
 
@@ -43,7 +43,7 @@ class BaseModel extends Model
     {
         return Attribute::make(
             get: fn ($value, $attributes) =>
-                $value ? User::find($value)->name . ' (' . date('d/m/y H:i', strtotime($attributes['deleted_at'])) . ')' : $value
+                $value ? User::find($value)->name . ' (' . date('d/m/Y H:i', strtotime($attributes['deleted_at'])) . ')' : $value
         );
     }
 }

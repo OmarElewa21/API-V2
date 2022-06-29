@@ -56,11 +56,8 @@ class AdminsController extends Controller
                     User::where('username', $data['username'])
                     ->leftJoin('roles', 'roles.id', '=', 'users.role_id')
                     ->leftJoin('countries', 'countries.id', '=', 'users.country_id')
-                    ->leftJoin('personal_access_tokens as pst', function ($join) {
-                            $join->on('users.id', '=', 'pst.tokenable_id')
-                                ->where('pst.tokenable_type', 'App\Models\User');
-                            })
-                    ->select('users.*', 'roles.name as role', 'countries.name as country', 'pst.updated_at as last_login')
+                    ->with('personal_access:tokenable_id,last_used_at as last_login')
+                    ->select('users.*', 'roles.name as role', 'countries.name as country')
                     ->first());
             } catch (Exception $e) {
                 DB::rollBack();
@@ -86,7 +83,7 @@ class AdminsController extends Controller
                         $join->on('users.id', '=', 'pst.tokenable_id')
                             ->where('pst.tokenable_type', 'App\Models\User');
                         })
-                ->select('users.*', 'roles.name as role', 'countries.name as country', 'pst.updated_at as last_login')
+                ->select('users.*', 'roles.name as role', 'countries.name as country')
                 ->firstOrFail();
         return response($user, 200);
     }

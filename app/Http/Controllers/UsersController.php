@@ -111,36 +111,30 @@ class UsersController extends Controller
     }
 
     /************************************ Index Section *************************************************/
-    protected function indexForSuperAdmin($data){
-        return $data->whereRelation('role', 'name', '<>', 'super admin')
-                ->leftJoin('personal_access_tokens as pst', function ($join) {
-                    $join->on('users.id', '=', 'pst.tokenable_id')
-                        ->where('pst.tokenable_type', 'App\Models\User');
-                })
-                ->select('users.*', 'r.name as role', 'c.name as country', 'pst.updated_at as last_login');
+    protected function getIndexData($data){
+        return $data->with('personal_access:tokenable_id,last_used_at as last_login')
+                ->select('users.*', 'r.name as role', 'c.name as country');
     }
 
-    protected function indexForAdmin($data){
-        return $data->whereRelation('role', 'name', '<>', 'super admin')
-                ->whereRelation('role', 'name', '<>', 'admin')
-                ->join('roles as r', 'r.id', '=', 'users.role_id')
-                ->leftJoin('personal_access_tokens as pst', function ($join) {
-                    $join->on('users.id', '=', 'pst.tokenable_id')
-                        ->where('pst.tokenable_type', 'App\Models\User');
-                })
-                ->select('users.*', 'r.name as role', 'pst.updated_at as last_login');
-    }
+    protected function indexfilterByRole(){
+        switch (auth()->user()->role->name) {
+            case 'super admin':
+                $data = User::whereRelation('role', 'name', '<>', 'super admin');
+                break;
+            case 'admin':
+                $data = User::whereRelation('role', 'name', '<>', 'super admin')->whereRelation('role', 'name', '<>', 'admin');
+                break;
+            case 'country partner':
+                $data = User::where('country_id', auth()->user()->country_id)
+                            ->whereRelation('role', 'name', '<>', 'super admin')
+                            ->whereRelation('role', 'name', '<>', 'admin')
+                            ->whereRelation('role', 'name', '<>', 'country partner');
 
-    protected function indexForCountryPartner($data){
-        return User::whereRelation('role', 'name', '=', 'country parnter assistant')
-                ->orWhereRelation('role', 'name', '=', 'school manager')
-                ->orWhereRelation('role', 'name', '=', 'teacher')
-                ->join('roles as r', 'r.id', '=', 'users.role_id')
-                ->leftJoin('personal_access_tokens as pst', function ($join) {
-                    $join->on('users.id', '=', 'pst.tokenable_id')
-                        ->where('pst.tokenable_type', 'App\Models\User');
-                })
-                ->select('users.*', 'r.name as role', 'pst.updated_at as last_login');
+                break;
+            default:
+                break;
+        }
+        return $data;
     }
 
      /**
@@ -150,6 +144,8 @@ class UsersController extends Controller
      */
     public function index(Request $request)
     {
+        $data = $this->indexfilterByRole();
+
         if($request->has('filterOptions')){
             $request->validate([
                 'filterOptions'                 => 'array',
@@ -157,32 +153,14 @@ class UsersController extends Controller
                 'filterOptions.country'         => 'exists:countries,id',
                 'filterOptions.status'          => ['string', Rule::in(['enabled', 'disabled', 'deleted'])]
             ]);
-            $data = User::applyFilter($request->get('filterOptions'));
-        }else{
-            $data = User::withTrashed();
+            $data = User::applyFilter($request->get('filterOptions'), $data);
         }
         $filterOptions = User::getFilterForFrontEnd($data);
         
-        switch (auth()->user()->role->name) {
-            case 'super admin':
-                $users = $this->indexForSuperAdmin($data);
-                break;
-            case 'admin':
-                $users = $this->indexForAdmin($data);
-                break;
-            case 'country partner':
-                $users = $this->indexForCountryPartner($data);
-                break;
-            default:
-                # code...
-                break;
-        }
-        return response($filterOptions->merge($users
-            ->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5)
-            )->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url'])
-            ,200);
+        return response($filterOptions->merge($this->getIndexData($data)
+                ->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5)
+                )->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']), 200);
     }
-
 
     public function mass_enable(Request $request)
     {
