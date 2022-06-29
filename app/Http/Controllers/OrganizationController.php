@@ -26,19 +26,23 @@ class OrganizationController extends Controller
                 'filterOptions'                 => 'array',
                 'filterOptions.country'         => 'exists:countries,id',
             ]);
-            $organizations = Organization::applyFilter($request->get('filterOptions'));
+            $data = Organization::applyFilter($request->get('filterOptions'));
         }else{
-            $organizations = new Organization;
+            $data = new Organization;
         }
-        return response(collect(
-                $organizations
-                ->join('countries', 'organizations.country_id', 'countries.id')
-                ->select('organizations.*', 'countries.name as country')
-                ->with('country_partners:uuid,name')
-                ->withCount('country_partners')
-                ->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5)
-            )->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url'])
-            ,200);    
+
+        $filterOptions = Organization::getFilterForFrontEnd($data);
+        return response(
+            $filterOptions->merge(
+                collect(
+                    $data
+                    ->join('countries', 'organizations.country_id', 'countries.id')
+                    ->select('organizations.*', 'countries.name as country')
+                    ->with('country_partners:uuid,name')
+                    ->withCount('country_partners')
+                    ->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5)
+                )->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']))
+            ,200);
     }
 
     /**

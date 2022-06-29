@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Dyrynda\Database\Support\GeneratesUuid;
+use Kirschbaum\PowerJoins\PowerJoins;
 
 class Organization extends BaseModel
 {
-    use SoftDeletes, GeneratesUuid;
+    use SoftDeletes, GeneratesUuid, PowerJoins;
 
     protected $fillable = [
         'name',
@@ -26,23 +27,37 @@ class Organization extends BaseModel
         'deleted_by'
     ];
 
-    function __construct(){
+    function __construct()
+    {
         parent::__construct();
         $this->hidden[] = 'img';
     }
 
-    public function country(){
+    public function country()
+    {
         return $this->belongsTo(Country::class);
     }
 
-    public function country_partners(){
+    public function country_partners()
+    {
         return $this->hasManyThrough(User::class, CountryPartner::class, 'organization_id', 'id', 'id', 'user_id');
     }
 
-    public static function applyFilter($filterOptions){
+    public static function applyFilter($filterOptions)
+    {
         if(isset($filterOptions['country']) && !is_null($filterOptions['country'])){
             $data = self::where('country_id', $filterOptions['country']);
         }
         return $data;
+    }
+
+    public static function getFilterForFrontEnd($data)
+    {
+        $filter = $data->joinRelationshipUsingAlias('country', 'c')->select('c.id as id','c.name as name');
+        return collect([
+            'filterOptions' => [
+                    'country'   => [$filter->pluck('name', 'id')->unique()],
+                ]
+            ]);
     }
 }
