@@ -119,19 +119,29 @@ class UsersController extends Controller
     protected function indexfilterByRole(){
         switch (auth()->user()->role->name) {
             case 'super admin':
-                $data = User::whereRelation('role', 'name', '<>', 'super admin');
+                $data = User::withTrashed()->whereRelation('role', 'name', '<>', 'super admin');
                 break;
             case 'admin':
-                $data = User::whereRelation('role', 'name', '<>', 'super admin')->whereRelation('role', 'name', '<>', 'admin');
+                $data = User::withTrashed()->whereRelation('role', 'name', '<>', 'super admin')->whereRelation('role', 'name', '<>', 'admin');
                 break;
             case 'country partner':
-                $data = User::where('country_id', auth()->user()->country_id)
+                $data = User::withTrashed()->where('country_id', auth()->user()->country_id)
                             ->whereRelation('role', 'name', '<>', 'super admin')
                             ->whereRelation('role', 'name', '<>', 'admin')
                             ->whereRelation('role', 'name', '<>', 'country partner');
-
+                break;
+            case 'country partner assistant':
+                $data = User::withTrashed()->where('country_id', auth()->user()->country_id)
+                            ->whereRelation('role', 'name', '<>', 'super admin')
+                            ->whereRelation('role', 'name', '<>', 'admin')
+                            ->whereRelation('role', 'name', '<>', 'country partner');
+                break;
+            case 'school manager':
+                $data = User::withTrashed()->whereRelation('role', 'name', '=', 'teacher')
+                            ->whereRelation('teacher', 'school_id', '=', auth()->user()->school->id);
                 break;
             default:
+                // Todo custom roles
                 break;
         }
         return $data;

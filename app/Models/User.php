@@ -135,6 +135,20 @@ class User extends Authenticatable
         return $this->hasOne(Country::class);
     }
 
+    public function school(){
+        switch ($this->role->name) {
+            case 'school manager':
+                return $this->schoolManager->school();
+                break;
+            case 'teacher':
+                return $this->teacher->school();
+                break; 
+            default:
+                # code...
+                break;
+        }
+    }
+
     public function personal_access(){
         return $this->hasMany(PersonalAccessToken::class, 'tokenable_id', 'id')
                 ->where('tokenable_type', 'App\Models\User')->latest('last_used_at')->take(1);
