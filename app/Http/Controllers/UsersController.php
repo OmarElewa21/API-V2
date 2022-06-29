@@ -116,6 +116,10 @@ class UsersController extends Controller
                 ->select('users.*', 'r.name as role', 'c.name as country');
     }
 
+    /**
+     * Get User model with the correct data based on role
+     * @return User model
+     */
     protected function indexfilterByRole(){
         switch (auth()->user()->role->name) {
             case 'super admin':
@@ -125,16 +129,15 @@ class UsersController extends Controller
                 $data = User::withTrashed()->whereRelation('role', 'name', '<>', 'super admin')->whereRelation('role', 'name', '<>', 'admin');
                 break;
             case 'country partner':
-                $data = User::withTrashed()->where('country_id', auth()->user()->country_id)
-                            ->whereRelation('role', 'name', '<>', 'super admin')
-                            ->whereRelation('role', 'name', '<>', 'admin')
-                            ->whereRelation('role', 'name', '<>', 'country partner');
+                $data = User::withTrashed()
+                        ->whereRelation('countryPartnerAssistant', 'country_partner_id', auth()->id())
+                        ->orWhereRelation('schoolManager', 'country_partner_id', auth()->id())
+                        ->orWhereRelation('teacher', 'country_partner_id', auth()->id());
                 break;
             case 'country partner assistant':
-                $data = User::withTrashed()->where('country_id', auth()->user()->country_id)
-                            ->whereRelation('role', 'name', '<>', 'super admin')
-                            ->whereRelation('role', 'name', '<>', 'admin')
-                            ->whereRelation('role', 'name', '<>', 'country partner');
+                $data = User::withTrashed()
+                        ->whereRelation('schoolManager', 'country_partner_id', auth()->user()->countryPartnerAssistant->country_partner_id)
+                        ->orWhereRelation('teacher', 'country_partner_id', auth()->user()->countryPartnerAssistant->country_partner_id);
                 break;
             case 'school manager':
                 $data = User::withTrashed()->whereRelation('role', 'name', '=', 'teacher')

@@ -123,7 +123,7 @@ class User extends Authenticatable
         return $this->hasOne(Teacher::class);
     }
 
-    public function CountryPartnerAssistant(){
+    public function countryPartnerAssistant(){
         return $this->hasOne(CountryPartnerAssistant::class);
     }
 
@@ -133,6 +133,23 @@ class User extends Authenticatable
 
     public function country(){
         return $this->hasOne(Country::class);
+    }
+
+    public function relatedCountryPartner(){
+        switch ($this->role->name) {
+            case 'school manager':
+                return $this->schoolManager->countryPartner();
+                break;
+            case 'teacher':
+                return $this->teacher->countryPartner();
+                break;
+            case 'country partner assistant':
+                return $this->countryPartnerAssistant->countryPartner();
+                break; 
+            default:
+                # code...
+                break;
+        }
     }
 
     public function school(){
@@ -150,8 +167,8 @@ class User extends Authenticatable
     }
 
     public function personal_access(){
-        return $this->hasMany(PersonalAccessToken::class, 'tokenable_id', 'id')
-                ->where('tokenable_type', 'App\Models\User')->latest('last_used_at')->take(1);
+        return $this->hasOne(PersonalAccessToken::class, 'tokenable_id', 'id')
+                ->where('tokenable_type', 'App\Models\User')->latest('last_used_at');
     }
 
     public function getUserPermissionSet(){
