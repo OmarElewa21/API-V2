@@ -33,6 +33,22 @@ class Organization extends BaseModel
         $this->hidden[] = 'img';
     }
 
+    public static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function($organization) {
+            $partners = User::whereRelation('countryPartner', 'organization_id', $organization->id)->get();
+            foreach($partners as $partner){
+                User::whereRelation('countryPartnerAssistant', 'country_partner_id', $partner->id)
+                        ->orWhereRelation('schoolManager', 'country_partner_id', $partner->id)
+                        ->orWhereRelation('teacher', 'country_partner_id', $partner->id)
+                        ->update(['status'  => 'disabled']);
+                $partner->update(['status'  => 'disabled']);
+            }
+        });
+    }
+
     public function country()
     {
         return $this->belongsTo(Country::class);

@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 
 class Role
 {
@@ -26,6 +27,9 @@ class Role
 
         $roles = explode("|", $roles);
         if($request->user()->hasRole($roles)){
+            if(! Arr::exists($request->route()->methods, 'GET') && $request->user()->status !== 'enabled'){
+                return response()->json(['message' => 'Your are only eligible to view'], 401);
+            };
             return $next($request);
         }
         return response()->json(['message' => 'User is not authorized for this request'], 401);
