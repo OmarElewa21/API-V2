@@ -23,11 +23,6 @@ class Topic extends Model
 
     protected $hidden = ['domain_id', 'deleted_at'];
 
-    public static function booted()
-    {
-        parent::booted();
-    }
-
     protected function updatedBy(): Attribute
     {
         return Attribute::make(
