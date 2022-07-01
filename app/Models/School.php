@@ -29,18 +29,13 @@ class School extends BaseModel
         'approved_at'
     ];
 
-    function __construct(){
-        parent::__construct();
-        $this->hidden[] = 'approved_at';
-    }
-
     protected $appends = ['teachers'];
 
     protected function approvedBy(): Attribute
     {
         return Attribute::make(
             get: fn ($value, $attributes) =>
-                $value ? User::find($value)->name . ' - ' . $attributes['approved_at'] : $value
+                $value ? User::find($value)->name . ' (' . date('d/m/Y H:i', strtotime($attributes['approved_at'])) . ')' : $value
         );
     }
 

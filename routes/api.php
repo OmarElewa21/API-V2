@@ -34,7 +34,8 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
         Route::apiResource('country_partners', App\Http\Controllers\User\CountryPartnerController::class)->except('index');
         Route::apiResources([
             'organizations'             => App\Http\Controllers\OrganizationController::class,
-            'roles'                     => App\Http\Controllers\RoleController::class
+            'roles'                     => App\Http\Controllers\RoleController::class,
+            'domains'                   => App\Http\Controllers\DomainsTagsController::class,
         ]);
 
         Route::delete('roles/action/mass_delete', [App\Http\Controllers\RoleController::class, "massDelete"]);
@@ -48,6 +49,10 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
         Route::post('schools/action/mass_approve', [App\Http\Controllers\SchoolController::class, "massApprove"]);
 
         Route::delete('organizations/action/mass_delete', [App\Http\Controllers\OrganizationController::class, "massDelete"]);
+
+        Route::put('domains/topic/{topic}', [App\Http\Controllers\DomainsTagsController::class, 'update_topic']);
+        Route::post('domains/action/mass_approve', [App\Http\Controllers\DomainsTagsController::class, "massApprove"]);
+        Route::delete('domains/action/mass_delete', [App\Http\Controllers\DomainsTagsController::class, "massDelete"]);
     });
 
     Route::middleware('role:super admin|admin|country partner')

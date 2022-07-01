@@ -16,12 +16,12 @@ class BaseModel extends Model
         'created_at',
         'updated_at',
         'deleted_at',
+        'approved_at'
     ];
 
     protected $casts = [
         'uuid'          => EfficientUuid::class,
     ];
-
     
     protected function createdBy(): Attribute
     {

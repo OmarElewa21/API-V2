@@ -19,7 +19,9 @@ return new class extends Migration
             $table->foreignId('domain_id')->constrained('domains_tags');
             $table->efficientUuid('uuid')->index()->unique()->nullable();
             $table->foreignId('updated_by')->nullable()->constrained('users');
-            $table->dateTime('updated_at');
+            $table->dateTime('updated_at')->nullable();
+            $table->foreignId('deleted_by')->nullable()->constrained('users');
+            $table->softDeletes($column = 'deleted_at', $precision = 0);
         });
     }
 

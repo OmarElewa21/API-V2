@@ -4,8 +4,14 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreDomainsTagsRequest extends FormRequest
+class StoreDomainsTagsRequest extends CreateBaseRequest
 {
+    function __construct()
+    {
+        $this->key = 'domains_tags';
+        $this->unique_fields = ['name'];
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -13,18 +19,18 @@ class StoreDomainsTagsRequest extends FormRequest
      */
     public function authorize()
     {
-        return false;
+        return auth()->user()->hasRole('super admin') || auth()->user()->hasRole('admin');
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, mixed>
+     * @return arr of rules
      */
-    public function rules()
+    protected function validationRules($key)
     {
         return [
-            //
+            $key.'.name'            => 'required|string|max:132',
+            $key.'.is_tag'          => 'required|boolean',
+            $key.'.topics'          => 'array',
         ];
     }
 }
