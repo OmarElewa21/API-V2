@@ -45,7 +45,7 @@ class CreateBaseRequest extends FormRequest
             foreach($this->all() as $key=>$data){
                 $validateKey = explode(" ", $key);
                 if(Str::lower($validateKey[0]) !== $this->key || !is_numeric($validateKey[1]) || count($validateKey) > 2){
-                    $validator->errors()->add($this->key, 'key '.$key.' is not valid');
+                    return $validator->errors()->add($this->key, 'key '.$key.' is not valid');
                 }
                 $this->checkUniqueness($validator);
                 Validate::validate($this->all(), $this->validationRules($key));

@@ -17,9 +17,9 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->foreignId('difficulty_group_id')->constrained('difficulty_groups');
-            $table->smallInteger('correct_points');
-            $table->smallInteger('wrong_points');
-            $table->smallInteger('blank_points');
+            $table->smallInteger('correct_points')->nullable();
+            $table->smallInteger('wrong_points')->nullable();
+            $table->smallInteger('blank_points')->nullable();
             $table->softDeletes($column = 'deleted_at', $precision = 0);
         });
     }

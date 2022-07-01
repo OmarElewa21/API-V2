@@ -96,6 +96,10 @@ class RouteServiceProvider extends ServiceProvider
         Route::bind('domain', function ($value) {
             return \App\Models\DomainsTags::whereUuid($value)->firstOrFail();
         });
+
+        Route::bind('difficulty_group', function ($value) {
+            return \App\Models\DifficultyGroup::whereUuid($value)->firstOrFail();
+        });
     }
 
     /**

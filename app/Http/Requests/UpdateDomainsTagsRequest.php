@@ -10,7 +10,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 
 class UpdateDomainsTagsRequest extends FormRequest
 {
-/**
+    /**
      * @var domain_tag
      */
     private $domain_tag;

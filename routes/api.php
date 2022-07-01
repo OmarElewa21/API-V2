@@ -36,6 +36,7 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
             'organizations'             => App\Http\Controllers\OrganizationController::class,
             'roles'                     => App\Http\Controllers\RoleController::class,
             'domains'                   => App\Http\Controllers\DomainsTagsController::class,
+            'difficulty_groups'         => App\Http\Controllers\DifficultyGroupController::class,
         ]);
 
         Route::delete('roles/action/mass_delete', [App\Http\Controllers\RoleController::class, "massDelete"]);
@@ -53,6 +54,8 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
         Route::put('domains/topic/{topic}', [App\Http\Controllers\DomainsTagsController::class, 'update_topic']);
         Route::post('domains/action/mass_approve', [App\Http\Controllers\DomainsTagsController::class, "massApprove"]);
         Route::delete('domains/action/mass_delete', [App\Http\Controllers\DomainsTagsController::class, "massDelete"]);
+
+        Route::delete('difficulty_groups/action/mass_delete', [App\Http\Controllers\DifficultyGroupController::class, "massDelete"]);
     });
 
     Route::middleware('role:super admin|admin|country partner')

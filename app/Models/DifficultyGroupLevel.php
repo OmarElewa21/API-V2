@@ -14,7 +14,7 @@ class DifficultyGroupLevel extends Model
 
     protected $fillable = ['name', 'difficulty_group_id', 'correct_points', 'wrong_points', 'blank_points'];
 
-    protected $hidden = ['difficulty_group_id'];
+    protected $hidden = ['id', 'difficulty_group_id', 'deleted_at'];
 
     public function difficulty_group()
     {

@@ -37,7 +37,7 @@ class DifficultyGroup extends BaseModel
 
     public static function applyFilter($filterOptions)
     {
-        $data = new DomainsTags;
+        $data = self::withTrashed();
         if(isset($filterOptions['status']) && !is_null($filterOptions['status'])){
             $data = $data->where('status', $filterOptions['status']);
         }
