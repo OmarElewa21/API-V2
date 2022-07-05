@@ -37,6 +37,7 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
             'roles'                     => App\Http\Controllers\RoleController::class,
             'domains'                   => App\Http\Controllers\DomainsTagsController::class,
             'difficulty_groups'         => App\Http\Controllers\DifficultyGroupController::class,
+            'tasks'                     => App\Http\Controllers\TasksController::class
         ]);
 
         Route::delete('roles/action/mass_delete', [App\Http\Controllers\RoleController::class, "massDelete"]);

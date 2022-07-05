@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Dyrynda\Database\Support\GeneratesUuid;
+use Illuminate\Database\Eloquent\Casts\AsArrayObject;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Kirschbaum\PowerJoins\PowerJoins;
 use Dyrynda\Database\Casts\EfficientUuid;
@@ -37,8 +38,22 @@ class Task extends BaseModel
 
     protected $casts = [
         'uuid'              => EfficientUuid::class,
-        'recommendations'   =>  AsArrayObject::class,
+        'recommendations'   => AsArrayObject::class,
     ];
+
+    public static function booted()
+    {
+        parent::booted();
+
+        static::creating(function($q) {
+            $q->created_by = auth()->id();
+            if(auth()->user()->hasRole(['super admin', 'admin'])){
+                $q->status      = "approved";
+                $q->approved_by = auth()->id();
+                $q->approved_at = now();
+            }
+        });
+    }
 
     protected function approvedBy(): Attribute
     {

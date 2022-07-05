@@ -20,6 +20,15 @@ class TaskAnswer extends BaseModel
         'deleted_by'
     ];
 
+    public static function booted()
+    {
+        parent::booted();
+
+        static::creating(function($q) {
+            $q->created_by = auth()->id();
+        });
+    }
+
     public function task()
     {
         return $this->belongsTo(Task::class);

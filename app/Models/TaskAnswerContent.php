@@ -13,9 +13,9 @@ class TaskAnswerContent extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'task_id',
+        'answer_id',
         'lang_id',
-        'title',
+        'label',
         'content',
         'updated_by',
         'updated_at'

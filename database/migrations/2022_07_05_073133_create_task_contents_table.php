@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('title');
             $table->text('content');
             $table->foreignId('updated_by')->nullable()->constrained('users');
-            $table->dateTime('updated_at');
+            $table->dateTime('updated_at')->nullable();
         });
     }
 

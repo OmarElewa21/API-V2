@@ -17,10 +17,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('answer_id')->constrained('task_answers');
             $table->foreignId('lang_id')->constrained('languages');
-            $table->text('label');
-            $table->text('content');
+            $table->text('label')->nullable();
+            $table->text('content')->nullable();
             $table->foreignId('updated_by')->nullable()->constrained('users');
-            $table->dateTime('updated_at');
+            $table->dateTime('updated_at')->nullable();
         });
     }
 

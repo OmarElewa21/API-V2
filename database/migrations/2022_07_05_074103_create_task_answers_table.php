@@ -17,6 +17,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('task_id')->constrained();
             $table->boolean('is_img')->default(false);
+            $table->boolean('is_correct')->default(false);
             $table->unsignedTinyInteger('order');
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');

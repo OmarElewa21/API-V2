@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('tasks', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->string('identifier', 64);
+            $table->string('identifier', 64)->unique();
             $table->text('description')->nullable();
             $table->string('img')->nullable();
             $table->text('solution_working')->nullable();

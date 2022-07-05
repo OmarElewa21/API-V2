@@ -1,0 +1,149 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Task;
+use App\Models\TaskAnswer;
+use App\Models\TaskAnswerContent;
+use App\Models\TaskContent;
+use App\Http\Requests\Task\StoreTaskRequest;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
+
+class TasksController extends Controller
+{
+    /***************************************** Helpers ****************************************/
+    /**
+     * Store Domains, Tags and Topics
+     * @param (array) $data
+     * @param \App\Models\Tasks $task
+     */
+    private function storeDomainsAndTopics($data, $task)
+    {
+        try {
+            if(Arr::has($data, 'domains')){
+                foreach($data['domains'] as $domain){
+                    DB::table('task_domains')->insert([
+                        'task_id'       => $task->id,
+                        'relation_id'   => $domain,
+                        'relation_type' => 'App\Models\DomainsTags'
+                    ]);
+                }
+            }
+            if(Arr::has($data, 'topics')){
+                foreach($data['topics'] as $topic){
+                    DB::table('task_domains')->insert([
+                        'task_id'       => $task->id,
+                        'relation_id'   => $topic,
+                        'relation_type' => 'App\Models\Topic'
+                    ]);
+                }
+                if(Arr::has($data, 'tags')){
+                    foreach($data['tags'] as $topic){
+                        DB::table('task_domains')->insert([
+                            'task_id'       => $task->id,
+                            'relation_id'   => $topic,
+                            'relation_type' => 'App\Models\DomainsTags',
+                            'is_tag'        => 1
+                        ]);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage());
+        }
+    }
+
+    /**
+     * Store 
+     * @param (array) $data
+     * @param \App\Models\Tasks $task
+     */
+    private function storeTaskAnswers($data, $task)
+    {
+        try {
+            foreach($data['answers'] as $answer){
+                $task_answer = TaskAnswer::create(array_merge($answer, [
+                    'task_id'   => $task->id,
+                    'is_img'    => (boolean)$data['answers_as_img'] ? 1 : 0
+                ]));
+                TaskAnswerContent::create(array_merge($answer, [
+                    'answer_id'  => $task_answer->id,
+                    'lang_id'    => $data['task_content']['lang_id'],
+                ]));
+            }
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage());
+        }
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        return Task::leftJoinRelationship();
+    }
+
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \App\Http\Requests\Task\StoreTaskRequest  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(StoreTaskRequest $request)
+    {
+        DB::beginTransaction();
+        foreach($request->all() as $key=>$data){
+            try {
+                $task = Task::create($data);
+                $this->storeDomainsAndTopics($data, $task);
+                TaskContent::create(array_merge($data['task_content'], ['task_id' => $task->id]));
+                $this->storeTaskAnswers($data, $task);
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json(['message' => $e->getMessage()], 500);
+            }
+        }
+        DB::commit();
+        return $this->index();
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  \App\Models\Task  $task
+     * @return \Illuminate\Http\Response
+     */
+    public function show(Task $task)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Task  $task
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, Task $task)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Models\Task  $task
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(Task $task)
+    {
+        //
+    }
+}

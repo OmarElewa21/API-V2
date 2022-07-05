@@ -19,7 +19,7 @@ class StoreDomainsTagsRequest extends CreateBaseRequest
      */
     public function authorize()
     {
-        return auth()->user()->hasRole('super admin') || auth()->user()->hasRole('admin');
+        return auth()->user()->hasRole(['super admin', 'admin']);
     }
 
     /**
