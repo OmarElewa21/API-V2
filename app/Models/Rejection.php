@@ -37,7 +37,7 @@ class Rejection extends Model
     {
         return Attribute::make(
             get: fn ($value, $attributes) =>
-                $value ? User::find($value)->name . ' - ' . $attributes['created_at'] : $value
+                $value ? User::find($value)->name . ' (' . date('d/m/Y H:i', strtotime($attributes['created_at'])) . ')' : $value
         );
     }
 
