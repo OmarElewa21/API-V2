@@ -47,6 +47,7 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
             Route::put('/updateRecommendations/{task}', [TasksController::class, 'updateRecommendations'])->name('updateRecommendations');
             Route::put('/updateAnswers/{task}', [TasksController::class, 'updateAnswers'])->name('updateAnswers');
         });
+        Route::delete('tasks/action/mass_delete', [TasksController::class, "massDelete"]);
 
         Route::delete('roles/action/mass_delete', [App\Http\Controllers\RoleController::class, "massDelete"]);
 

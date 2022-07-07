@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class TasksController extends Controller
 {
@@ -154,9 +155,16 @@ class TasksController extends Controller
      */
     public function updateTask(UpdateTaskRequest $request, Task $task)
     {
-        $task->update(array_merge($request->all(), ['updated_by' => auth()->id()]));
-        DB::table('task_domains')->where('task_id', $task->id)->delete();
-        $this->storeDomainsAndTopics($request->all(), $task);
+        DB::beginTransaction();
+        try{
+            $task->update(array_merge($request->all(), ['updated_by' => auth()->id()]));
+            DB::table('task_domains')->where('task_id', $task->id)->delete();
+            $this->storeDomainsAndTopics($request->all(), $task);
+        } catch (\Exception $th) {
+            DB::rollBack();
+            return response()->json(["message" => $e->getMessage()], 500);
+        }
+        DB::commit();
         return $this->show($task);
     }
 
@@ -169,21 +177,28 @@ class TasksController extends Controller
      */
     public function updateTaskContent(UpdateTaskRequest $request, Task $task)
     {
-        $data = collect($request->all());
-        $data = $data->map(function ($array, $key) use($task) {
-            return $array = array_merge($array, [
-                'task_id'    => $task->id,
-                'updated_by' => auth()->id(),
-                'updated_at' => now()
-            ]);
-        });
-        foreach($data->all() as $record){
-            DB::table('task_contents')->updateOrInsert(
-                ['task_id' => $record['task_id'], 'lang_id' => $record['lang_id']],
-                $record
-            );
+        DB::beginTransaction();
+        try{
+            $data = collect($request->all());
+            $data = $data->map(function ($array, $key) use($task) {
+                return $array = array_merge($array, [
+                    'task_id'    => $task->id,
+                    'updated_by' => auth()->id(),
+                    'updated_at' => now()
+                ]);
+            });
+            foreach($data->all() as $record){
+                DB::table('task_contents')->updateOrInsert(
+                    ['task_id' => $record['task_id'], 'lang_id' => $record['lang_id']],
+                    $record
+                );
+            }
+        } catch (\Exception $th) {
+            DB::rollBack();
+            return response()->json(["message" => $e->getMessage()], 500);
         }
-        return $this->show($task);
+        DB::commit();
+        return $this->show($task);   
     }
 
     /**
@@ -211,9 +226,16 @@ class TasksController extends Controller
      */
     public function updateAnswers(UpdateTaskRequest $request, Task $task)
     {
-        $task->update(array_merge($request->all(), ['updated_at' => auth()->id()]));
-        $task->task_answers()->delete();
-        $this->storeTaskAnswers($request->all(), $task, true);
+        DB::beginTransaction();
+        try {
+            $task->update(array_merge($request->all(), ['updated_at' => auth()->id()]));
+            $task->task_answers()->delete();
+            $this->storeTaskAnswers($request->all(), $task, true);
+        } catch (\Exception $th) {
+            DB::rollBack();
+            return response()->json(["message" => $e->getMessage()], 500);
+        }
+        DB::commit();
         return $this->show($task);
     }
 
@@ -223,8 +245,30 @@ class TasksController extends Controller
      * @param  \App\Models\Task  $task
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Task $task)
+    public function destroy(Task $task, $return=true)
     {
-        //
+        $task->update(['deleted_by' => auth()->id()]);
+        $task->delete();
+        return $return ? $this->index(new ValidateFilterOptionsRequest) : '';
+    }
+
+    public function massDelete(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            foreach($request->all() as $task_uuid){
+                if(Str::isUuid($task_uuid) && Task::whereUuid($task_uuid)->exists()){
+                    $task = Task::whereUuid($task_uuid)->firstOrFail();
+                    $this->destroy($task, false);
+                }else{
+                    throw new Exception("data is not valid");
+                }
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json(["message" => $e->getMessage()], 500);
+        }
+        DB::commit();
+        return $this->index(new ValidateFilterOptionsRequest);
     }
 }
