@@ -14,6 +14,7 @@ class TaskAnswer extends BaseModel
         'task_id',
         'is_img',
         'order',
+        'is_correct',
         'created_by',
         'updated_by',
         'deleted_at',

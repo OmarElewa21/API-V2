@@ -22,6 +22,12 @@ class DomainsTags extends BaseModel
         'deleted_by'
     ];
 
+    function __construct()
+    {
+        parent::__construct();
+        $this->hidden[] = 'pivot';
+    }
+
     public static function booted()
     {
         parent::booted();

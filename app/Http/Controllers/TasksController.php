@@ -6,10 +6,12 @@ use App\Models\Task;
 use App\Models\TaskAnswer;
 use App\Models\TaskAnswerContent;
 use App\Models\TaskContent;
+use App\Http\Requests\Task\ValidateFilterOptionsRequest;
 use App\Http\Requests\Task\StoreTaskRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
+use Illuminate\Validation\Rule;
 
 class TasksController extends Controller
 {
@@ -83,11 +85,24 @@ class TasksController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(ValidateFilterOptionsRequest $request)
     {
-        return Task::leftJoinRelationship();
-    }
+        $data = Task::with(['domains:id,name', 'domains.topics:domain_id,name','tags:id,name'])
+                ->withCount(['task_content', 'task_answers as correct_answers_count' => function($q){
+                    $q->where('is_correct', 1);
+                }]);
 
+        if($request->has('filterOptions')){
+            $data = Task::applyFilter($request->get('filterOptions'), $data);
+        }
+        
+        $filterOptions = Task::getFilterForFrontEnd($data);        // get collection of availble filter options data
+        
+        // Get data as a collection
+        $data = collect($data->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5))
+                    ->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']);
+        return response($filterOptions->merge($data), 200);
+    }
 
     /**
      * Store a newly created resource in storage.

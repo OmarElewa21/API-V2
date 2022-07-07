@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Casts\AsArrayObject;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Kirschbaum\PowerJoins\PowerJoins;
 use Dyrynda\Database\Casts\EfficientUuid;
+use Illuminate\Support\Facades\DB;
 
 class Task extends BaseModel
 {
@@ -41,6 +42,8 @@ class Task extends BaseModel
         'recommendations'   => AsArrayObject::class,
     ];
 
+    protected $appends = ['languages'];
+
     public static function booted()
     {
         parent::booted();
@@ -63,14 +66,27 @@ class Task extends BaseModel
         );
     }
 
-    public function domains()
+    public function domainsOnly()
     {
         return $this->belongsToMany(DomainsTags::class, 'task_domains', 'task_id', 'relation_id')->wherePivot('relation_type', 'App\Models\DomainsTags')->wherePivot('is_tag', 0);
+    }
+
+    public function domains()
+    {
+        $topics_Ids = $this->topics()->pluck('id');
+        return $this->domainsOnly()->with(['topics' => function($q) use($topics_Ids){
+            $q->whereIn('id', $topics_Ids);
+        }]);
     }
 
     public function tags()
     {
         return $this->belongsToMany(DomainsTags::class, 'task_domains', 'task_id', 'relation_id')->wherePivot('relation_type', 'App\Models\DomainsTags')->wherePivot('is_tag', 1);
+    }
+
+    public function domains_and_tags()
+    {
+        return $this->belongsToMany(DomainsTags::class, 'task_domains', 'task_id', 'relation_id')->wherePivot('relation_type', 'App\Models\DomainsTags');
     }
 
     public function topics()
@@ -80,11 +96,58 @@ class Task extends BaseModel
     
     public function task_content()
     {
-        return $this->hasOne(TaskContent::class);
+        return $this->hasMany(TaskContent::class);
+    }
+
+    public function getLanguagesAttribute()
+    {
+        $langs = $this->task_content()->joinRelationship('language')->select('task_contents.status', 'languages.name')->get();
+        $langs = $langs->mergeRecursive([
+            'pending' => $this->task_content()->where('status', 'pending')->count(),
+            'total'   => $this->task_content()->count(),
+        ]);
+        return $langs->all();
     }
 
     public function task_answers()
     {
         return $this->hasMany(TaskAnswer::class);
+    }
+
+    public static function applyFilter($filterOptions, $data){
+        // filter by lang_count
+        if(isset($filterOptions['lang_count']) && !is_null($filterOptions['lang_count'])){
+            $data = $data->having('task_content_count', $filterOptions['lang_count']);
+        }
+
+        // filter by domains and tags
+        if(isset($filterOptions['domain']) || isset($filterOptions['tags'])){
+            $data = $data->joinRelationship('domains_and_tags');
+            $filterIds = [];
+            if(isset($filterOptions['domains'])){
+                $filterIds = array_merge($filterIds, $filterOptions['domains']);
+            }
+            if(isset($filterOptions['tags'])){
+                $filterIds = array_merge($filterIds, $filterOptions['tags']);
+            }
+            $data = $data->whereIn('domains_tags.id', $filterIds)->distinct();
+        }
+
+        // filter by status
+        if(isset($filterOptions['status']) && !is_null($filterOptions['status'])){
+            $data = $data->where('tasks.status', $filterOptions['status']);
+        }
+        return $data;
+    }
+
+    public static function getFilterForFrontEnd($data){
+        return collect([
+            'filterOptions' => [
+                    'lang_count'    => $data->pluck('task_content_count')->unique(),
+                    'domain'        => $data->get()->pluck('domains')->map->pluck('name')->flatten()->unique(),
+                    'tags'          => $data->get()->pluck('tags')->map->pluck('name')->flatten()->unique(),
+                    'status'        => $data->pluck("status")->unique()
+                ]
+            ]);
     }
 }

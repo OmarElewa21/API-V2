@@ -19,6 +19,7 @@ return new class extends Migration
             $table->foreignId('lang_id')->constrained('languages');
             $table->string('title');
             $table->text('content');
+            $table->string('status', 32)->default('approved');
             $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->dateTime('updated_at')->nullable();
         });

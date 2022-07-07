@@ -106,43 +106,4 @@ class School extends BaseModel
                 ]
             ]);
     }
-
-    public function checkUpdateEligibility(){
-        $user = auth()->user();
-        if($user->hasRole(['super admin', 'admin'])){
-            return true;
-        }
-        if($user->hasRole(['country partner', 'country partner assistant'])){
-            if($user->getRelatedUser()->country_id !== $this->country_id){
-                return false;
-            }
-            if($this->status === 'pending'){
-                if($this->created_by !== $user->id){
-                    return false;
-                }
-            }
-        }else{
-            if($user->getRelatedUser()->school_id !== $this->id){
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public function checkShowEligibility(){
-        $user = auth()->user();
-        if($user->hasRole(['super admin', 'admin'])){
-            return true;
-        }
-        if($user->hasRole(['country partner', 'country partner assistant'])){
-            if($user->getRelatedUser()->country_id !== $this->country_id){
-                return false;
-            }
-        }else{
-            if($user->getRelatedUser()->school_id !== $this->id){
-                return false;
-            }
-        }
-        return true;
-    }
 }
