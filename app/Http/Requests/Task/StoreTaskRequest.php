@@ -49,6 +49,7 @@ class StoreTaskRequest extends CreateBaseRequest
         ];
         $validation_arr = $this->domains_validation($key, $validation_arr);
         $validation_arr = $this->answers_validation($key, $validation_arr);
+        $validation_arr = $this->recommendation_validation($key, $validation_arr);
         return $validation_arr;
     }
 
@@ -110,6 +111,30 @@ class StoreTaskRequest extends CreateBaseRequest
                 $validation_arr = array_merge($validation_arr, [
                     $key.'.answers.'.$k.'.content'         => 'string',
                 ]);
+            }
+        }
+        return $validation_arr;
+    }
+
+    /**
+     * @return (array) rules
+     */
+    private function recommendation_validation($key, $validation_arr)
+    {
+        $validation_arr = [];
+        if(Arr::has($this->get($key), 'recommendations')){
+            foreach($this->get($key)['recommendations'] as $k=>$data){
+                $validation_arr = array_merge($validation_arr, [
+                    $key.'.recommendations.'.$k                  => 'array',
+                    $key.'.recommendations.'.$k.'.grades'        => 'required|array',
+                    $key.'.recommendations.'.$k.'.difficulty'    => 'required|array',
+                ]);
+                foreach($data['grades'] as $k2=>$grade){
+                    $validation_arr = array_merge($validation_arr, [
+                        $key.'.recommendations.'.$k.'.grades.'.$k2     => 'in:Grade 1,Grade 2,Grade 3,Grade 4,Grade 5,Grade 6',
+                        $key.'.recommendations.'.$k.'.difficulty.'.$k2 => 'in:Easy,Intermediate,Hard,Very Hard',
+                    ]);
+                }
             }
         }
         return $validation_arr;

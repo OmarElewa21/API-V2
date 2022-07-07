@@ -8,6 +8,7 @@ use App\Models\TaskAnswerContent;
 use App\Models\TaskContent;
 use App\Http\Requests\Task\ValidateFilterOptionsRequest;
 use App\Http\Requests\Task\StoreTaskRequest;
+use App\Http\Requests\Task\UpdateTaskRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
@@ -62,17 +63,19 @@ class TasksController extends Controller
      * @param (array) $data
      * @param \App\Models\Tasks $task
      */
-    private function storeTaskAnswers($data, $task)
+    private function storeTaskAnswers($data, $task, $withUpdatedBy=false)
     {
         try {
             foreach($data['answers'] as $answer){
                 $task_answer = TaskAnswer::create(array_merge($answer, [
-                    'task_id'   => $task->id,
-                    'is_img'    => (boolean)$data['answers_as_img'] ? 1 : 0
+                    'task_id'    => $task->id,
+                    'is_img'     => (boolean)$data['answers_as_img'] ? 1 : 0,
+                    'updated_by' => $withUpdatedBy ? auth()->id() : null
                 ]));
                 TaskAnswerContent::create(array_merge($answer, [
                     'answer_id'  => $task_answer->id,
-                    'lang_id'    => $data['task_content']['lang_id'],
+                    'updated_by' => $withUpdatedBy ? auth()->id() : null,
+                    'updated_at' => $withUpdatedBy ? now() : null
                 ]));
             }
         } catch (\Exception $e) {
@@ -125,7 +128,7 @@ class TasksController extends Controller
             }
         }
         DB::commit();
-        return $this->index();
+        return $this->index(new ValidateFilterOptionsRequest);
     }
 
     /**
@@ -136,7 +139,10 @@ class TasksController extends Controller
      */
     public function show(Task $task)
     {
-        //
+        return $task->load(['domains:id,name', 'domains.topics:domain_id,name','tags:id,name'])
+                    ->loadCount(['task_content', 'task_answers as correct_answers_count' => function($q){
+                        $q->where('is_correct', 1);
+                }]);
     }
 
     /**
@@ -146,9 +152,69 @@ class TasksController extends Controller
      * @param  \App\Models\Task  $task
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Task $task)
+    public function updateTask(UpdateTaskRequest $request, Task $task)
     {
-        //
+        $task->update(array_merge($request->all(), ['updated_by' => auth()->id()]));
+        DB::table('task_domains')->where('task_id', $task->id)->delete();
+        $this->storeDomainsAndTopics($request->all(), $task);
+        return $this->show($task);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Task  $task
+     * @return \Illuminate\Http\Response
+     */
+    public function updateTaskContent(UpdateTaskRequest $request, Task $task)
+    {
+        $data = collect($request->all());
+        $data = $data->map(function ($array, $key) use($task) {
+            return $array = array_merge($array, [
+                'task_id'    => $task->id,
+                'updated_by' => auth()->id(),
+                'updated_at' => now()
+            ]);
+        });
+        foreach($data->all() as $record){
+            DB::table('task_contents')->updateOrInsert(
+                ['task_id' => $record['task_id'], 'lang_id' => $record['lang_id']],
+                $record
+            );
+        }
+        return $this->show($task);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Task  $task
+     * @return \Illuminate\Http\Response
+     */
+    public function updateRecommendations(UpdateTaskRequest $request, Task $task)
+    {
+        $task->update([
+            'recommendations'  => $request->all(),
+            'updated_by'       => auth()->id()
+        ]);
+        return $this->show($task);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Task  $task
+     * @return \Illuminate\Http\Response
+     */
+    public function updateAnswers(UpdateTaskRequest $request, Task $task)
+    {
+        $task->update(array_merge($request->all(), ['updated_at' => auth()->id()]));
+        $task->task_answers()->delete();
+        $this->storeTaskAnswers($request->all(), $task, true);
+        return $this->show($task);
     }
 
     /**

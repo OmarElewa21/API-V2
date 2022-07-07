@@ -100,6 +100,10 @@ class RouteServiceProvider extends ServiceProvider
         Route::bind('difficulty_group', function ($value) {
             return \App\Models\DifficultyGroup::whereUuid($value)->firstOrFail();
         });
+
+        Route::bind('task', function ($value) {
+            return \App\Models\Task::whereUuid($value)->firstOrFail();
+        });
     }
 
     /**

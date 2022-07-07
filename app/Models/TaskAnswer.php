@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Dyrynda\Database\Support\GeneratesUuid;
 
 class TaskAnswer extends BaseModel
 {
-    use SoftDeletes;
+    use SoftDeletes, GeneratesUuid;
 
     protected $fillable = [
         'task_id',

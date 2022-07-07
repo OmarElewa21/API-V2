@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UsersController;
+use App\Http\Controllers\TasksController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,9 +37,16 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
             'organizations'             => App\Http\Controllers\OrganizationController::class,
             'roles'                     => App\Http\Controllers\RoleController::class,
             'domains'                   => App\Http\Controllers\DomainsTagsController::class,
-            'difficulty_groups'         => App\Http\Controllers\DifficultyGroupController::class,
-            'tasks'                     => App\Http\Controllers\TasksController::class
+            'difficulty_groups'         => App\Http\Controllers\DifficultyGroupController::class
         ]);
+    
+        Route::apiResource('tasks', TasksController::class)->except('update');
+        Route::group(['prefix'=>'tasks','as'=>'tasks.'], function(){
+            Route::put('/updateTask/{task}', [TasksController::class, 'updateTask'])->name('updateTask');
+            Route::put('/updateTaskContent/{task}', [TasksController::class, 'updateTaskContent'])->name('updateTaskContent');
+            Route::put('/updateRecommendations/{task}', [TasksController::class, 'updateRecommendations'])->name('updateRecommendations');
+            Route::put('/updateAnswers/{task}', [TasksController::class, 'updateAnswers'])->name('updateAnswers');
+        });
 
         Route::delete('roles/action/mass_delete', [App\Http\Controllers\RoleController::class, "massDelete"]);
 
