@@ -39,7 +39,7 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
             'domains'                   => App\Http\Controllers\DomainsTagsController::class,
             'difficulty_groups'         => App\Http\Controllers\DifficultyGroupController::class
         ]);
-    
+
         Route::apiResource('tasks', TasksController::class)->except('update');
         Route::group(['prefix'=>'tasks','as'=>'tasks.'], function(){
             Route::put('/updateTask/{task}', [TasksController::class, 'updateTask'])->name('updateTask');
