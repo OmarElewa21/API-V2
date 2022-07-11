@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Task;
 
-use Illuminate\Foundation\Http\FormRequest;
 use App\Http\Requests\CreateBaseRequest;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
@@ -53,6 +52,9 @@ class StoreTaskRequest extends CreateBaseRequest
         return $validation_arr;
     }
 
+    /**
+     * @return (array) rules
+     */
     private function domains_validation($key, $validation_arr)
     {
         if(Arr::has($this->get($key), 'domains')){
@@ -79,6 +81,9 @@ class StoreTaskRequest extends CreateBaseRequest
         return $validation_arr;
     }
 
+    /**
+     * @return (array) rules
+     */
     private function answers_validation($key, $validation_arr)
     {
         $answer_type = $this->get($key)['answer_type'];

@@ -16,6 +16,8 @@ return new class extends Migration
         Schema::create('section_task', function (Blueprint $table) {
             $table->foreignId('section_id')->constrained();
             $table->foreignId('task_id')->constrained();
+            $table->unsignedSmallInteger('index')->nullable();
+            $table->boolean('in_group')->default(false);
             $table->unsignedSmallInteger('group_index')->nullable();
         });
     }
@@ -27,6 +29,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('section_tasks');
+        Schema::dropIfExists('section_task');
     }
 };

@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('sections', function (Blueprint $table) {
             $table->id();
             $table->foreignId('collection_id')->constrained()->onDelete('cascade');
-            $table->unsignedTinyInteger('number');
+            $table->unsignedTinyInteger('index');
             $table->boolean('sort_randomly')->default(true);
             $table->boolean('allow_skips')->default(false);
             $table->text('description')->nullable();

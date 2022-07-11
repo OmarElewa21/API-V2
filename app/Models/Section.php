@@ -13,7 +13,7 @@ class Section extends BaseModel
 
     protected $fillable = [
         'collection_id',
-        'number',
+        'index',
         'sort_randomly',
         'allow_skips',
         'description'

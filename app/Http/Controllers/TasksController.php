@@ -43,15 +43,15 @@ class TasksController extends Controller
                         'relation_type' => 'App\Models\Topic'
                     ]);
                 }
-                if(Arr::has($data, 'tags')){
-                    foreach($data['tags'] as $topic){
-                        DB::table('task_domains')->insert([
-                            'task_id'       => $task->id,
-                            'relation_id'   => $topic,
-                            'relation_type' => 'App\Models\DomainsTags',
-                            'is_tag'        => 1
-                        ]);
-                    }
+            }
+            if(Arr::has($data, 'tags')){
+                foreach($data['tags'] as $tag){
+                    DB::table('task_domains')->insert([
+                        'task_id'       => $task->id,
+                        'relation_id'   => $tag,
+                        'relation_type' => 'App\Models\DomainsTags',
+                        'is_tag'        => 1
+                    ]);
                 }
             }
         } catch (\Exception $e) {
@@ -60,7 +60,7 @@ class TasksController extends Controller
     }
 
     /**
-     * Store 
+     * Store Answers
      * @param (array) $data
      * @param \App\Models\Tasks $task
      */

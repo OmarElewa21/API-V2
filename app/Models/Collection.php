@@ -43,7 +43,7 @@ class Collection extends BaseModel
         static::creating(function($q) {
             $q->created_by = auth()->id();
             if(auth()->user()->hasRole(['super admin', 'admin'])){
-                $q->status      = "approved";
+                $q->status      = "active";
                 $q->approved_by = auth()->id();
                 $q->approved_at = now();
             }

@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\TasksController;
+use App\Http\Controllers\CollectionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,16 +40,7 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
             'domains'                   => App\Http\Controllers\DomainsTagsController::class,
             'difficulty_groups'         => App\Http\Controllers\DifficultyGroupController::class
         ]);
-
-        Route::apiResource('tasks', TasksController::class)->except('update');
-        Route::group(['prefix'=>'tasks','as'=>'tasks.'], function(){
-            Route::put('/updateTask/{task}', [TasksController::class, 'updateTask'])->name('updateTask');
-            Route::put('/updateTaskContent/{task}', [TasksController::class, 'updateTaskContent'])->name('updateTaskContent');
-            Route::put('/updateRecommendations/{task}', [TasksController::class, 'updateRecommendations'])->name('updateRecommendations');
-            Route::put('/updateAnswers/{task}', [TasksController::class, 'updateAnswers'])->name('updateAnswers');
-        });
-        Route::delete('tasks/action/mass_delete', [TasksController::class, "massDelete"]);
-
+        
         Route::delete('roles/action/mass_delete', [App\Http\Controllers\RoleController::class, "massDelete"]);
 
         Route::post('users/action/mass_enable', [App\Http\Controllers\UsersController::class, 'mass_enable']);
@@ -66,6 +58,17 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
         Route::delete('domains/action/mass_delete', [App\Http\Controllers\DomainsTagsController::class, "massDelete"]);
 
         Route::delete('difficulty_groups/action/mass_delete', [App\Http\Controllers\DifficultyGroupController::class, "massDelete"]);
+
+        Route::apiResource('tasks', TasksController::class)->except('update');
+        Route::group(['prefix'=>'tasks','as'=>'tasks.'], function(){
+            Route::put('/updateTask/{task}', [TasksController::class, 'updateTask'])->name('updateTask');
+            Route::put('/updateTaskContent/{task}', [TasksController::class, 'updateTaskContent'])->name('updateTaskContent');
+            Route::put('/updateRecommendations/{task}', [TasksController::class, 'updateRecommendations'])->name('updateRecommendations');
+            Route::put('/updateAnswers/{task}', [TasksController::class, 'updateAnswers'])->name('updateAnswers');
+        });
+        Route::delete('tasks/action/mass_delete', [TasksController::class, "massDelete"]);
+
+        Route::apiResource('collections', CollectionController::class)->except('update');
     });
 
     Route::middleware('role:super admin|admin|country partner')
