@@ -8,6 +8,7 @@ use App\Http\Requests\StoreCollectionRequest;
 use App\Http\Requests\UpdateCollectionRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
+use Illuminate\Http\Request;
 
 class CollectionController extends Controller
 {
@@ -59,9 +60,28 @@ class CollectionController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $data = Collection::with(['tags:id,name', 'sections' => function($section){
+            $section->select('id', 'collection_id', 'index')->withCount('tasks');
+        }])->withCount(['sections']);
+
+        if($request->has('filterOptions')){
+            $request->validate([
+                'filterOptions'                 => 'array',
+                'filterOptions.status'          => 'string|in:pending,approved',
+                'filterOptions.tags'            => 'array'
+            ]);
+
+            $data = Collection::applyFilter($request->get('filterOptions'), $data);
+        }
+
+        $filterOptions = Collection::getFilterForFrontEnd($data);        // get collection of availble filter options data
+
+        $data = collect($data->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5))
+                    ->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']);
+        
+        return response($filterOptions->merge($data), 200);
     }
 
     /**
@@ -102,7 +122,11 @@ class CollectionController extends Controller
      */
     public function show(Collection $collection)
     {
-        //
+        return response(
+            $collection->load(['tags:id,name', 'sections' => function($section){
+                $section->select('id', 'collection_id', 'index')->withCount('tasks');
+            }])->loadCount(['sections']),
+            200);
     }
 
     /**

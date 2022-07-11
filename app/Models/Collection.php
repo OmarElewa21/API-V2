@@ -65,6 +65,29 @@ class Collection extends BaseModel
 
     public function sections()
     {
-        return $this->belongsToMany(Section::class);
+        return $this->hasMany(Section::class);
+    }
+
+    public static function applyFilter($filterOptions, $data){
+        // filter by domains and tags
+        if(isset($filterOptions['tags'])){
+            $data = $data->joinRelationship('tags');
+            $data = $data->whereIn('domains_tags.id', $filterOptions['tags'])->distinct();
+        }
+
+        // filter by status
+        if(isset($filterOptions['status']) && !is_null($filterOptions['status'])){
+            $data = $data->where('tasks.status', $filterOptions['status']);
+        }
+        return $data;
+    }
+
+    public static function getFilterForFrontEnd($data){
+        return collect([
+            'filterOptions' => [
+                    'tags'          => $data->get()->pluck('tags')->map->pluck('name')->flatten()->unique(),
+                    'status'        => $data->pluck("status")->unique()
+                ]
+        ]);
     }
 }

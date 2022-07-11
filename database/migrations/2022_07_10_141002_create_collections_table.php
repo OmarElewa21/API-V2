@@ -21,7 +21,7 @@ return new class extends Migration
             $table->float('initial_points')->default(0);
             $table->text('description')->nullable();
             $table->json('recommendations')->nullable();
-            $table->string('status', 32)->default('pending');
+            $table->string('status', 32)->default('approved');
             $table->foreignId('approved_by')->nullable()->constrained('users');
             $table->dateTime('approved_at')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users');

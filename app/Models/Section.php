@@ -19,6 +19,12 @@ class Section extends BaseModel
         'description'
     ];
 
+    function __construct()
+    {
+        parent::__construct();
+        $this->hidden[] = 'collection_id';
+    }
+
     public static function booted()
     {
         parent::booted();

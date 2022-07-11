@@ -143,11 +143,9 @@ class Task extends BaseModel
     public static function getFilterForFrontEnd($data){
         return collect([
             'filterOptions' => [
-                    'lang_count'    => $data->pluck('task_content_count')->unique(),
-                    'domain'        => $data->get()->pluck('domains')->map->pluck('name')->flatten()->unique(),
                     'tags'          => $data->get()->pluck('tags')->map->pluck('name')->flatten()->unique(),
                     'status'        => $data->pluck("status")->unique()
                 ]
-            ]);
+        ]);
     }
 }

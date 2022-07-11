@@ -104,6 +104,10 @@ class RouteServiceProvider extends ServiceProvider
         Route::bind('task', function ($value) {
             return \App\Models\Task::whereUuid($value)->firstOrFail();
         });
+
+        Route::bind('collection', function ($value) {
+            return \App\Models\Collection::whereUuid($value)->firstOrFail();
+        });
     }
 
     /**

@@ -140,10 +140,12 @@ class TasksController extends Controller
      */
     public function show(Task $task)
     {
-        return $task->load(['domains:id,name', 'domains.topics:domain_id,name','tags:id,name'])
+        return response(
+            $task->load(['domains:id,name', 'domains.topics:domain_id,name','tags:id,name'])
                     ->loadCount(['task_content', 'task_answers as correct_answers_count' => function($q){
                         $q->where('is_correct', 1);
-                }]);
+            }]),
+            200);
     }
 
     /**
