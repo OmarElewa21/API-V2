@@ -51,7 +51,7 @@ class StoreCollectionRequest extends CreateBaseRequest
     private function tags_validation($key, $validation_arr)
     {
         if(Arr::has($this->get($key), 'tags')){
-            foreach($this->get($key)['tags'] as $k=>$domain){
+            foreach($this->get($key)['tags'] as $k=>$tag){
                 $validation_arr = array_merge($validation_arr, [
                     $key.'.tags.'.$k      => Rule::exists(\App\Models\DomainsTags::class, 'id')->whereNull('deleted_at')
                 ]);
@@ -99,7 +99,6 @@ class StoreCollectionRequest extends CreateBaseRequest
      */
     private function recommendation_validation($key, $validation_arr)
     {
-        $validation_arr = [];
         if(Arr::has($this->get($key), 'recommendations')){
             foreach($this->get($key)['recommendations'] as $k=>$data){
                 $validation_arr = array_merge($validation_arr, [

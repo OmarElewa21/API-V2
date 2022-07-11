@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateCollectionRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class CollectionController extends Controller
 {
@@ -111,7 +112,7 @@ class CollectionController extends Controller
             }
         }
         DB::commit();
-        return $this->index();
+        return $this->index(new Request);
     }
 
     /**
@@ -138,7 +139,29 @@ class CollectionController extends Controller
      */
     public function update(UpdateCollectionRequest $request, Collection $collection)
     {
-        //
+        DB::beginTransaction();
+        try {
+            $collection->update(array_merge($request->all(), ['updated_by' => auth()->id()]));
+            
+            DB::table('collection_tag')->where('collection_id', $collection->id)->delete();
+            if($request->has('tags')){
+                foreach($request->get('tags') as $tag){
+                    DB::table('collection_tag')->insert([
+                        'collection_id'       => $collection->id,
+                        'tag_id'              => $tag,
+                    ]);
+                }
+            }
+
+            $collection->sections()->delete();
+            $this->storeSections($request->all(), $collection);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+        DB::commit();
+        return $this->show($collection);
     }
 
     /**
@@ -149,6 +172,64 @@ class CollectionController extends Controller
      */
     public function destroy(Collection $collection)
     {
-        //
+        $collection->update(['deleted_by' => auth()->id()]);
+        $collection->delete();
+        return $this->index(new Request);
+    }
+
+    /**
+     * approve multiple collections.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function massApprove(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            foreach($request->all() as $collection_uuid){
+                if(Str::isUuid($collection_uuid) && Collection::whereUuid($collection_uuid)->exists()){
+                    $collection = Collection::whereUuid($collection_uuid)->firstOrFail();
+                    $collection->update([
+                        'status' => 'approved',
+                        'approved_by' => auth()->id(),
+                        'approved_at' => now()
+                    ]);
+                }else{
+                    throw new \Exception("data is not valid");
+                }
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(["message" => $e->getMessage()], 500);
+        }
+        DB::commit();
+        return $this->index(new Request);
+    }
+
+    /**
+     * Remove multiple collections.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function massDelete(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            foreach($request->all() as $collection_uuid){
+                if(Str::isUuid($collection_uuid) && Collection::whereUuid($collection_uuid)->exists()){
+                    $collection = Collection::whereUuid($collection_uuid)->firstOrFail();
+                    $this->destroy($collection, false);
+                }else{
+                    throw new \Exception("data is not valid");
+                }
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(["message" => $e->getMessage()], 500);
+        }
+        DB::commit();
+        return $this->index(new Request);
     }
 }

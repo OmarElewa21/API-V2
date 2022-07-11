@@ -22,6 +22,7 @@ class Collection extends BaseModel
         'time_to_solve',
         'initial_points',
         'recommendations',
+        'description',
         'status',
         'created_by',
         'updated_by',

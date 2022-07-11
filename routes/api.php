@@ -4,7 +4,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\TasksController;
-use App\Http\Controllers\CollectionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,7 +37,8 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
             'organizations'             => App\Http\Controllers\OrganizationController::class,
             'roles'                     => App\Http\Controllers\RoleController::class,
             'domains'                   => App\Http\Controllers\DomainsTagsController::class,
-            'difficulty_groups'         => App\Http\Controllers\DifficultyGroupController::class
+            'difficulty_groups'         => App\Http\Controllers\DifficultyGroupController::class,
+            'collections'               => App\Http\Controllers\CollectionController::class
         ]);
         
         Route::delete('roles/action/mass_delete', [App\Http\Controllers\RoleController::class, "massDelete"]);
@@ -68,7 +68,8 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
         });
         Route::delete('tasks/action/mass_delete', [TasksController::class, "massDelete"]);
 
-        Route::apiResource('collections', CollectionController::class)->except('update');
+        Route::post('collections/action/mass_approve', [App\Http\Controllers\CollectionController::class, "massApprove"]);
+        Route::delete('collections/action/mass_delete', [App\Http\Controllers\CollectionController::class, "massDelete"]);
     });
 
     Route::middleware('role:super admin|admin|country partner')

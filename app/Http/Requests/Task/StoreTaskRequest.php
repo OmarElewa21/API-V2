@@ -126,7 +126,6 @@ class StoreTaskRequest extends CreateBaseRequest
      */
     private function recommendation_validation($key, $validation_arr)
     {
-        $validation_arr = [];
         if(Arr::has($this->get($key), 'recommendations')){
             foreach($this->get($key)['recommendations'] as $k=>$data){
                 $validation_arr = array_merge($validation_arr, [
