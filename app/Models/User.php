@@ -35,7 +35,9 @@ class User extends Authenticatable
         'updated_by',
         'deleted_by',
         'status',
-        'country_id'
+        'country_id',
+        'about',
+        'img'
     ];
 
     protected $hidden = [
@@ -46,7 +48,9 @@ class User extends Authenticatable
         'laravel_through_key',
         'created_at',
         'updated_at',
-        'deleted_at'
+        'deleted_at',
+        'img',
+        'about'
     ];
 
     protected $casts = [
@@ -132,7 +136,7 @@ class User extends Authenticatable
     }
 
     public function country(){
-        return $this->hasOne(Country::class);
+        return $this->belongsTo(Country::class);
     }
 
     public function relatedCountryPartner(){

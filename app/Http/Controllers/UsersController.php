@@ -12,6 +12,7 @@ use App\Mail\ResetPassword;
 use App\Http\Requests\ChangePasswordRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class UsersController extends Controller
 {
@@ -245,5 +246,72 @@ class UsersController extends Controller
         }
         DB::commit();
         return $this->index(new Request);
+    }
+
+    /**
+     * Get profile info for authinticated user
+     */
+    public function profile()
+    {
+        $data = User::where('users.id', auth()->id())->joinRelationship('role')->leftJoinRelationship('country')
+                            ->select('users.name', 'users.uuid', 'users.email', 'users.about', 'countries.name as country',
+                                        'users.created_at as user_since', 'users.img', 'users.username', 'roles.name as role');
+
+        switch (auth()->user()->role->name) {
+            case 'country partner':
+                $data->joinRelationship('countryPartner.organization')
+                        ->addSelect('organizations.name as organization');
+                break;
+            case 'country partner assistant':
+                $data->joinRelationship('countryPartnerAssistant.countryPartner.organization')
+                        ->addSelect('organizations.name as organization');
+                break;
+            case 'school manager':
+                $data->joinRelationship('schoolManager.countryPartner.organization')
+                        ->joinRelationship('schoolManager.school')
+                        ->addSelect('organizations.name as organization', 'schools.name as school');
+                break;
+            case 'teacher':
+                $data->joinRelationship('schoolManager.countryPartner.organization')
+                        ->joinRelationship('schoolManager.school')
+                        ->addSelect('organizations.name as organization', 'schools.name as school');
+                break;
+            default:
+                break;
+        }
+        
+        return response($data->firstOrFail()->makeVisible('img', 'about'), 200);
+    }
+
+    /**
+     * update user profile
+     */
+    public function updateProfile(Request $request)
+    {
+        $request->validate(['mode' => 'required|in:user_data,user_password']);
+        if($request->mode === 'user_data'){
+            $request->validate([
+                'name'      => 'string|max:132',
+                'email'     => 'string|max:132',
+                'about'     => 'string',
+                'img'       => 'string',
+            ]);
+            
+            auth()->user()->update($request->all());
+        }else{
+            $request->validate([
+                'password'              => ['required',
+                                                Password::min(8)
+                                                    ->letters()
+                                                    ->numbers()
+                                                    ->symbols()
+                                                    ->uncompromised(), 'confirmed'],
+            ]);
+            auth()->user()->update([
+                'password'      =>  bcrypt($request->password),
+            ]);
+        }
+
+        return $this->profile();
     }
 }

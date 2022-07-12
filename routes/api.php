@@ -22,6 +22,8 @@ Route::post('change_password', [UsersController::class,"changePassword"]);
 
 Route::group(['middleware' => ['auth:sanctum']], function() {
     Route::post('logout', [UsersController::class,"logout"]);
+    Route::get('profile', [UsersController::class,"profile"]);
+    Route::put('profile', [UsersController::class,"updateProfile"]);
     Route::resource('countries', App\Http\Controllers\CountryController::class)->only('index', 'show');
 
     Route::middleware('role:super admin|admin|country partner|country partner assistant|school manager')
@@ -40,7 +42,7 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
             'difficulty_groups'         => App\Http\Controllers\DifficultyGroupController::class,
             'collections'               => App\Http\Controllers\CollectionController::class
         ]);
-        
+
         Route::delete('roles/action/mass_delete', [App\Http\Controllers\RoleController::class, "massDelete"]);
 
         Route::post('users/action/mass_enable', [App\Http\Controllers\UsersController::class, 'mass_enable']);
