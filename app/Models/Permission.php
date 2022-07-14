@@ -14,8 +14,6 @@ class Permission extends Model
 
     protected $fillable = ['permissions_set'];
 
-    protected $hidden = ['id'];
-
     protected $casts = [
         'permissions_set'   =>  AsArrayObject::class,
     ];

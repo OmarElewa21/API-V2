@@ -125,14 +125,10 @@ class Task extends BaseModel
             $data = $data->joinRelationship('domains_and_tags');
             $filterIds = [];
             if(isset($filterOptions['domains'])){
-                foreach($filterOptions['domains'] as $domain_uuid){
-                    $filterIds[] = DomainsTags::whereUuid($domain_uuid)->value('id');
-                }
+                $filterIds = array_merge($filterIds, $filterOptions['domains']);
             }
             if(isset($filterOptions['tags'])){
-                foreach($filterOptions['tags'] as $domain_uuid){
-                    $filterIds[] = DomainsTags::whereUuid($domain_uuid)->value('id');
-                }
+                $filterIds = array_merge($filterIds, $filterOptions['tags']);
             }
             $data = $data->whereIn('domains_tags.id', $filterIds)->distinct();
         }
@@ -148,8 +144,8 @@ class Task extends BaseModel
         return collect([
             'filterOptions' => [
                     'lang_count'    => $data->pluck('task_content_count')->unique(),
-                    'domain'        => $data->get()->pluck('domains')->map->pluck('name', 'uuid')->unique(),
-                    'tags'          => $data->get()->pluck('tags')->map->pluck('name', 'uuid')->unique(),
+                    'domain'        => $data->get()->pluck('domains')->map->pluck('name', 'id')->unique(),
+                    'tags'          => $data->get()->pluck('tags')->map->pluck('name', 'id')->unique(),
                     'status'        => $data->pluck("status")->unique()
                 ]
         ]);
