@@ -38,14 +38,14 @@ class ValidateFilterOptionsRequest extends FormRequest
         if(Arr::has($this->get($key), 'domains')){
             foreach($this->get($key)['domains'] as $k=>$domain){
                 $validation_arr = array_merge($validation_arr, [
-                    $key.'.domains.'.$k      => Rule::exists(\App\Models\DomainsTags::class, 'id')->where('is_tag', 0)->whereNull('deleted_at')
+                    $key.'.domains.'.$k      => 'uuid'
                 ]);
             }
         }
         if(Arr::has($this->get($key), 'tags')){
             foreach($this->get($key)['tags'] as $k=>$domain){
                 $validation_arr = array_merge($validation_arr, [
-                    $key.'.tags.'.$k      => Rule::exists(\App\Models\DomainsTags::class, 'id')->where('is_tag', 1)->whereNull('deleted_at')
+                    $key.'.tags.'.$k      => 'uuid'
                 ]);
             }
         }

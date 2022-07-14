@@ -73,12 +73,16 @@ class Collection extends BaseModel
         // filter by domains and tags
         if(isset($filterOptions['tags'])){
             $data = $data->joinRelationship('tags');
-            $data = $data->whereIn('domains_tags.id', $filterOptions['tags'])->distinct();
+            $Ids = [];
+            foreach($filterOptions['tags'] as $tag_uuid){
+                $Ids[] =  DomainsTags::whereUuid($tag_uuid)->value('id');
+            }
+            $data = $data->whereIn('domains_tags.id', $Ids)->distinct();
         }
 
         // filter by status
         if(isset($filterOptions['status']) && !is_null($filterOptions['status'])){
-            $data = $data->where('tasks.status', $filterOptions['status']);
+            $data = $data->where('collections.status', $filterOptions['status']);
         }
         return $data;
     }
@@ -86,7 +90,7 @@ class Collection extends BaseModel
     public static function getFilterForFrontEnd($data){
         return collect([
             'filterOptions' => [
-                    'tags'          => $data->get()->pluck('tags')->map->pluck('name')->flatten()->unique(),
+                    'tags'          => $data->get()->pluck('tags')->map->pluck('name', 'uuid')->unique(),
                     'status'        => $data->pluck("status")->unique()
                 ]
         ]);

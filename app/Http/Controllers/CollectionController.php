@@ -63,7 +63,7 @@ class CollectionController extends Controller
      */
     public function index(Request $request)
     {
-        $data = Collection::with(['tags:id,name', 'sections' => function($section){
+        $data = Collection::with(['tags:id,name,uuid', 'sections' => function($section){
             $section->select('id', 'collection_id', 'index')->withCount('tasks');
         }])->withCount(['sections']);
 

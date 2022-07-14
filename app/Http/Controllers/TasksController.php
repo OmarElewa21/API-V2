@@ -91,7 +91,7 @@ class TasksController extends Controller
      */
     public function index(ValidateFilterOptionsRequest $request)
     {
-        $data = Task::with(['domains:id,name', 'domains.topics:domain_id,name','tags:id,name'])
+        $data = Task::with(['domains:id,name,uuid', 'domains.topics:domain_id,name,uuid','tags:id,name,uuid'])
                 ->withCount(['task_content', 'task_answers as correct_answers_count' => function($q){
                     $q->where('is_correct', 1);
                 }]);
@@ -99,7 +99,7 @@ class TasksController extends Controller
         if($request->has('filterOptions')){
             $data = Task::applyFilter($request->get('filterOptions'), $data);
         }
-        
+
         $filterOptions = Task::getFilterForFrontEnd($data);        // get collection of availble filter options data
         
         // Get data as a collection
@@ -195,7 +195,7 @@ class TasksController extends Controller
                     $record
                 );
             }
-        } catch (\Exception $th) {
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(["message" => $e->getMessage()], 500);
         }
@@ -233,7 +233,7 @@ class TasksController extends Controller
             $task->update(array_merge($request->all(), ['updated_at' => auth()->id()]));
             $task->task_answers()->delete();
             $this->storeTaskAnswers($request->all(), $task, true);
-        } catch (\Exception $th) {
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(["message" => $e->getMessage()], 500);
         }
