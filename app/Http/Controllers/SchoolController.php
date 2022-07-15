@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Scopes\UserScope;
 use App\Http\Scopes\RoleScope;
 use Exception;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
 class SchoolController extends Controller

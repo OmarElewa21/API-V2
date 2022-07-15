@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Dyrynda\Database\Support\GeneratesUuid;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class School extends BaseModel
 {
@@ -81,7 +82,7 @@ class School extends BaseModel
                 'filterOptions.country'         => 'exists:countries,id',
                 'filterOptions.status'          => ['string', Rule::in(['pending', 'approved', 'rejected', 'deleted'])]
             ]);
-            $filterOptions = $request->$filterOptions;
+            $filterOptions = $request->filterOptions;
 
             if(isset($filterOptions['type']) && !is_null($filterOptions['type'])){
                 switch ($filterOptions['type']) {

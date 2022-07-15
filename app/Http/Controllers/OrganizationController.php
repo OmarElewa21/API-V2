@@ -21,17 +21,10 @@ class OrganizationController extends Controller
      */
     public function index(Request $request)
     {
-        if($request->has('filterOptions')){
-            $request->validate([
-                'filterOptions'                 => 'array',
-                'filterOptions.country'         => 'exists:countries,id',
-            ]);
-            $data = Organization::applyFilter($request->get('filterOptions'));
-        }else{
-            $data = new Organization;
-        }
+        $data = Organization::applyFilter($request, new Organization);
 
         $filterOptions = Organization::getFilterForFrontEnd($data);
+
         return response(
             $filterOptions->merge(
                 collect(

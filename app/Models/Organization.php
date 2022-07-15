@@ -6,9 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Dyrynda\Database\Support\GeneratesUuid;
 use Kirschbaum\PowerJoins\PowerJoins;
+use Illuminate\Http\Request;
 
 class Organization extends BaseModel
 {
+    const FILTER_COLUMNS = ['name', 'address', 'phone', 'email', 'person_in_charge_name'];
+
     use SoftDeletes, GeneratesUuid, PowerJoins;
 
     protected $fillable = [
@@ -59,10 +62,29 @@ class Organization extends BaseModel
         return $this->hasManyThrough(User::class, CountryPartner::class, 'organization_id', 'id', 'id', 'user_id');
     }
 
-    public static function applyFilter($filterOptions)
+    public static function applyFilter(Request $request, $data)
     {
-        if(isset($filterOptions['country']) && !is_null($filterOptions['country'])){
-            $data = self::where('country_id', $filterOptions['country']);
+        if($request->has('filterOptions')){
+            $request->validate([
+                'filterOptions'                 => 'array',
+                'filterOptions.country'         => 'exists:countries,id',
+            ]);
+            $filterOptions = $request->filterOptions;
+
+            if(isset($filterOptions['country']) && !is_null($filterOptions['country'])){
+                $data = $data->where('country_id', $filterOptions['country']);
+            }
+        }
+        
+
+        if($request->filled('search')){
+            $search = $request->search;
+            $data = $data->where(function($query)use($search){
+                $query->where('organizations.name', 'LIKE', '%'. $search. '%');
+                foreach(Organization::FILTER_COLUMNS as $column){
+                    $query->orwhere('organizations.' . $column, 'LIKE', '%'. $search. '%');
+                }
+            });
         }
         return $data;
     }
@@ -74,6 +96,6 @@ class Organization extends BaseModel
             'filterOptions' => [
                     'country'   => [$filter->pluck('name', 'id')->unique()],
                 ]
-            ]);
+        ]);
     }
 }
