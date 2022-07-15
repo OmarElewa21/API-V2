@@ -29,16 +29,9 @@ class SchoolController extends Controller
         }else{
             $data = School::withTrashed();
         }
+
         // Filter data according to payload filterOptions
-        if($request->has('filterOptions')){
-            $request->validate([
-                'filterOptions'                 => 'array',
-                'filterOptions.type'            => ['string', Rule::in(['school', 'tuition centre'])],
-                'filterOptions.country'         => 'exists:countries,id',
-                'filterOptions.status'          => ['string', Rule::in(['pending', 'approved', 'rejected', 'deleted'])]
-            ]);
-            $data = School::applyFilter($request->get('filterOptions'), $data);
-        }
+        $data = School::applyFilter($request, $data);
 
         $filterOptions = School::getFilterForFrontEnd($data);        // get collection of availble filter options data 
         

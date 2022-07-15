@@ -6,9 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Dyrynda\Database\Support\GeneratesUuid;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Http\Request;
 
 class School extends BaseModel
 {
+    const FILTER_COLUMNS = ['name', 'address', 'phone', 'email', 'postal_code', 'province'];
+
     use SoftDeletes, GeneratesUuid;
 
     protected $fillable = [
@@ -70,25 +73,45 @@ class School extends BaseModel
         return $this->where('country_id', auth()->user()->getRelatedUser()->country_id);
     }
 
-    public static function applyFilter($filterOptions, $data){
-        if(isset($filterOptions['type']) && !is_null($filterOptions['type'])){
-            switch ($filterOptions['type']) {
-                case 'school':
-                    $data = $data->where('is_tuition_centre', 0);
-                    break;
-                case 'tuition centre':
-                    $data = $data->where('is_tuition_centre', 1);
-                    break;
-                default:
-                    $data = $data->whereIn('is_tuition_centre', [1,0]);               
-                    break;
+    public static function applyFilter(Request $request, $data){
+        if($request->has('filterOptions')){
+            $request->validate([
+                'filterOptions'                 => 'array',
+                'filterOptions.type'            => ['string', Rule::in(['school', 'tuition centre'])],
+                'filterOptions.country'         => 'exists:countries,id',
+                'filterOptions.status'          => ['string', Rule::in(['pending', 'approved', 'rejected', 'deleted'])]
+            ]);
+            $filterOptions = $request->$filterOptions;
+
+            if(isset($filterOptions['type']) && !is_null($filterOptions['type'])){
+                switch ($filterOptions['type']) {
+                    case 'school':
+                        $data = $data->where('is_tuition_centre', 0);
+                        break;
+                    case 'tuition centre':
+                        $data = $data->where('is_tuition_centre', 1);
+                        break;
+                    default:
+                        $data = $data->whereIn('is_tuition_centre', [1,0]);               
+                        break;
+                }
+            }
+            if(isset($filterOptions['country']) && !is_null($filterOptions['country'])){
+                $data = $data->where('country_id', $filterOptions['country']);
+            }
+            if(isset($filterOptions['status']) && !is_null($filterOptions['status'])){
+                $data = $data->where('status', $filterOptions['status']);
             }
         }
-        if(isset($filterOptions['country']) && !is_null($filterOptions['country'])){
-            $data = $data->where('country_id', $filterOptions['country']);
-        }
-        if(isset($filterOptions['status']) && !is_null($filterOptions['status'])){
-            $data = $data->where('status', $filterOptions['status']);
+
+        if($request->filled('search')){
+            $search = $request->search;
+            $data = $data->where(function($query)use($search){
+                $query->where('schools.name', 'LIKE', '%'. $search. '%');
+                foreach(School::FILTER_COLUMNS as $column){
+                    $query->orwhere('schools.'. $column, 'LIKE', '%'. $search. '%');
+                }
+            });
         }
         return $data;
     }
