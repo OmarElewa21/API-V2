@@ -27,7 +27,7 @@ class Role
 
         $roles = explode("|", $roles);
         if($request->user()->hasRole($roles)){
-            if(! Arr::exists($request->route()->methods, 'GET') && $request->user()->status !== 'enabled'){
+            if(! Arr::exists($request->route()->methods, 'GET') && $request->user()->status !== 'Enabled'){
                 return response()->json(['message' => 'Your are only eligible to view'], 401);
             };
             return $next($request);

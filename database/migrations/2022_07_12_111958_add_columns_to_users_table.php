@@ -14,8 +14,13 @@ return new class extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('status');
+        });
+
+        Schema::table('users', function (Blueprint $table) {
             $table->string('img')->nullable();
             $table->text('about')->nullable();
+            $table->set('status', ['Disabled', 'Enabled', 'Deleted'])->default('Enabled');
         });
     }
 

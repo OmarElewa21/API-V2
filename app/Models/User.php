@@ -247,45 +247,27 @@ class User extends Authenticatable
                 'filterOptions'                 => 'array',
                 'filterOptions.role'            => 'exists:roles,name',
                 'filterOptions.country'         => 'exists:countries,id',
-                'filterOptions.status'          => 'string|in:enabled,disabled,deleted'
+                'filterOptions.status'          => 'string|in:Enabled,Disabled,Deleted'
             ]);
 
             $filterOptions = $request->filterOptions;
-
+            
             if(isset($filterOptions['role']) && !is_null($filterOptions['role'])){
-                switch ($filterOptions['role']) {
-                    case 'admin':
-                        $data = $data->whereRelation('role', 'name', 'admin');
-                        break;
-                    case 'country partner':
-                        $data = $data->whereRelation('role', 'name', 'country partner');
-                        break;
-                    case 'country partner assistant':
-                        $data = $data->whereRelation('role', 'name', 'country partner assistant');
-                        break;
-                    case 'school manager':
-                        $data = $data->whereRelation('role', 'name', 'school manager');
-                        break;
-                    case 'teacher':
-                        $data = $data->whereRelation('role', 'name', 'teacher');
-                        break;
-                    default:
-                        break;
-                }
+                $data->whereRelation('role', 'name', $filterOptions['role']);
             }
     
             if(isset($filterOptions['country']) && !is_null($filterOptions['country'])){
-                $data = $data->where('country_id', $filterOptions['country']);
+                $data->where('country_id', $filterOptions['country']);
             }
     
             if(isset($filterOptions['status']) && !is_null($filterOptions['status'])){
-                $data = $data->where('status', $filterOptions['status']);
+                $data->where('status', $filterOptions['status']);
             }
         }
 
         if($request->filled('search')){
             $search = $request->search;
-            $data = $data->where(function($query)use($search){
+            $data->where(function($query)use($search){
                 $query->where('users.name', 'LIKE', '%'. $search. '%');
                 foreach(User::FILTER_COLUMNS as $column){
                     $query->orwhere('users.' . $column, 'LIKE', '%'. $search. '%');
@@ -294,5 +276,23 @@ class User extends Authenticatable
         }
 
         return $data;
+    }
+
+    public function allowedForRoute(User $user, $userType="teacher")
+    {
+        switch ($userType) {
+            case 'country_partner_assistant':
+                return CountryPartnerAssistant::allowedForRoute($user);
+                break;
+            case 'school_manager':
+                return SchoolManager::allowedForRoute($user);
+                break;
+            case 'teacher':
+                return Teacher::allowedForRoute($user);
+                break;
+            default:
+                return true;
+                break;
+        }
     }
 }

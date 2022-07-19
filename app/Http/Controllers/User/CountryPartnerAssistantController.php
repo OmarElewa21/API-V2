@@ -121,7 +121,7 @@ class CountryPartnerAssistantController extends Controller
     public function destroy(User $user)
     {
         $user->update([
-            'status'     => 'deleted',
+            'status'     => 'Deleted',
             'deleted_by' => auth()->id()
         ]);
         $user->delete();

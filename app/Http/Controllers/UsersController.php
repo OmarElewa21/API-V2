@@ -115,6 +115,7 @@ class UsersController extends Controller
         return response()->json(['message' => 'Password changed successfully'], 200);
     }
 
+
     /************************************ Index Section *************************************************/
     
     /**
@@ -138,19 +139,23 @@ class UsersController extends Controller
                 break;
 
             case 'country partner':
-                $data->whereRelation('countryPartnerAssistant', 'country_partner_id', auth()->id())
-                        ->orWhereRelation('schoolManager', 'country_partner_id', auth()->id())
-                        ->orWhereRelation('teacher', 'country_partner_id', auth()->id());
+                $data->where(function($query){
+                    $query->whereRelation('countryPartnerAssistant', 'country_partner_id', auth()->id())
+                    ->orWhereRelation('schoolManager', 'country_partner_id', auth()->id())
+                    ->orWhereRelation('teacher', 'country_partner_id', auth()->id());
+                });
                 break;
 
             case 'country partner assistant':
-                $data->whereRelation('schoolManager', 'country_partner_id', auth()->user()->countryPartnerAssistant->country_partner_id)
+                $data->where(function($query){
+                    $query->whereRelation('schoolManager', 'country_partner_id', auth()->user()->countryPartnerAssistant->country_partner_id)
                         ->orWhereRelation('teacher', 'country_partner_id', auth()->user()->countryPartnerAssistant->country_partner_id);
+                });
                 break;
 
             case 'school manager':
-                $data->whereRelation('role', 'name', '=', 'teacher')
-                        ->whereRelation('teacher', 'school_id', '=', auth()->user()->school->id);
+                $data->whereRelation('role', 'name', 'teacher')
+                        ->whereRelation('teacher', 'school_id', auth()->user()->school->id);
                 break;
 
             default:
@@ -170,13 +175,14 @@ class UsersController extends Controller
         $data = $this->indexfilterByRole();
 
         $data = User::applyFilter($request, $data);
-        
+
         $filterOptions = User::getFilterForFrontEnd($data);
         
         return response($filterOptions->merge($data
                 ->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5)
                 )->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']), 200);
     }
+
 
     /************************************ Mass Operations Section *************************************************/
     /**
@@ -190,7 +196,7 @@ class UsersController extends Controller
                 if(Str::isUuid($user_uuid) && User::withTrashed()->whereUuid($user_uuid)->exists()){
                     $user = User::withTrashed()->whereUuid($user_uuid)->firstOrFail();
                     $user->update([
-                        'status'        => 'enabled',
+                        'status'        => 'Enabled',
                         'deleted_at'    => null,
                         'deleted_by'    => null
                     ]);
@@ -217,7 +223,7 @@ class UsersController extends Controller
                 if(Str::isUuid($user_uuid) && User::withTrashed()->whereUuid($user_uuid)->exists()){
                     $user = User::withTrashed()->whereUuid($user_uuid)->firstOrFail();
                     $user->update([
-                        'status'        => 'disabled',
+                        'status'        => 'Disabled',
                         'deleted_at'    => null,
                         'deleted_by'    => null
                     ]);
@@ -244,7 +250,7 @@ class UsersController extends Controller
                 if(Str::isUuid($user_uuid) && User::whereUuid($user_uuid)->exists()){
                     $user = User::whereUuid($user_uuid)->firstOrFail();
                     $user->update([
-                        'status'        => 'deleted',
+                        'status'        => 'Deleted',
                         'deleted_by'    => auth()->id()    
                     ]);
                     $user->delete();

@@ -75,11 +75,11 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
         Route::delete('collections/action/mass_delete', [App\Http\Controllers\CollectionController::class, "massDelete"]);
     });
 
-    Route::middleware('role:super admin|admin|country partner')
+    Route::middleware(['role:super admin|admin|country partner', 'users'])
         ->apiResource('country_partner.country_partner_assistants', App\Http\Controllers\User\CountryPartnerAssistantController::class)->except('index')->shallow();
 
     Route::group(['middleware' => 'role:super admin|admin|country partner|country partner assistant'], function() {
-        Route::apiResource('school_managers', App\Http\Controllers\User\SchoolManagerController::class)->except('index');
+        Route::apiResource('school_managers', App\Http\Controllers\User\SchoolManagerController::class)->except('index')->middleware('users');
         Route::apiResource('schools', App\Http\Controllers\SchoolController::class);
     });
 
@@ -88,7 +88,7 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
         Route::put('school/updateRelated', [App\Http\Controllers\SchoolController::class, 'updateRelated']);
     });
 
-    Route::middleware('role:super admin|admin|country partner|country partner assistant|school manager')
+    Route::middleware(['role:super admin|admin|country partner|country partner assistant|school manager', 'users'])
         ->apiResource('teachers', App\Http\Controllers\User\TeacherController::class)->except('index');
 
     Route::group(['middleware' => 'role:super admin|admin|country partner|country partner assistant|school manager|teacher'], function() {

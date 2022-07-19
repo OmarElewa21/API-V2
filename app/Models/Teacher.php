@@ -38,6 +38,24 @@ class Teacher extends Model
     }
 
     public function countryPartner(){
-        return $this->belongsTo(CountryPartner::class, 'country_partner_id', 'user_id');
+        return $this->belongsTo(User::class, 'country_partner_id');
+    }
+    
+    public static function allowedForRoute(User $user)
+    {
+        switch (auth()->user()->role->name) {
+            case 'country partner':
+                return $user->teacher->countryPartner->id === auth()->id();
+                break;
+            case 'country partner assistant':
+                return $user->teacher->countryPartner->id === auth()->user()->countryPartnerAssistant->countryPartner->id;
+                break;
+            case 'school manager':
+                return $user->teacher->school->id === auth()->user()->schoolManager->school->id;
+                break;
+            default:
+                return true;
+                break;
+        }
     }
 }
