@@ -169,15 +169,7 @@ class UsersController extends Controller
     {
         $data = $this->indexfilterByRole();
 
-        if($request->has('filterOptions')){
-            $request->validate([
-                'filterOptions'                 => 'array',
-                'filterOptions.role'            => 'exists:roles,name',
-                'filterOptions.country'         => 'exists:countries,id',
-                'filterOptions.status'          => ['string', Rule::in(['enabled', 'disabled', 'deleted'])]
-            ]);
-            $data = User::applyFilter($request->get('filterOptions'), $data);
-        }
+        $data = User::applyFilter($request, $data);
         
         $filterOptions = User::getFilterForFrontEnd($data);
         

@@ -34,7 +34,6 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
     });
 
     Route::group(['middleware' => ['role:super admin|admin']], function() {
-        Route::apiResource('country_partners', App\Http\Controllers\User\CountryPartnerController::class)->except('index');
         Route::apiResources([
             'organizations'             => App\Http\Controllers\OrganizationController::class,
             'roles'                     => App\Http\Controllers\RoleController::class,
@@ -42,6 +41,8 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
             'difficulty_groups'         => App\Http\Controllers\DifficultyGroupController::class,
             'collections'               => App\Http\Controllers\CollectionController::class
         ]);
+
+        Route::apiResource('country_partners', App\Http\Controllers\User\CountryPartnerController::class)->except('index');
 
         Route::delete('roles/action/mass_delete', [App\Http\Controllers\RoleController::class, "massDelete"]);
 

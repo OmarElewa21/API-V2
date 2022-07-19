@@ -18,10 +18,13 @@ use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
 use App\Http\Scopes\ExtendUser;
 use Kirschbaum\PowerJoins\PowerJoins;
+use Illuminate\Http\Request;
 
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes, GeneratesUuid, PowerJoins;
+
+    const FILTER_COLUMNS = ['name', 'email'];
 
     protected $fillable = [
         'name',
@@ -238,34 +241,58 @@ class User extends Authenticatable
             ]);
     }
 
-    public static function applyFilter($filterOptions, $data){        
-        if(isset($filterOptions['role']) && !is_null($filterOptions['role'])){
-            switch ($filterOptions['role']) {
-                case 'admin':
-                    $data = $data->whereRelation('role', 'name', 'admin');
-                    break;
-                case 'country partner':
-                    $data = $data->whereRelation('role', 'name', 'country partner');
-                    break;
-                case 'country partner assistant':
-                    $data = $data->whereRelation('role', 'name', 'country partner assistant');
-                    break;
-                case 'school manager':
-                    $data = $data->whereRelation('role', 'name', 'school manager');
-                    break;
-                case 'teacher':
-                    $data = $data->whereRelation('role', 'name', 'teacher');
-                    break;
-                default:
-                    break;
+    public static function applyFilter(Request $request, $data){   
+        if($request->has('filterOptions')){
+            $request->validate([
+                'filterOptions'                 => 'array',
+                'filterOptions.role'            => 'exists:roles,name',
+                'filterOptions.country'         => 'exists:countries,id',
+                'filterOptions.status'          => 'string|in:enabled,disabled,deleted'
+            ]);
+
+            $filterOptions = $request->filterOptions;
+
+            if(isset($filterOptions['role']) && !is_null($filterOptions['role'])){
+                switch ($filterOptions['role']) {
+                    case 'admin':
+                        $data = $data->whereRelation('role', 'name', 'admin');
+                        break;
+                    case 'country partner':
+                        $data = $data->whereRelation('role', 'name', 'country partner');
+                        break;
+                    case 'country partner assistant':
+                        $data = $data->whereRelation('role', 'name', 'country partner assistant');
+                        break;
+                    case 'school manager':
+                        $data = $data->whereRelation('role', 'name', 'school manager');
+                        break;
+                    case 'teacher':
+                        $data = $data->whereRelation('role', 'name', 'teacher');
+                        break;
+                    default:
+                        break;
+                }
+            }
+    
+            if(isset($filterOptions['country']) && !is_null($filterOptions['country'])){
+                $data = $data->where('country_id', $filterOptions['country']);
+            }
+    
+            if(isset($filterOptions['status']) && !is_null($filterOptions['status'])){
+                $data = $data->where('status', $filterOptions['status']);
             }
         }
-        if(isset($filterOptions['country']) && !is_null($filterOptions['country'])){
-            $data = $data->where('country_id', $filterOptions['country']);
+
+        if($request->filled('search')){
+            $search = $request->search;
+            $data = $data->where(function($query)use($search){
+                $query->where('users.name', 'LIKE', '%'. $search. '%');
+                foreach(User::FILTER_COLUMNS as $column){
+                    $query->orwhere('users.' . $column, 'LIKE', '%'. $search. '%');
+                }
+            });
         }
-        if(isset($filterOptions['status']) && !is_null($filterOptions['status'])){
-            $data = $data->where('status', $filterOptions['status']);
-        }
+
         return $data;
     }
 }
