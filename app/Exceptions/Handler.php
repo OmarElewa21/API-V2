@@ -4,6 +4,8 @@ namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Validation\ValidationException;
 
 class Handler extends ExceptionHandler
 {
@@ -46,5 +48,19 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+    }
+
+    public function render($request, Throwable $exception)
+    {
+        if ($exception instanceof ModelNotFoundException) {
+            $model = explode('\\', $exception->getModel());
+            $modelPhrase = ucwords(implode('',preg_split('/(?=[A-Z])/', end($model))));
+
+            throw ValidationException::withMessages([
+                $modelPhrase => \App::make($exception->getModel())->modelNotFoundMessage ?? $modelPhrase . ' not found'
+            ])->status(404);
+        }
+
+        return parent::render($request, $exception);
     }
 }
