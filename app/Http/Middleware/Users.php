@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class Users
 {
@@ -14,13 +15,14 @@ class Users
      * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next, $routeParameter)
     {
-        $user = $request->route()->parameter($request->route()->parameterNames()[0]);
-        if(auth()->user()->allowedForRoute($user, $request->route()->parameterNames()[0])){
-            return $next($request);
-        }else{
-            return response()->json(['message' => 'Not allowed for this request'], 422);
+        if(in_array(Str::after($request->route()->getName(), '.'), ['update', 'show', 'destroy'])){
+            $user = $request->route()->parameter($routeParameter);
+            if(!auth()->user()->allowedForRoute($user, $routeParameter)){
+                return response()->json(['message' => 'Not allowed for this request'], 422);
+            }
         }
+        return $next($request);
     }
 }

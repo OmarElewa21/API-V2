@@ -13,6 +13,7 @@ class CreateBaseRequest extends FormRequest
 {
     protected $key = '';
     protected $unique_fields = [];
+    protected $rules = [];
 
     /**
      * Overwrite validation return
@@ -48,8 +49,9 @@ class CreateBaseRequest extends FormRequest
                     return $validator->errors()->add($this->key, 'key '.$key.' is not valid');
                 }
                 $this->checkUniqueness($validator);
-                Validate::validate($this->all(), $this->validationRules($key));
+                $this->rules = array_merge($this->rules, $this->validationRules($key));
             }
+            Validate::validate($this->all(), $this->rules);
         });
     }
 
@@ -74,7 +76,10 @@ class CreateBaseRequest extends FormRequest
                 $list_check[] = $data[$field_check];
             }
             if(count($list_check) > count(array_unique($list_check))){
-                $validator->errors()->add($this->key, $field_check . ' has duplicates, please review ' . $field_check . ' field across your submitted data');
+                $validator->errors()->add(
+                    'errors', 
+                    $field_check . ' has duplicates, please review ' . $field_check . ' field across your submitted data'
+                );
             }
         }
     }
