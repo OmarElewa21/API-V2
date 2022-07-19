@@ -112,36 +112,35 @@ class UsersController extends Controller
     }
 
     /************************************ Index Section *************************************************/
-    protected function getIndexData($data){
-        return $data->with('personal_access:tokenable_id,last_used_at as last_login')
-                ->select('users.*', 'r.name as role', 'c.name as country');
-    }
-
     /**
      * Get User model with the correct data based on role
      * @return User model
      */
     protected function indexfilterByRole(){
+        $data = User::withTrashed()->distinct()->joinRelationship('role', function($join){
+                    $join->where('roles.name', '<>', 'super admin');
+                })->leftJoinRelationship('country')
+                ->select('users.*', 'roles.name as role', 'countries.name as country_name')
+                ->with('personal_access:tokenable_id,last_used_at as last_login');
+
         switch (auth()->user()->role->name) {
             case 'super admin':
-                $data = User::withTrashed()->whereRelation('role', 'name', '<>', 'super admin');
+                $data->whereRelation('role', 'name', '<>', 'super admin');
                 break;
             case 'admin':
-                $data = User::withTrashed()->whereRelation('role', 'name', '<>', 'super admin')->whereRelation('role', 'name', '<>', 'admin');
+                $data->whereRelation('role', 'name', '<>', 'super admin')->whereRelation('role', 'name', '<>', 'admin');
                 break;
             case 'country partner':
-                $data = User::withTrashed()
-                        ->whereRelation('countryPartnerAssistant', 'country_partner_id', auth()->id())
-                        ->orWhereRelation('schoolManager', 'country_partner_id', auth()->id())
-                        ->orWhereRelation('teacher', 'country_partner_id', auth()->id());
+                $data->whereRelation('countryPartnerAssistant', 'country_partner_id', auth()->id())
+                    ->orWhereRelation('schoolManager', 'country_partner_id', auth()->id())
+                    ->orWhereRelation('teacher', 'country_partner_id', auth()->id());
                 break;
             case 'country partner assistant':
-                $data = User::withTrashed()
-                        ->whereRelation('schoolManager', 'country_partner_id', auth()->user()->countryPartnerAssistant->country_partner_id)
-                        ->orWhereRelation('teacher', 'country_partner_id', auth()->user()->countryPartnerAssistant->country_partner_id);
+                $data->whereRelation('schoolManager', 'country_partner_id', auth()->user()->countryPartnerAssistant->country_partner_id)
+                    ->orWhereRelation('teacher', 'country_partner_id', auth()->user()->countryPartnerAssistant->country_partner_id);
                 break;
             case 'school manager':
-                $data = User::withTrashed()->whereRelation('role', 'name', '=', 'teacher')
+                $data->whereRelation('role', 'name', '=', 'teacher')
                             ->whereRelation('teacher', 'school_id', '=', auth()->user()->school->id);
                 break;
             default:
@@ -171,7 +170,7 @@ class UsersController extends Controller
         }
         $filterOptions = User::getFilterForFrontEnd($data);
         
-        return response($filterOptions->merge($this->getIndexData($data)
+        return response($filterOptions->merge($data
                 ->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5)
                 )->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']), 200);
     }

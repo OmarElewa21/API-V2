@@ -222,13 +222,7 @@ class User extends Authenticatable
         }
     }
 
-    public static function getFilterForFrontEnd($users){
-        $filter = $users
-                    ->leftJoin('roles as r', function ($join) {
-                        $join->on('users.role_id', '=', 'r.id')->where('r.name', '<>', 'super admin');
-                    })
-                    ->leftJoin('countries as c', 'users.country_id', '=', 'c.id')
-                    ->select('users.status', 'users.country_id', 'r.name as role', 'c.name as country_name');
+    public static function getFilterForFrontEnd($filter){
         return collect([
             'filterOptions' => [
                     'role'      => $filter->pluck('role')->unique()
