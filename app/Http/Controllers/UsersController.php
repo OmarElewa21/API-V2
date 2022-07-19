@@ -18,6 +18,7 @@ class UsersController extends Controller
 {
     private $secret_key = "8A0B0DC579F3DA6A417409BFB9071FDA663457F347B735D621FC9B3AA90796D3";
 
+    /****************************************************** Credintials Part ***********************************************/
     public function login(Request $request)
     {
         // Request Validation
@@ -51,6 +52,7 @@ class UsersController extends Controller
         ], 200);
     }
 
+
     public function logout()
     {
         if(!auth()->check()){
@@ -59,6 +61,7 @@ class UsersController extends Controller
         auth()->user()->tokens()->delete();
         return response()->json(["message" => "User logged out successfully"], 200);
     }
+
 
     public function sendResetLink(Request $request){
         if(filter_var($request->identifier, FILTER_VALIDATE_EMAIL)){
@@ -99,6 +102,7 @@ class UsersController extends Controller
         return response()->json(['message' => 'Mail sent successfully'], 200);
     }
 
+
     public function changePassword(ChangePasswordRequest $request){
         $user = User::where('username', $request->username)->firstOrFail();
         if(PasswordReset::where('username', $request->username)->value('user_key') !== $request->user_key){
@@ -112,9 +116,10 @@ class UsersController extends Controller
     }
 
     /************************************ Index Section *************************************************/
+    
     /**
      * Get User model with the correct data based on role
-     * @return User model
+     * @return Builder query
      */
     protected function indexfilterByRole(){
         $data = User::withTrashed()->distinct()->joinRelationship('role', function($join){
@@ -127,24 +132,29 @@ class UsersController extends Controller
             case 'super admin':
                 $data->whereRelation('role', 'name', '<>', 'super admin');
                 break;
+
             case 'admin':
                 $data->whereRelation('role', 'name', '<>', 'super admin')->whereRelation('role', 'name', '<>', 'admin');
                 break;
+
             case 'country partner':
                 $data->whereRelation('countryPartnerAssistant', 'country_partner_id', auth()->id())
-                    ->orWhereRelation('schoolManager', 'country_partner_id', auth()->id())
-                    ->orWhereRelation('teacher', 'country_partner_id', auth()->id());
+                        ->orWhereRelation('schoolManager', 'country_partner_id', auth()->id())
+                        ->orWhereRelation('teacher', 'country_partner_id', auth()->id());
                 break;
+
             case 'country partner assistant':
                 $data->whereRelation('schoolManager', 'country_partner_id', auth()->user()->countryPartnerAssistant->country_partner_id)
-                    ->orWhereRelation('teacher', 'country_partner_id', auth()->user()->countryPartnerAssistant->country_partner_id);
+                        ->orWhereRelation('teacher', 'country_partner_id', auth()->user()->countryPartnerAssistant->country_partner_id);
                 break;
+
             case 'school manager':
                 $data->whereRelation('role', 'name', '=', 'teacher')
-                            ->whereRelation('teacher', 'school_id', '=', auth()->user()->school->id);
+                        ->whereRelation('teacher', 'school_id', '=', auth()->user()->school->id);
                 break;
+
             default:
-                // Todo custom roles
+                // Todo For Custom Roles
                 break;
         }
         return $data;
@@ -168,6 +178,7 @@ class UsersController extends Controller
             ]);
             $data = User::applyFilter($request->get('filterOptions'), $data);
         }
+        
         $filterOptions = User::getFilterForFrontEnd($data);
         
         return response($filterOptions->merge($data
@@ -175,6 +186,10 @@ class UsersController extends Controller
                 )->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']), 200);
     }
 
+    /************************************ Mass Operations Section *************************************************/
+    /**
+     * mass enable users
+     */
     public function mass_enable(Request $request)
     {
         DB::beginTransaction();
@@ -199,6 +214,9 @@ class UsersController extends Controller
         return $this->index(new Request);
     }
 
+    /**
+     * mass disable users
+     */
     public function mass_disable(Request $request)
     {
         DB::beginTransaction();
@@ -223,6 +241,9 @@ class UsersController extends Controller
         return $this->index(new Request);
     }
 
+    /**
+     * mass delete users
+     */
     public function mass_delete(Request $request)
     {
         DB::beginTransaction();
@@ -247,6 +268,7 @@ class UsersController extends Controller
         return $this->index(new Request);
     }
 
+    /************************************ Profile Section *************************************************/
     /**
      * Get profile info for authinticated user
      */
