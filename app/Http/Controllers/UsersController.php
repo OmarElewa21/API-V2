@@ -42,7 +42,9 @@ class UsersController extends Controller
             return response()->json(["message" => "Invalid credentials"], 422);
         }
 
-        $user = User::where($identifier, $request->identifier)->with(['role:id,name,uuid'])->firstOrFail();      // get user
+        $user = User::where($identifier, $request->identifier)
+                    ->with(['role:id,name,uuid'])
+                    ->firstOrFail()->append('school', 'parent');      // get user
         $authToken = $user->createToken("auth_token")->plainTextToken;                                        // generate token
 
         return response()->json([
