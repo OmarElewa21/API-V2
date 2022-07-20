@@ -64,18 +64,12 @@ class Organization extends BaseModel
 
     public static function applyFilter(Request $request, $data)
     {
-        if($request->has('filterOptions')){
-            $request->validate([
-                'filterOptions'                 => 'array',
-                'filterOptions.country'         => 'exists:countries,id',
-            ]);
-            $filterOptions = $request->filterOptions;
-
+        if($request->has('filterOptions') && gettype($request->filterOptions) === 'string'){
+            $filterOptions = json_decode($request->filterOptions, true);
             if(isset($filterOptions['country']) && !is_null($filterOptions['country'])){
                 $data = $data->where('country_id', $filterOptions['country']);
             }
         }
-        
 
         if($request->filled('search')){
             $search = $request->search;
