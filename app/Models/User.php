@@ -172,6 +172,37 @@ class User extends Authenticatable
         }
     }
 
+    public function getSchoolAttribute(){
+        switch ($this->role->name) {
+            case 'school manager':
+                return collect($this->schoolManager()->with('school')->first()->school)->only('name', 'uuid');
+                break;
+            case 'teacher':
+                return collect($this->teacher()->with('school')->first()->school)->only('name', 'uuid');
+                break; 
+            default:
+                return null;
+                break;
+        }
+    }
+
+    public function getParentAttribute(){
+        switch ($this->role->name) {
+            case 'country partner assistant':
+                return collect($this->countryPartnerAssistant()->with('countryPartner')->first()->countryPartner)->only('name', 'uuid');
+                break;
+            case 'school manager':
+                return collect($this->schoolManager()->with('countryPartner')->first()->countryPartner)->only('name', 'uuid');
+                break;
+            case 'teacher':
+                return collect($this->teacher()->with('countryPartner')->first()->countryPartner)->only('name', 'uuid');
+                break; 
+            default:
+                return null;
+                break;
+        }
+    }
+
     public function personal_access(){
         return $this->hasOne(PersonalAccessToken::class, 'tokenable_id', 'id')
                 ->where('tokenable_type', 'App\Models\User')->latest('last_used_at');
