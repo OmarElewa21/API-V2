@@ -273,16 +273,9 @@ class User extends Authenticatable
     }
 
     public static function applyFilter(Request $request, $data){   
-        if($request->has('filterOptions')){
-            $request->validate([
-                'filterOptions'                 => 'array',
-                'filterOptions.role'            => 'exists:roles,name',
-                'filterOptions.country'         => 'exists:countries,id',
-                'filterOptions.status'          => 'string|in:Enabled,Disabled,Deleted'
-            ]);
+        if($request->has('filterOptions') && gettype($request->filterOptions) === 'string'){
+            $filterOptions = json_decode($request->filterOptions, true);
 
-            $filterOptions = $request->filterOptions;
-            
             if(isset($filterOptions['role']) && !is_null($filterOptions['role'])){
                 $data->whereRelation('role', 'name', $filterOptions['role']);
             }
