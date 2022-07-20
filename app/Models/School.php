@@ -75,14 +75,8 @@ class School extends BaseModel
     }
 
     public static function applyFilter(Request $request, $data){
-        if($request->has('filterOptions')){
-            $request->validate([
-                'filterOptions'                 => 'array',
-                'filterOptions.type'            => ['string', Rule::in(['school', 'tuition centre'])],
-                'filterOptions.country'         => 'exists:countries,id',
-                'filterOptions.status'          => ['string', Rule::in(['pending', 'approved', 'rejected', 'deleted'])]
-            ]);
-            $filterOptions = $request->filterOptions;
+        if($request->has('filterOptions') && gettype($request->filterOptions) === 'string'){
+            $filterOptions = json_decode($request->filterOptions, true);
 
             if(isset($filterOptions['type']) && !is_null($filterOptions['type'])){
                 switch ($filterOptions['type']) {
@@ -126,7 +120,7 @@ class School extends BaseModel
                     'type'      => [$filter->selectRaw("CASE WHEN is_tuition_centre=1 THEN 'tuition centre' ELSE 'school' END AS type")
                                         ->pluck('type')->unique()->values()],
                     'country'   => [$filter->pluck('name', 'country_id')],
-                    'status'    => $filter->pluck('status')->unique()->values(),
+                    'status'    => $filter->pluck('status')->unique()->values()
                 ]
             ]);
     }
