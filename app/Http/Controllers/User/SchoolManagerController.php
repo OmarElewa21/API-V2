@@ -37,11 +37,11 @@ class SchoolManagerController extends Controller
                             'deleted_at'    => null,
                             'deleted_by'    => null,
                             'updated_by'    => auth()->id(),
-                            'status'        => 'enabled'
+                            'status'        => 'Enabled'
                         ]
                     );
                 }else{
-                    User::Create(
+                    $user = User::Create(
                         [
                             'username'      => $data['username'],
                             'email'         => $data['email'],
@@ -49,13 +49,24 @@ class SchoolManagerController extends Controller
                             'role_id'       => Role::where('name', $data['role'])->value('id'),
                             'password'      => bcrypt($data['password']),
                             'created_by'    => auth()->id(),
-                            'country_id'    => $data['country_id']
                         ]
                     );
+
+                    if(auth()->user()->hasRole('country partner assistant')){
+                        $cp = auth()->user()->countryPartnerAssistant->countryPartner;
+                    }
+                    elseif(auth()->user()->hasRole('country partner')){
+                        $cp = auth()->user();
+                    }
+                    else{
+                        $cp = User::find($data['country_partner_id']);
+                    }
+
+                    $user->country_id = $cp->country_id;
                     SchoolManager::create(
                         [
                             'user_id'               => User::where('username', $data['username'])->value('id'),
-                            'country_partner_id'    => $data['country_partner_id'],
+                            'country_partner_id'    => $cp->id,
                             'school_id'             => $data['school_id'],
                         ]);
                 }

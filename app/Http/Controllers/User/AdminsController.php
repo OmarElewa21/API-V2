@@ -37,7 +37,7 @@ class AdminsController extends Controller
                             'updated_by'    => auth()->id(),
                             'deleted_at'    => null,
                             'deleted_by'    => null,
-                            'status'        => 'enabled'
+                            'status'        => 'Enabled'
                         ]
                     );
                 }else{

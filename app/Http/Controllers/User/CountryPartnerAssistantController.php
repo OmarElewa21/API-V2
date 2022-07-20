@@ -20,7 +20,7 @@ class CountryPartnerAssistantController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(User $cp, CreateCountryPartnerAssistantRequest $request)
+    public function store(CreateCountryPartnerAssistantRequest $request)
     {
         $collection = new Collection;
         DB::beginTransaction();
@@ -33,26 +33,32 @@ class CountryPartnerAssistantController extends Controller
                             'username'      => $data['username'],
                             'email'         => $data['email'],
                             'name'          => $data['name'],
-                            'role_id'       => Role::where('name', $data['role'])->value('id'),
                             'password'      => bcrypt($data['password']),
                             'deleted_at'    => null,
                             'deleted_by'    => null,
                             'updated_by'    => auth()->id(),
-                            'status'        => 'enabled'
+                            'status'        => 'Enabled'
                         ]
                     );
                 }else{
-                    User::Create(
+                    $user = User::Create(
                         [
                             'username'      => $data['username'],
                             'email'         => $data['email'],
                             'name'          => $data['name'],
-                            'role_id'       => Role::where('name', $data['role'])->value('id'),
+                            'role_id'       => Role::where('name', 'country partner assistant')->value('id'),
                             'password'      => bcrypt($data['password']),
-                            'created_by'    => auth()->id(),
-                            'country_id'    => $data['country_id']
+                            'created_by'    => auth()->id()
                         ]
                     );
+                    
+                    if(auth()->user()->hasRole('country partner')){
+                        $cp = auth()->user();
+                    }else{
+                        $cp = User::find($data['country_partner_id']);
+                    }
+
+                    $user->country_id = $cp->country_id;
                     CountryPartnerAssistant::create(
                         [
                             'user_id'               => User::where('username', $data['username'])->value('id'),

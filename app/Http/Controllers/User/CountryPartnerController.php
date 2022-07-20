@@ -38,7 +38,7 @@ class CountryPartnerController extends Controller
                             'deleted_at'    => null,
                             'deleted_by'    => null,
                             'updated_by'    => auth()->id(),
-                            'status'        => 'enabled'
+                            'status'        => 'Enabled'
                         ]
                     );
                 }else{

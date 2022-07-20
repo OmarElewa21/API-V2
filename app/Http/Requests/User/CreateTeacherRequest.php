@@ -29,9 +29,8 @@ class CreateTeacherRequest extends CreateBaseRequest
      */
     protected function validationRules($key)
     {
-        return [
+        $rules = [
             $key.'.name'                => 'required|string|max:160',
-            $key.'.role'                => 'required|string|in:teacher',
             $key.'.username'            => ['required', 'string', 'max:64', Rule::unique('users', 'username')->whereNull('deleted_at')],
             $key.'.email'               => ['required', 'email', 'max:64', Rule::unique('users', 'email')->whereNull('deleted_at')],
             $key.'.password'            => ['required',
@@ -41,8 +40,27 @@ class CreateTeacherRequest extends CreateBaseRequest
                                                 ->symbols()
                                                 ->uncompromised(), 'confirmed'],
             $key.'.country_partner_id'  => ['required', Rule::exists('country_partners', 'user_id')],
-            $key.'.school_id'           => ['required', Rule::exists('schools', 'id')->whereNull('deleted_at')],
-            $key.'.country_id'          => 'required|exists:countries,id'
         ];
+
+        if(auth()->user()->hasRole(['admin', 'super admin'])){
+            $rules = array_merge($rules, [
+                    $key.'.country_partner_id' => ['required',
+                                                    Rule::exists('users', 'id')->where(function($query){
+                                                        $query->join('roles', function ($join) {
+                                                            $join->on('roles.id', '=', 'users.role_id')->where('roles.name', 'country partner');
+                                                        })->whereNull('deleted_at');
+                                                    })
+                                                    ]
+                                                                
+                ]
+            );
+        }
+        if(!auth()->user()->hasRole('school manager')){
+            $rules = array_merge($rules, [
+                $key.'.school_id'           => ['required', Rule::exists('schools', 'id')->whereNull('deleted_at')]
+
+            ]);
+        }
+        return $rules;  
     }
 }

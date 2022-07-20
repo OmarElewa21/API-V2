@@ -31,31 +31,44 @@ class TeacherController extends Controller
                             'username'      => $data['username'],
                             'email'         => $data['email'],
                             'name'          => $data['name'],
-                            'role_id'       => Role::where('name', $data['role'])->value('id'),
                             'password'      => bcrypt($data['password']),
                             'deleted_at'    => null,
                             'deleted_by'    => null,
                             'updated_by'    => auth()->id(),
-                            'status'        => 'enabled'
+                            'status'        => 'Enabled'
                         ]
                     );
                 }else{
-                    User::Create(
+                    $user = User::Create(
                         [
                             'username'      => $data['username'],
                             'email'         => $data['email'],
                             'name'          => $data['name'],
-                            'role_id'       => Role::where('name', $data['role'])->value('id'),
                             'password'      => bcrypt($data['password']),
                             'created_by'    => auth()->id(),
-                            'country_id'    => $data['country_id']
                         ]
                     );
+
+                    if(auth()->user()->hasRole('country partner assistant')){
+                        $cp = auth()->user()->countryPartnerAssistant->countryPartner;
+                    }
+                    elseif(auth()->user()->hasRole('country partner')){
+                        $cp = auth()->user();
+                    }
+                    elseif(auth()->user()->hasRole('school manager')){
+                        $schoolManager = auth()->user()->schoolManager;
+                        $cp = $schoolManager->countryPartner;
+                    }
+                    else{
+                        $cp = User::find($data['country_partner_id']);
+                    }
+
+                    $user->country_id = $cp->country_id;
                     Teacher::create(
                         [
                             'user_id'               => User::where('username', $data['username'])->value('id'),
-                            'country_partner_id'    => $data['country_partner_id'],
-                            'school_id'             => $data['school_id'],
+                            'country_partner_id'    => $cp->id,
+                            'school_id'             => array_key_exists('school_id', $data) ? $data['school_id'] : $schoolManager->school_id,
                         ]
                     );
                 }

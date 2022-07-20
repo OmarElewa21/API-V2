@@ -31,7 +31,6 @@ class CreateCountryPartnerAssistantRequest extends CreateBaseRequest
     {
         $rules = [
                 $key.'.name'                => 'required|string|max:160',
-                $key.'.role'                => 'required|string|in:country partner assistant',
                 $key.'.username'            => ['required', 'string', 'max:64', Rule::unique('users', 'username')->whereNull('deleted_at')],
                 $key.'.email'               => ['required', 'email', 'max:64', Rule::unique('users', 'email')->whereNull('deleted_at')],
                 $key.'.password'            => ['required',
@@ -39,8 +38,7 @@ class CreateCountryPartnerAssistantRequest extends CreateBaseRequest
                                                     ->letters()
                                                     ->numbers()
                                                     ->symbols()
-                                                    ->uncompromised(), 'confirmed'],
-                $key.'.country_id'          => 'required|exists:countries,id'
+                                                    ->uncompromised(), 'confirmed']
             ];
         
         if(auth()->user()->hasRole(['admin', 'super admin'])){
