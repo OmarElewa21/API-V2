@@ -113,6 +113,11 @@ class Participant extends Authenticatable
         return $this->belongsTo(School::class);
     }
 
+    public function tuition_centre()
+    {
+        return $this->belongsTo(School::class, 'tuition_centre_id');
+    }
+
     public function country()
     {
         return $this->belongsTo(Country::class);
@@ -132,6 +137,11 @@ class Participant extends Authenticatable
 
         static::updating(function ($participant) {
             $participant->updated_by = auth()->id();
+        });
+
+        static::deleted(function ($participant) {
+            $participant->deleted_by = auth()->id();
+            $participant->save();
         });
     }
 

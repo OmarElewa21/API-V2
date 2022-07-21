@@ -19,8 +19,8 @@ class ParticipantController extends Controller
      */
     public function index(Request $request)
     {
-        $data = Participant::leftJoinRelationship('school')->joinRelationship('countryPartner')
-                    ->joinRelationshipUsingAlias('school', 'tuition_centre')
+        $data = Participant::leftJoinRelationship('school')->leftJoinRelationship('countryPartner')
+                    ->leftJoinRelationshipUsingAlias('tuition_centre', 'tuition_centre')
                     ->leftJoinRelationship('country')
                     ->select('participants.*', 'schools.name as school','users.name as partner',
                                 'countries.name as country', 'tuition_centre.name as tuition_centre');
@@ -84,6 +84,12 @@ class ParticipantController extends Controller
      */
     public function show(Participant $participant)
     {
+        $participant = Participant::whereUuid($participant->uuid)->leftJoinRelationship('school')->leftJoinRelationship('countryPartner')
+                            ->leftJoinRelationshipUsingAlias('tuition_centre', 'tuition_centre')
+                            ->leftJoinRelationship('country')
+                            ->select('participants.*', 'schools.name as school','users.name as partner',
+                                        'countries.name as country', 'tuition_centre.name as tuition_centre')
+                            ->firstOrFail();
         return response($participant, 200);
     }
 
@@ -97,7 +103,7 @@ class ParticipantController extends Controller
     public function update(UpdateParticipantRequest $request, Participant $participant)
     {
         $participant->update($request->all());
-        return response($participant, 200);
+        return $this->show($participant);
     }
 
     /**
@@ -109,6 +115,8 @@ class ParticipantController extends Controller
     public function destroy(Participant $participant)
     {
         $participant->delete();
-        return $this->index();
+        return $this->index(new Request);
     }
+
+    
 }
