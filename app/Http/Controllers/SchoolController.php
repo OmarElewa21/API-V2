@@ -111,7 +111,10 @@ class SchoolController extends Controller
                     ->Join('countries', 'schools.country_id', '=', 'countries.id')
                     ->select('schools.*', 'countries.name as country')
                     ->with([
-                        'rejections', 'rejections.user:id,uuid,name,role_id',
+                        'rejections' => function($query){
+                            $query->orderBy('count', 'DESC');
+                        },
+                        'rejections.user:id,uuid,name,role_id',
                         'rejections.user.role' => function($role){
                             $role->withoutGlobalScopes([RoleScope::class])->select('id', 'name', 'uuid');
                         }
