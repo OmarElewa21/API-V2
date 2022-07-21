@@ -9,6 +9,7 @@ use App\Http\Requests\User\UpdateParticipantRequest;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ParticipantController extends Controller
 {
@@ -118,5 +119,26 @@ class ParticipantController extends Controller
         return $this->index(new Request);
     }
 
-    
+    /**
+     * mass delete users
+     */
+    public function mass_delete(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            foreach($request->all() as $participant_uuid){
+                if(Str::isUuid($participant_uuid)){
+                    $participant = Participant::whereUuid($participant_uuid)->firstOrFail();
+                    $participant->delete();
+                }else{
+                    throw new \Exception("data is not valid");
+                }
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(["message" => $e->getMessage()], 500);
+        }
+        DB::commit();
+        return $this->index(new Request);
+    }
 }
