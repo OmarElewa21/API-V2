@@ -27,14 +27,33 @@ class StoreParticipantRequest extends CreateBaseRequest
      */
     protected function validationRules($key)
     {
-        return [
+        $rules = [
             $key.'.name'                => 'required|string|max:132',
             $key.'.class'               => 'required|string|max:32',
             $key.'.grade'               => 'required|string|max:32',
-            $key.'.user_id'             => ['required', Rule::exists('users', 'id')->whereNull('deleted_at')],
-            $key.'.school_id'           => [Rule::exists('schools', 'id')->whereNull('deleted_at')->where('is_tuition_centre', 0)],
-            $key.'.tuition_centre_id'   => [Rule::exists('schools', 'id')->whereNull('deleted_at')->where('is_tuition_centre', 1)],
-            $key.'.country_id'          => 'required|digits_between:2,251|exists:countries,id'
+            $key.'.tuition_centre_id'   => [Rule::exists('schools', 'id')->whereNull('deleted_at')->where('is_tuition_centre', 1)]
         ];
+
+        if(auth()->user()->hasRole(['admin', 'super admin'])){
+            $rules = array_merge($rules, [
+                    $key.'.country_partner_id' => ['required',
+                                                    Rule::exists('users', 'id')->where(function($query){
+                                                        $query->join('roles', function ($join) {
+                                                            $join->on('roles.id', '=', 'users.role_id')->where('roles.name', 'country partner');
+                                                        })->whereNull('deleted_at');
+                                                    })
+                                                ]
+                                                                
+                ]
+            );
+        }
+
+        if(!auth()->user()->hasRole(['school manager', 'teacher'])){
+            $rules = array_merge($rules, [
+                $key.'.school_id'           => ['required', Rule::exists('schools', 'id')->whereNull('deleted_at')]
+            ]);
+        }
+        
+        return $rules; 
     }
 }
