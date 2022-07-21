@@ -219,4 +219,25 @@ class Participant extends Authenticatable
                 ]
             ]);
     }
+
+    public static function allowedForRoute(self $participant)
+    {
+        switch (auth()->user()->role->name) {
+            case 'country partner':
+                return $participant->country_partner_id === auth()->id();
+                break;
+            case 'country partner assistant':
+                return $participant->country_partner_id === auth()->user()->countryPartnerAssistant->country_partner_id;
+                break;
+            case 'school manager':
+                return $participant->school_id === auth()->user()->schoolManager->school_id;
+                break;
+            case 'teacher':
+                return $participant->school_id === auth()->user()->teacher->school_id;
+                break;
+            default:
+                return true;
+                break;
+        }
+    }
 }

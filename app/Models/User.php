@@ -302,7 +302,7 @@ class User extends Authenticatable
         return $data;
     }
 
-    public function allowedForRoute(User $user, $userType="teacher")
+    public function allowedForRoute(self $user, $userType="teacher")
     {
         switch ($userType) {
             case 'country_partner_assistant':
@@ -313,6 +313,9 @@ class User extends Authenticatable
                 break;
             case 'teacher':
                 return Teacher::allowedForRoute($user);
+                break;
+            case 'participant':
+                return Participant::allowedForRoute($user);
                 break;
             default:
                 return true;

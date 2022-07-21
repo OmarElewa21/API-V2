@@ -14,6 +14,33 @@ use Illuminate\Support\Str;
 class ParticipantController extends Controller
 {
     /**
+     * Get User model with the correct data based on role
+     * @return Builder query
+     */
+    protected function indexfilterByRole($data){
+        switch (auth()->user()->role->name) {
+            case 'country partner':
+                $data->where('country_partner_id', auth()->id());
+                break;
+
+            case 'country partner assistant':
+                    $data->where('country_partner_id', auth()->user()->countryPartnerAssistant->country_partner_id);
+                break;
+
+            case 'school manager':
+                $data->where('school_id', auth()->user()->schoolManager->school_id);
+                break;
+    
+            case 'teacher':
+                $data->where('school_id', auth()->user()->teacher->school_id);
+                break;
+            default:
+                break;
+        }
+        return $data;
+    }
+
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
@@ -25,6 +52,8 @@ class ParticipantController extends Controller
                     ->leftJoinRelationship('country')
                     ->select('participants.*', 'schools.name as school','users.name as partner',
                                 'countries.name as country', 'tuition_centre.name as tuition_centre');
+        
+        $this->indexfilterByRole($data);
         
         $data = Participant::applyFilter($request, $data);
         
