@@ -94,5 +94,6 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
     Route::group(['middleware' => 'role:super admin|admin|country partner|country partner assistant|school manager|teacher'], function() {
         Route::apiResource('participants', App\Http\Controllers\User\ParticipantController::class);
         Route::delete('participants/action/mass_delete', [App\Http\Controllers\User\ParticipantController::class, 'mass_delete']);
+        Route::post('participants/action/regenerate_password/{participant}', [App\Http\Controllers\User\ParticipantController::class, 'regenerate_password']);
     });
 });

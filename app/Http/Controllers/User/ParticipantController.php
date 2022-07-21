@@ -108,6 +108,17 @@ class ParticipantController extends Controller
     }
 
     /**
+     * regenerate Password for the participant
+     */
+    public function regenerate_password(Participant $participant)
+    {
+        $password = Str::random(14);
+        $participant->password = encrypt($password);
+        $participant->save();
+        return response($password, 200);
+    }
+
+    /**
      * Remove the specified resource from storage.
      *
      * @param  \App\Models\Participant  $participant
