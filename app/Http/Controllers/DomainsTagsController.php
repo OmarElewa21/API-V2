@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\DomainsTags;
-use App\Models\Topic;
 use App\Http\Requests\StoreDomainsTagsRequest;
 use App\Http\Requests\UpdateDomainsTagsRequest;
 use Illuminate\Http\Request;
@@ -11,6 +10,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Exception;
+use Illuminate\Support\Facades\Route;
 
 class DomainsTagsController extends Controller
 {
@@ -21,23 +21,18 @@ class DomainsTagsController extends Controller
      */
     public function index(Request $request)
     {
-        if($request->has('filterOptions')){
-            $request->validate([
-                'filterOptions'                => 'array',
-                'filterOptions.type'           => 'in:Domain,Tag',
-                'filterOptions.status'         => 'in:approved,pending,rejected,deleted',
-            ]);
-            $data = DomainsTags::applyFilter($request->get('filterOptions'));
-        }else{
-            $data = new DomainsTags;
-        }
+        $data = DomainsTags::withTrashed()->where(function($query){
+            $query->where('domains_tags.is_tag', 1)->orwhere(function($query){
+                $query->where('domains_tags.is_tag', 0)->whereNotNull('domains_tags.parent_id');
+            });
+        })->with('domain:id,name,uuid');
+
+        DomainsTags::applyFilter($request, $data);
         $filterOptions = DomainsTags::getFilterForFrontEnd($data);
+        
         return response(
             $filterOptions->merge(
-                collect(
-                    $data
-                    ->leftJoinRelationship('topics')
-                    ->select('domains_tags.*', 'topics.name as topic_name')
+                collect($data->select('domains_tags.*')
                     ->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5)
                 )->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']))
             ,200);
@@ -52,30 +47,32 @@ class DomainsTagsController extends Controller
     public function store(StoreDomainsTagsRequest $request)
     {
         DB::beginTransaction();
+        $is_tag = Route::currentRouteName() === 'domains.store' ? 0 : 1;
         foreach($request->all() as $key=>$data){
             try {
-                if
-                (
-                    $data['is_tag'] && DomainsTags::tags()->where('name', $data['name'])->doesntExist()
-                    || !$data['is_tag'] && DomainsTags::domains()->where('name', $data['name'])->doesntExist()
-                )
+                if(DomainsTags::withTrashed()->where('name', $data['name'])->where('is_tag', $is_tag)->doesntExist())
                 {
-                    DomainsTags::create(Arr::only($data, ['name', 'is_tag']));
-                }
-                
-                if(!$data['is_tag'] && Arr::exists($data, 'topics')){
-                    foreach($data['topics'] as $topic){
-                        if
-                        (Topic::where('name', $topic)
-                            ->whereRelation('domain', 'name', '=', $data['name'])
-                            ->doesntExist()
-                        )
-                        {
-                            Topic::create([
-                                'name'      => $topic,
-                                'domain_id' => DomainsTags::domains()->where('name', $data['name'])->value('id')
+                    $record = DomainsTags::create(['name' => $data['name'], 'is_tag' => $is_tag]);
+                    if(!$is_tag){
+                        if(Arr::exists($data, 'topics')){
+                            foreach($data['topics'] as $topic){
+                                DomainsTags::create([
+                                    'name'      => $topic,
+                                    'parent_id' => $record->id
+                                ]);
+                            }
+                        }else{
+                            DomainsTags::create([
+                                'name'      => $record->name,
+                                'parent_id' => $record->id
                             ]);
                         }
+                    }
+                }
+                else{
+                    $record = DomainsTags::withTrashed()->where('name', $data['name'])->where('is_tag', $is_tag)->first();
+                    if($record->status === DomainsTags::STATUS['Deleted']){
+                        throw new Exception($record->name . " is deleted, please contact the admin for restoring it");
                     }
                 }
             } catch (Exception $e) {
@@ -95,48 +92,68 @@ class DomainsTagsController extends Controller
      */
     public function show(DomainsTags $domainsTags)
     {
-        $data = $domainsTags->is_tag ? $domainsTags : $domainsTags->load('topics:domain_id,uuid,name');
-        return response($data, 200);
+        return response(
+            $domainsTags->is_tag ? $domainsTags
+            : (is_null($domainsTags->parent_id) ? $domainsTags->append('topics')
+                : $domainsTags->load('domain:id,name,uuid')),
+            200);
     }
 
     /**
      * Update the specified resource in storage.
-     *
+     *  
      * @param  \App\Http\Requests\UpdateDomainsTagsRequest  $request
      * @param  \App\Models\DomainsTags  $domainsTags
      * @return \Illuminate\Http\Response
      */
     public function update(UpdateDomainsTagsRequest $request, DomainsTags $domainsTags)
     {
-        $domainsTags->update(array_merge($request->only('name'), ['updated_by'  => auth()->id()]));
-        if(!$request->is_tag && $request->has('topics')){
-            $domainsTags->topics()->update(['deleted_by' => auth()->id()]);
-            $domainsTags->topics()->delete();
-            foreach($request->topics as $topic){
-                if
-                (Topic::where('name', $topic)
-                    ->where('domain_id', $domainsTags->id)
-                    ->doesntExist()
-                )
-                {
-                    Topic::create([
-                        'name'      => $topic,
-                        'domain_id' => $domainsTags->id
-                    ]);
+        DB::beginTransaction();
+        try {
+            if($domainsTags->status === DomainsTags::STATUS['Deleted']){
+                throw new Exception($domainsTags->name . " is deleted, please contact the admin for restoring it");
+            }elseif($domainsTags->status === DomainsTags::STATUS['Pending']){
+                throw new Exception($domainsTags->name . " is pending, you can't add to this domain untill it is approved");
+            }
+            
+            $domainsTags->update($request->only('name'));
+
+            if(!$request->is_tag && $request->has('topics')){
+                DomainsTags::where('parent_id', $domainsTags->id)->update([
+                    'deleted_by' => auth()->id(),
+                    'status'     => DomainsTags::STATUS['Deleted']
+                ]);
+                DomainsTags::where('parent_id', $domainsTags->id)->delete();
+                foreach($request->topics as $topic){
+                    if(DomainsTags::withTrashed()->where('name', $topic)->where('parent_id', $domainsTags->id)->exists()){
+                        $record = DomainsTags::withTrashed()->where('name', $topic)->where('parent_id', $domainsTags->id)->first();
+                        $record->update([
+                            'name'          => $topic,
+                            'deleted_at'    => null,
+                            'deleted_by'    => null    
+                        ]);
+                    }else{
+                        DomainsTags::create([
+                            'name'          => $topic,
+                            'parent_id'     => $domainsTags->id
+                        ]);
+                    }
                 }
             }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response($e->getMessage(), 500);
         }
+        DB::commit();
         return $this->show($domainsTags);
     }
 
-    public function update_topic($topic_uuid, Request $request)
+    public function update_topic(DomainsTags $topic, Request $request)
     {
-        $request->validate = array(
-            'name' =>   'required|string' 
-        );
-        $topic = Topic::whereUuid($topic_uuid)->firstOrFail();
-        $topic->update(['name' => $request->name, 'updated_by' => auth()->id()]);
-        return $topic;
+        $request->validate = array('name' => 'required|string' );
+        $topic->name = $request->name;
+        $topic->save();
+        return $this->show($topic);
     }
 
     /**
@@ -146,13 +163,23 @@ class DomainsTagsController extends Controller
      * @param boolean return (Whether to return data or just a success of the destroy)
      * @return \Illuminate\Http\Response
      */
-    public function destroy(DomainsTags $domainsTags, $return=true)
+    public function destroy(DomainsTags $domainsTags)
     {
-        $domainsTags->topics()->update(['deleted_by' => auth()->id()]);
-        $domainsTags->topics()->delete();
-        $domainsTags->update(['deleted_by' => auth()->id()]);
-        $domainsTags->delete();
-        return $return ? $this->index(new Request) : true;
+        try {
+            DB::transaction(function ()use($domainsTags) {
+                DomainsTags::where('parent_id', $domainsTags->id)->update([
+                    'deleted_by' => auth()->id(),
+                    'status'     => DomainsTags::STATUS['Deleted']
+                ]);
+                DomainsTags::where('parent_id', $domainsTags->id)->delete();
+                $domainsTags->delete();
+            });
+
+        } catch (Exception $e) {
+            return response($e->getMessage(), 500);
+        }
+        
+        return $this->index(new Request);
     }
 
     /**
@@ -169,9 +196,9 @@ class DomainsTagsController extends Controller
                 if(Str::isUuid($domain_uuid) && DomainsTags::whereUuid($domain_uuid)->exists()){
                     $domain = DomainsTags::whereUuid($domain_uuid)->firstOrFail();
                     $domain->update([
-                        'status' => 'approved',
-                        'approved_by' => auth()->id(),
-                        'approved_at' => now()
+                        'status'        => DomainsTags::STATUS['Approved'],
+                        'approved_by'   => auth()->id(),
+                        'approved_at'   => now()
                     ]);
                 }else{
                     throw new Exception("data is not valid");
@@ -196,8 +223,14 @@ class DomainsTagsController extends Controller
         DB::beginTransaction();
         try {
             foreach($request->all() as $domain_uuid){
-                if(Str::isUuid($domain_uuid) && DomainsTags::whereUuid($domain_uuid)->exists()){
-                    $this->destroy(DomainsTags::whereUuid($domain_uuid)->first());
+                if(Str::isUuid($domain_uuid) && DomainsTags::domains()->whereUuid($domain_uuid)->exists()){
+                    $domainsTags = DomainsTags::domains()->whereUuid($domain_uuid)->first();
+                    DomainsTags::where('parent_id', $domainsTags->id)->update([
+                        'deleted_by' => auth()->id(),
+                        'status'     => DomainsTags::STATUS['Deleted']
+                    ]);
+                    DomainsTags::where('parent_id', $domainsTags->id)->delete();
+                    $domainsTags->delete();
                 }else{
                     throw new Exception("data is not valid");
                 }

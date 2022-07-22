@@ -55,8 +55,9 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
         Route::post('schools/action/mass_approve', [App\Http\Controllers\SchoolController::class, "massApprove"]);
 
         Route::delete('organizations/action/mass_delete', [App\Http\Controllers\OrganizationController::class, "massDelete"]);
-
-        Route::put('domains/topic/{topic}', [App\Http\Controllers\DomainsTagsController::class, 'update_topic']);
+       
+        Route::post('tags', [App\Http\Controllers\DomainsTagsController::class, "store"])->name('tags.store');
+        Route::put('domains/topic/{domain}', [App\Http\Controllers\DomainsTagsController::class, 'update_topic']);
         Route::post('domains/action/mass_approve', [App\Http\Controllers\DomainsTagsController::class, "massApprove"]);
         Route::delete('domains/action/mass_delete', [App\Http\Controllers\DomainsTagsController::class, "massDelete"]);
 

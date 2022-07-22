@@ -2,13 +2,14 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Route;
 
 class StoreDomainsTagsRequest extends CreateBaseRequest
 {
     function __construct()
     {
-        $this->key = 'domains_tags';
+        parent::__construct();
+        $this->key = Route::currentRouteName() === 'domains.store' ? 'domain' : 'tag';
         $this->unique_fields = ['name'];
     }
 
@@ -29,7 +30,6 @@ class StoreDomainsTagsRequest extends CreateBaseRequest
     {
         return [
             $key.'.name'            => 'required|string|max:132',
-            $key.'.is_tag'          => 'required|boolean',
             $key.'.topics'          => 'array',
         ];
     }

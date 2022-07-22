@@ -103,7 +103,7 @@ class School extends BaseModel
             $search = $request->search;
             $data = $data->where(function($query)use($search){
                 $query->where('schools.name', 'LIKE', '%'. $search. '%');
-                foreach(School::FILTER_COLUMNS as $column){
+                foreach(self::FILTER_COLUMNS as $column){
                     $query->orwhere('schools.'. $column, 'LIKE', '%'. $search. '%');
                 }
             });
