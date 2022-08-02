@@ -39,7 +39,8 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
             'roles'                     => App\Http\Controllers\RoleController::class,
             'domains'                   => App\Http\Controllers\DomainsTagsController::class,
             'difficulty_groups'         => App\Http\Controllers\DifficultyGroupController::class,
-            'collections'               => App\Http\Controllers\CollectionController::class
+            'collections'               => App\Http\Controllers\CollectionController::class,
+            'competitions'               => App\Http\Controllers\competitionController::class,
         ]);
 
         Route::apiResource('country_partners', App\Http\Controllers\User\CountryPartnerController::class)->except('index');

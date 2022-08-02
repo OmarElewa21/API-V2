@@ -53,7 +53,7 @@ class StoreCollectionRequest extends CreateBaseRequest
         if(Arr::has($this->get($key), 'tags')){
             foreach($this->get($key)['tags'] as $k=>$tag){
                 $validation_arr = array_merge($validation_arr, [
-                    $key.'.tags.'.$k      => Rule::exists(\App\Models\DomainsTags::class, 'id')->whereNull('deleted_at')
+                    $key.'.tags.'.$k      => Rule::exists(\App\Models\DomainsTags::class, 'id')->where('is_tag', 1)->whereNull('deleted_at')
                 ]);
             }
         }
