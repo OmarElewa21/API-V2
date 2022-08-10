@@ -15,6 +15,7 @@ return new class extends Migration
     {
         Schema::create('rounds', function (Blueprint $table) {
             $table->id();
+            $table->unsignedTinyInteger('index');
             $table->foreignId('competition_id')->constrained();
             $table->string('label');
             $table->set('configurations', ['Team', 'Individual'])->default('Team');

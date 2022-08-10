@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Dyrynda\Database\Support\GeneratesUuid;
 use Illuminate\Database\Eloquent\Casts\AsArrayObject;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -13,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class Collection extends BaseModel
 {
-    use SoftDeletes, GeneratesUuid, PowerJoins;
+    use GeneratesUuid, PowerJoins;
 
     protected $fillable = [
         'name',
@@ -66,6 +64,24 @@ class Collection extends BaseModel
     public function sections()
     {
         return $this->hasMany(Section::class);
+    }
+
+    public function tasks()
+    {
+        $sections =  $this->sections()->with('tasks')->get();
+        if(empty($sections)){
+            return $sections;
+        }
+        $sections = $sections->map(function ($item, $key){
+            if(empty($item->tasks)){
+                return [];
+            }
+            foreach($item->tasks as $task){
+                $task->section = 'Section ' . $item->index;
+            }
+            return $item->tasks;
+        })->flatten();
+        return $sections;
     }
 
     public static function applyFilter($filterOptions, $data){

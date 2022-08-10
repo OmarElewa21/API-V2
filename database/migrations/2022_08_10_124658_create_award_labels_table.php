@@ -13,9 +13,13 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('difficulty_and_points', function (Blueprint $table) {
+        Schema::create('award_labels', function (Blueprint $table) {
             $table->id();
-            
+            $table->foreignId('award_id')->constrained();
+            $table->unsignedTinyInteger('round_index')->nullable();
+            $table->string('label');
+            $table->float('min_points')->default(0);
+            $table->float('percentage')->default(0);
             $table->timestamps();
         });
     }
@@ -27,6 +31,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('difficulty_and_points');
+        Schema::dropIfExists('award_labels');
     }
 };

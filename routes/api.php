@@ -40,7 +40,7 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
             'domains'                   => App\Http\Controllers\DomainsTagsController::class,
             'difficulty_groups'         => App\Http\Controllers\DifficultyGroupController::class,
             'collections'               => App\Http\Controllers\CollectionController::class,
-            'competitions'               => App\Http\Controllers\competitionController::class,
+            'competitions'              => App\Http\Controllers\competitionController::class,
         ]);
 
         Route::apiResource('country_partners', App\Http\Controllers\User\CountryPartnerController::class)->except('index');
@@ -75,6 +75,10 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
 
         Route::post('collections/action/mass_approve', [App\Http\Controllers\CollectionController::class, "massApprove"]);
         Route::delete('collections/action/mass_delete', [App\Http\Controllers\CollectionController::class, "massDelete"]);
+
+        Route::get('difficulty_and_points/byRound/{round_level}', [App\Http\Controllers\DifficultyAndPointsController::class, 'index']);
+        Route::get('difficulty_and_points/byCollection/{collection}', [App\Http\Controllers\DifficultyAndPointsController::class, 'indexBlank']);
+        Route::post('difficulty_and_points', [App\Http\Controllers\DifficultyAndPointsController::class, 'store']);
     });
 
     Route::middleware(['role:super admin|admin|country partner', 'users:country_partner_assistant'])

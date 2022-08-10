@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Dyrynda\Database\Support\GeneratesUuid;
 use Kirschbaum\PowerJoins\PowerJoins;
 use Dyrynda\Database\Casts\EfficientUuid;
-use Illuminate\Support\Facades\DB;
 
 class Round extends BaseModel
 {
@@ -14,6 +13,7 @@ class Round extends BaseModel
 
     protected $fillable = [
         'competition_id',
+        'index',
         'label',
         'configurations',
         'contribute_to_individual_score',
@@ -24,10 +24,6 @@ class Round extends BaseModel
         'updated_by',
         'deleted_at',
         'deleted_by'
-    ];
-
-    protected $casts = [
-        'uuid'              => EfficientUuid::class
     ];
 
     public static function booted()

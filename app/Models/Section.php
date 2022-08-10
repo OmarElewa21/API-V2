@@ -41,6 +41,6 @@ class Section extends BaseModel
 
     public function tasks()
     {
-        return $this->belongsToMany(Task::class);
+        return $this->belongsToMany(Task::class)->withPivot('index', 'in_group', 'group_index');
     }
 }

@@ -108,6 +108,9 @@ class RouteServiceProvider extends ServiceProvider
         Route::bind('collection', function ($value) {
             return \App\Models\Collection::whereUuid($value)->firstOrFail();
         });
+        Route::bind('round_level', function ($value) {
+            return \App\Models\RoundLevel::whereUuid($value)->firstOrFail();
+        });
     }
 
     /**

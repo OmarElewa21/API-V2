@@ -99,6 +99,11 @@ class Task extends BaseModel
         return $this->hasMany(TaskContent::class);
     }
 
+    public function section()
+    {
+        return $this->belongsToMany(Section::class)->withPivot('index', 'in_group', 'group_index');
+    }
+
     public function getLanguagesAttribute()
     {
         $langs = $this->task_content()->joinRelationship('language')->select('task_contents.status', 'languages.name')->get();

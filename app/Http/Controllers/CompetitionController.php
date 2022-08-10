@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Competition;
 use App\Models\CompetitionPartner;
 use App\Models\Round;
+use App\Models\RoundLevel;
 use App\Http\Requests\competition\StoreCompetitionRequest;
 use App\Http\Requests\competition\UpdatecompetitionRequest;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ class CompetitionController extends Controller
      */
     public function index(Request $request)
     {
-        //
+        
     }
 
     /***************************************** Storing *****************************************/
@@ -69,10 +70,25 @@ class CompetitionController extends Controller
      */
     private function storeRounds(Competition $competition, $data)
     {
-        foreach($data['rounds'] as $round){
+        foreach($data['rounds'] as $index=>$round){
             $round['competition_id'] = $competition->id;
-            Round::create($round);
+            $round['index'] = $index+1;
+            $stored_round = Round::create($round);
+            foreach($round['levels'] as $round_level){
+                $round_level['round_id'] = $stored_round->id;
+                RoundLevel::create($round_level);
+            }
         }
+    }
+
+    /**
+     * store awards for comptetion
+     * @param \App\Models\Competition  $competition
+     * @param array $data
+     */
+    public function storeAwards(Competition $competition, $data)
+    {
+        
     }
 
     /**
@@ -104,6 +120,7 @@ class CompetitionController extends Controller
                 }
                 $this->storePartners($competition, $data);
                 $this->storeRounds($competition, $data);
+                $this->storeAwards();
 
             } catch (\Exception $e) {
                 DB::rollBack();
