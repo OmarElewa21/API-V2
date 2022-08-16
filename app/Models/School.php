@@ -117,9 +117,9 @@ class School extends BaseModel
         
         return collect([
             'filterOptions' => [
-                    'type'      => [$filter->selectRaw("CASE WHEN is_tuition_centre=1 THEN 'tuition centre' ELSE 'school' END AS type")
-                                        ->pluck('type')->unique()->values()],
-                    'country'   => [$filter->pluck('name', 'country_id')],
+                    'type'      => $filter->selectRaw("CASE WHEN is_tuition_centre=1 THEN 'tuition centre' ELSE 'school' END AS type")
+                                        ->pluck('type')->unique()->values(),
+                    'country'   => $filter->pluck('name', 'country_id'),
                     'status'    => $filter->pluck('status')->unique()->values()
                 ]
             ]);

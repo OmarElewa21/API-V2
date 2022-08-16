@@ -9,10 +9,13 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Kirschbaum\PowerJoins\PowerJoins;
 use Dyrynda\Database\Casts\EfficientUuid;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 
 class Competition extends BaseModel
 {
     use SoftDeletes, GeneratesUuid, PowerJoins;
+
+    const FILTER_COLUMNS = ['name', 'description'];
 
     protected $fillable = [
         'name',
@@ -33,8 +36,10 @@ class Competition extends BaseModel
     ];
 
     protected $casts = [
-        'uuid'              => EfficientUuid::class,
-        'grades'            => AsArrayObject::class
+        'uuid'                          => EfficientUuid::class,
+        'grades'                        => AsArrayObject::class,
+        'global_competition_start_date' => 'datetime:Y/m/d',
+        'global_competition_end_date'   => 'datetime:Y/m/d'
     ];
 
     public static function booted()
@@ -49,5 +54,75 @@ class Competition extends BaseModel
     public function tags()
     {
         return $this->belongsToMany(DomainsTags::class, 'collection_tag', 'collection_id', 'tag_id');
+    }
+
+    public function partners()
+    {
+        return $this->hasMany(CompetitionPartner::class);
+    }
+
+    public function rounds()
+    {
+        return $this->hasMany(Round::class);
+    }
+
+    public function awards()
+    {
+        return $this->hasMany(Award::class);
+    }
+
+    public function overall_award()
+    {
+        return $this->hasMany(Award::class)->where('is_overall', 1);
+    }
+
+    public function round_awards()
+    {
+        return $this->hasMany(Award::class)->where('is_overall', 0);
+    }
+
+    public static function getFilterForFrontEnd($filter){
+        return collect([
+            'filterOptions' => [
+                    'format'    => $filter->pluck('competition_format')->unique()->values(),
+                    'tag'       => $filter->get()->pluck('tags')->unique()
+                                        ->filter(function ($value, $key) {
+                                            return count($value) !== 0;
+                                    })->flatten()->pluck('name', 'id'),
+                    'status'    => $filter->pluck('status')->unique()->values()
+                ]
+            ]);
+    }
+
+    public static function applyFilter(Request $request, $data){   
+        if($request->has('filterOptions') && gettype($request->filterOptions) === 'string'){
+            $filterOptions = json_decode($request->filterOptions, true);
+
+            if(isset($filterOptions['format']) && !is_null($filterOptions['format'])){
+                $data->where('competition_format', $filterOptions['format']);
+            }
+    
+            if(isset($filterOptions['tags']) && !is_null($filterOptions['tags'] && is_array($filterOptions['tags']))){
+                foreach($filterOptions['tags'] as $tag_id){
+                    $data->whereRelation('tags', 'id', $tag_id);
+                }
+            }
+    
+            if(isset($filterOptions['status']) && !is_null($filterOptions['status'])){
+                $data->where('status', $filterOptions['status']);
+            }
+        }
+
+        if($request->filled('search')){
+            $search = $request->search;
+            $data->where(function($query)use($search){
+                $query->where('competitions.name', 'LIKE', '%'. $search. '%');
+                foreach(self::FILTER_COLUMNS as $column){
+                    $query->orwhere('competitions.' . $column, 'LIKE', '%'. $search. '%');
+                }
+            });
+        }
+
+        return $data;
     }
 }

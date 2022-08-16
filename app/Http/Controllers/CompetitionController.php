@@ -6,6 +6,8 @@ use App\Models\Competition;
 use App\Models\CompetitionPartner;
 use App\Models\Round;
 use App\Models\RoundLevel;
+use App\Models\Award;
+use App\Models\AwardLabel;
 use App\Http\Requests\competition\StoreCompetitionRequest;
 use App\Http\Requests\competition\UpdatecompetitionRequest;
 use Illuminate\Http\Request;
@@ -22,12 +24,32 @@ class CompetitionController extends Controller
      */
     public function index(Request $request)
     {
+        $data = Competition::with([
+                'partners' => function($query){
+                    $query->joinRelationship('partner')->joinRelationship('partner.country')
+                        ->select('competition_partners.competition_id', 'competition_partners.partner_id', 'users.name as partner_name', 'countries.name');
+                },
+                'tags:id,name',
+                'rounds' => function($query){
+                    $query->joinRelationship('round_level')->joinRelationship('round_level.collection')
+                        ->select('rounds.id', 'rounds.competition_id', 'round_levels.level', 'round_levels.grades', 'collections.name');
+                },
+                'round_awards:id,competition_id,labels'
+            ])->withCount('partners', 'tags', 'rounds');
         
+        Competition::applyFilter($request, $data);
+
+        $filterOptions = Competition::getFilterForFrontEnd($data);
+        
+        return response($filterOptions->merge($data
+                ->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5)
+                )->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']), 200); 
     }
+
 
     /***************************************** Storing *****************************************/
     /**
-     * store partner for comptetion
+     * store partner for competition
      * @param \App\Models\Competition  $competition
      * @param array $data
      */
@@ -88,7 +110,13 @@ class CompetitionController extends Controller
      */
     public function storeAwards(Competition $competition, $data)
     {
-        
+        foreach($data['awards'] as $index=>$award){
+            $award['competition_id'] = $competition->id;
+            if($index === 'overall'){
+                $award['is_overall'] = 1;
+            }
+            Award::create($award);
+        }
     }
 
     /**
@@ -120,7 +148,7 @@ class CompetitionController extends Controller
                 }
                 $this->storePartners($competition, $data);
                 $this->storeRounds($competition, $data);
-                $this->storeAwards();
+                $this->storeAwards($competition, $data);
 
             } catch (\Exception $e) {
                 DB::rollBack();
@@ -139,7 +167,7 @@ class CompetitionController extends Controller
      */
     public function show(Competition $competition)
     {
-        //
+        
     }
 
     /**

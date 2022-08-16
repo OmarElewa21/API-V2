@@ -40,13 +40,14 @@ class DifficultyAndPointsController extends Controller
      */
     public function store(StoreDifficultyAndPointsRequest $request)
     {
-        DB::transaction(function () use($request) {
-            $identifier = Str::random(16);
+        $identifier = Str::random(16);
+        DB::transaction(function () use($request, $identifier) {
             foreach($request->tasks as $data){
                 $data['identifier'] = $identifier;
                 DifficultyAndPoints::create($data);
             }
         });
-        return response(200);
+        
+        return response()->json(["identifier" => $identifier], 200);
     }
 }

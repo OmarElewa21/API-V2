@@ -34,4 +34,9 @@ class Round extends BaseModel
             $q->created_by = auth()->id();
         });
     }
+
+    public function round_level()
+    {
+        return $this->hasMany(RoundLevel::class);
+    }
 }
