@@ -13,14 +13,14 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('competition_partners', function (Blueprint $table) {
+        Schema::create('competition_organizations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('competition_id')->constrained();
-            $table->foreignId('partner_id')->constrained('users');
-            $table->boolean('allow_session_edits_by_partner')->default(true);
+            $table->foreignId('organization_id')->constrained();
+            $table->boolean('allow_session_edits_by_partners')->default(true);
             $table->date('registration_open');
             $table->json('competition_dates');
-            $table->set('status', ['Active', 'Ready'])->default('Active');
+            $table->set('status', ['Active', 'Locked', 'Ready', 'Rejected', 'Pending'])->default('Active');
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->foreignId('deleted_by')->nullable()->constrained('users');
@@ -37,6 +37,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('competition_partners');
+        Schema::dropIfExists('competition_organizations');
     }
 };

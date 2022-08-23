@@ -56,9 +56,9 @@ class Competition extends BaseModel
         return $this->belongsToMany(DomainsTags::class, 'collection_tag', 'collection_id', 'tag_id');
     }
 
-    public function partners()
+    public function organizations()
     {
-        return $this->hasMany(CompetitionPartner::class);
+        return $this->hasMany(CompetitionOrganization::class);
     }
 
     public function rounds()

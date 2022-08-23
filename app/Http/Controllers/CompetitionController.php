@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Competition;
-use App\Models\CompetitionPartner;
+use App\Models\CompetitionOrganization;
 use App\Models\Round;
 use App\Models\RoundLevel;
 use App\Models\Award;
@@ -25,9 +25,9 @@ class CompetitionController extends Controller
     public function index(Request $request)
     {
         $data = Competition::with([
-                'partners' => function($query){
-                    $query->joinRelationship('partner')->joinRelationship('partner.country')
-                        ->select('competition_partners.competition_id', 'competition_partners.partner_id', 'users.name as partner_name', 'countries.name');
+                'organizations' => function($query){
+                    $query->joinRelationship('organization')
+                        ->select('competition_organizations.competition_id', 'competition_organizations.organization_id', 'organizations.name');
                 },
                 'tags:id,name',
                 'rounds' => function($query){
@@ -35,7 +35,7 @@ class CompetitionController extends Controller
                         ->select('rounds.id', 'rounds.competition_id', 'round_levels.level', 'round_levels.grades', 'collections.name');
                 },
                 'round_awards:id,competition_id,labels'
-            ])->withCount('partners', 'tags', 'rounds');
+            ])->withCount('organizations', 'tags', 'rounds');
         
         Competition::applyFilter($request, $data);
 
@@ -49,35 +49,37 @@ class CompetitionController extends Controller
 
     /***************************************** Storing *****************************************/
     /**
-     * store partner for competition
+     * store organizations for competition
      * @param \App\Models\Competition  $competition
      * @param array $data
      */
-    private function storePartners(Competition $competition, $data)
+    private function storeOrganizations(Competition $competition, $data)
     {
-        foreach($data['partners'] as $partner){
-            $partner['competition_dates'] = 
-                Arr::map(explode('-', $partner['competition_dates']), function ($value, $key) {
+        foreach($data['organizations'] as $organization){
+            $organization['competition_dates'] = 
+                Arr::map(explode('-', $organization['competition_dates']), function ($value, $key) {
                     return Carbon::createFromFormat('m/d/Y', $value)->format('Y-m-d');
                 });
-            $partner['competition_id'] = $competition->id;
-            $partner['registration_open'] = Carbon::createFromFormat('m/d/Y', $partner['registration_open'])->format('Y-m-d');
+            $organization['competition_id'] = $competition->id;
+            $organization['registration_open'] = Carbon::createFromFormat('m/d/Y', $organization['registration_open'])->format('Y-m-d');
             
-            $competition_parnter = CompetitionPartner::create($partner);
+            CompetitionOrganization::create($organization);
 
-            if(Arr::has($partner, 'languages_to_translate')){
-                foreach($partner['languages_to_translate'] as $lang_id){
-                    DB::table('competition_parnter_languages')->insert([
-                        'competition_partner_id'    => $competition_parnter->id,
+            if(Arr::has($organization, 'languages_to_translate')){
+                foreach($organization['languages_to_translate'] as $lang_id){
+                    DB::table('competition_organization_languages')->insert([
+                        'competition_id'            => $competition->id,
+                        'organization_id'           => $organization['organization_id'],
                         'language_id'               => $lang_id,
                         'to_view'                   => false
                     ]);
                 }
             }
-            if(Arr::has($partner, 'languages_to_view')){
-                foreach($partner['languages_to_view'] as $lang_id){
-                    DB::table('competition_parnter_languages')->insert([
-                        'competition_partner_id'    => $competition_parnter->id,
+            if(Arr::has($organization, 'languages_to_view')){
+                foreach($organization['languages_to_view'] as $lang_id){
+                    DB::table('competition_organization_languages')->insert([
+                        'competition_id'            => $competition->id,
+                        'organization_id'           => $organization['organization_id'],
                         'language_id'               => $lang_id
                     ]);
                 }
@@ -146,7 +148,7 @@ class CompetitionController extends Controller
                         ]);
                     }
                 }
-                $this->storePartners($competition, $data);
+                $this->storeOrganizations($competition, $data);
                 $this->storeRounds($competition, $data);
                 $this->storeAwards($competition, $data);
 
@@ -167,19 +169,92 @@ class CompetitionController extends Controller
      */
     public function show(Competition $competition)
     {
-        
+        return response($competition->load('organizations', 'tags:id,name', 'rounds', 'rounds.round_level', 'awards'), 200);
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \App\Http\Requests\UpdatecompetitionRequest  $request
+     * @param  \App\Http\Requests\UpdateCompetitionRequest  $request
      * @param  \App\Models\Competition  $competition
      * @return \Illuminate\Http\Response
      */
     public function update(UpdateCompetitionRequest $request, Competition $competition)
     {
-        //
+        if($request->has('settings')){
+            $competition->update($request->all());
+            if(Arr::has($request->settings, 'tags')){
+                foreach($data['tags'] as $tag){
+                    DB::table('competition_tag')->where('competition_id', $competition->id)->delete();
+                    DB::table('competition_tag')->insert([
+                        'competition_id'       => $competition->id,
+                        'tag_id'              => $tag,
+                    ]);
+                }
+            }
+        }
+        elseif($request->has('organizations')){
+            $this->updateComptetionOrganizations($request->organizations, $competition);
+        }
+        elseif($request->has('rounds')){
+            $this->updateRounds($request->rounds, $competition);
+        }
+        elseif($request->has('awards')){
+            $this->updateAwards($request->awards, $competition);
+        }
+    }
+
+    /**
+     * update organizations
+     * @param array $organizations
+     * @param int $competition_id
+     */
+    private function updateComptetionOrganizations($organizations, Competition $competition){
+        foreach($organizations as $organization){
+            if(CompetitionOrganization::where('organization_id', $organization['organization_id'])
+                ->where('competition_id', $competition->id)->exists())
+            {
+                CompetitionOrganization::where('organization_id', $organization['organization_id'])
+                ->where('competition_id', $competition->id)->first()->update($organization);
+            }else{
+                CompetitionOrganization::create($organization);
+                if(Arr::has($organization, 'languages_to_translate')){
+                    foreach($organization['languages_to_translate'] as $lang_id){
+                        DB::table('competition_organization_languages')->insert([
+                            'competition_id'            => $competition->id,
+                            'organization_id'           => $organization['organization_id'],
+                            'language_id'               => $lang_id,
+                            'to_view'                   => false
+                        ]);
+                    }
+                }
+                if(Arr::has($organization, 'languages_to_view')){
+                    foreach($organization['languages_to_view'] as $lang_id){
+                        DB::table('competition_organization_languages')->insert([
+                            'competition_id'            => $competition->id,
+                            'organization_id'           => $organization['organization_id'],
+                            'language_id'               => $lang_id
+                        ]);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 
+     */
+    private function updateRounds($rounds, Competition $competition){
+        $competition->rounds()->delete();
+        $this->storeRounds($competition, [$rounds]);
+    }
+
+    /**
+     * 
+     */
+    private function updateAwards($awards, Competition $competition){
+        $competition->awards()->delete();
+        $this->storeAwards($competition, [$awards]);
     }
 
     /**
@@ -190,6 +265,8 @@ class CompetitionController extends Controller
      */
     public function destroy(Competition $competition)
     {
-        //
+        $competition->deleted_by = auth()->id();
+        $competition->save();
+        $competition->delete();
     }
 }

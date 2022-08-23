@@ -42,13 +42,15 @@ class StoreCompetitionRequest extends CreateBaseRequest
             $key.'.difficulty_group_id'             => ['required',
                                                             Rule::exists(\App\Models\DifficultyGroup::class, 'id')
                                                             ->whereNull('deleted_at')->where('status', 'Active')],
-            $key.'.partners'                        => 'required|array',
+            $key.'.organizations'                   => 'required|array',
             $key.'.rounds'                          => 'required|array',
+            $key.'.awards'                          => 'required|array',
         ];
 
         $validation_arr = $this->tags_validation($key, $validation_arr);
-        $validation_arr = $this->partners_validation($key, $validation_arr);
+        $validation_arr = $this->organizations_validation($key, $validation_arr);
         $validation_arr = $this->rounds_validation($key, $validation_arr);
+        $validation_arr = $this->awards_validation($key, $validation_arr);
 
         return $validation_arr;
     }
@@ -71,16 +73,16 @@ class StoreCompetitionRequest extends CreateBaseRequest
     /**
      * @return (array) rules
      */
-    private function partners_validation($key, $validation_arr)
+    private function organizations_validation($key, $validation_arr)
     {
-        foreach($this->get($key)['partners'] as $k=>$partner){
+        foreach($this->get($key)['organizations'] as $k=>$partner){
             $validation_arr = array_merge($validation_arr, [
-                $key.'.partners.'.$k.'.partner_id'                        => ['required', Rule::exists(\App\Models\User::class, 'id')->whereNull('deleted_at')],
-                $key.'.partners.'.$k.'.allow_session_edits_by_partner'    => 'boolean',
-                $key.'.partners.'.$k.'.registration_open'                 => 'required|date',
-                $key.'.partners.'.$k.'.competition_dates'                 => 'required|string',
-                $key.'.partners.'.$k.'.languages_to_view'                 => 'array',
-                $key.'.partners.'.$k.'.languages_to_translate'            => 'array',
+                $key.'.organizations.'.$k.'.organization_id'                   => ['required', Rule::exists(\App\Models\User::class, 'id')->whereNull('deleted_at')],
+                $key.'.organizations.'.$k.'.allow_session_edits_by_partners'   => 'boolean',
+                $key.'.organizations.'.$k.'.registration_open'                 => 'required|date',
+                $key.'.organizations.'.$k.'.competition_dates'                 => 'required|string',
+                $key.'.organizations.'.$k.'.languages_to_view'                 => 'array',
+                $key.'.organizations.'.$k.'.languages_to_translate'            => 'array',
             ]);
         }
 
@@ -92,7 +94,7 @@ class StoreCompetitionRequest extends CreateBaseRequest
      */
     private function rounds_validation($key, $validation_arr)
     {
-        foreach($this->get($key)['rounds'] as $k=>$partner){
+        foreach($this->get($key)['rounds'] as $k=>$round){
             $validation_arr = array_merge($validation_arr, [
                 $key.'.rounds.'.$k.'.label'                             => 'required',
                 $key.'.rounds.'.$k.'.configurations'                    => 'required|in:Team,Individual',
@@ -100,6 +102,23 @@ class StoreCompetitionRequest extends CreateBaseRequest
                 $key.'.rounds.'.$k.'.tasks_assigned_by_leader'          => 'boolean',
                 $key.'.rounds.'.$k.'.free_for_all'                      => 'boolean',
                 $key.'.rounds.'.$k.'.contribute_to_individual_score'    => 'required|boolean',
+            ]);
+        }
+
+        return $validation_arr;
+    }
+
+    private function awards_validation($key, $validation_arr)
+    {
+        foreach($this->get($key)['awards'] as $k=>$award){
+            $validation_arr = array_merge($validation_arr, [
+                $key.'.awards.'.$k.'.by_position'                             => 'boolean|required',
+                $key.'.awards.'.$k.'.use_grade_to_assign_points'              => 'boolean',
+                $key.'.awards.'.$k.'.min_points'                              => 'numeric',
+                $key.'.awards.'.$k.'.use_min_points_for_all'                  => 'boolean',
+                $key.'.awards.'.$k.'.default_award'                           => 'string',
+                $key.'.awards.'.$k.'.labels'                                  => 'required|array',
+                $key.'.awards.'.$k.'.percentage'                              => 'numeric',
             ]);
         }
 

@@ -13,8 +13,9 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('competition_parnter_languages', function (Blueprint $table) {
-            $table->foreignId('competition_partner_id')->constrained();
+        Schema::create('competition_organization_languages', function (Blueprint $table) {
+            $table->foreignId('competition_id')->constrained();
+            $table->foreignId('organization_id')->constrained();
             $table->foreignId('language_id')->constrained();
             $table->boolean('to_view')->default(true);
         });
@@ -27,6 +28,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('competition_parnter_languages');
+        Schema::dropIfExists('competition_organization_languages');
     }
 };

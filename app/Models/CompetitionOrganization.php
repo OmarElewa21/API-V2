@@ -10,14 +10,14 @@ use Kirschbaum\PowerJoins\PowerJoins;
 use Dyrynda\Database\Casts\EfficientUuid;
 use Illuminate\Support\Facades\DB;
 
-class CompetitionPartner extends BaseModel
+class CompetitionOrganization extends BaseModel
 {
     use SoftDeletes, GeneratesUuid, PowerJoins;
 
     protected $fillable = [
         'competition_id',
-        'partner_id',
-        'allow_session_edits_by_partner',
+        'organization_id',
+        'allow_session_edits_by_partners',
         'registration_open',
         'competition_dates',
         'status',
@@ -47,8 +47,8 @@ class CompetitionPartner extends BaseModel
         return $this->belongsTo(Competition::class);
     }
 
-    public function partner()
+    public function organization()
     {
-        return $this->belongsTo(User::class, 'partner_id');
+        return $this->belongsTo(Organization::class);
     }
 }
