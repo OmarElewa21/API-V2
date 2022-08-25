@@ -181,80 +181,51 @@ class CompetitionController extends Controller
      */
     public function update(UpdateCompetitionRequest $request, Competition $competition)
     {
-        if($request->has('settings')){
-            $competition->update($request->all());
-            if(Arr::has($request->settings, 'tags')){
-                foreach($data['tags'] as $tag){
-                    DB::table('competition_tag')->where('competition_id', $competition->id)->delete();
-                    DB::table('competition_tag')->insert([
-                        'competition_id'       => $competition->id,
-                        'tag_id'              => $tag,
-                    ]);
+        DB::beginTransaction();
+        try {
+            if($request->has('settings')){
+                $data = $request->settings;
+                if(Arr::has($data, 'global_competition_start_date')){
+                    $data['global_competition_start_date'] = Carbon::createFromFormat('m/d/Y', $data['global_competition_start_date'])->format('Y-m-d');
                 }
-            }
-        }
-        elseif($request->has('organizations')){
-            $this->updateComptetionOrganizations($request->organizations, $competition);
-        }
-        elseif($request->has('rounds')){
-            $this->updateRounds($request->rounds, $competition);
-        }
-        elseif($request->has('awards')){
-            $this->updateAwards($request->awards, $competition);
-        }
-    }
-
-    /**
-     * update organizations
-     * @param array $organizations
-     * @param int $competition_id
-     */
-    private function updateComptetionOrganizations($organizations, Competition $competition){
-        foreach($organizations as $organization){
-            if(CompetitionOrganization::where('organization_id', $organization['organization_id'])
-                ->where('competition_id', $competition->id)->exists())
-            {
-                CompetitionOrganization::where('organization_id', $organization['organization_id'])
-                ->where('competition_id', $competition->id)->first()->update($organization);
-            }else{
-                CompetitionOrganization::create($organization);
-                if(Arr::has($organization, 'languages_to_translate')){
-                    foreach($organization['languages_to_translate'] as $lang_id){
-                        DB::table('competition_organization_languages')->insert([
-                            'competition_id'            => $competition->id,
-                            'organization_id'           => $organization['organization_id'],
-                            'language_id'               => $lang_id,
-                            'to_view'                   => false
-                        ]);
-                    }
+                if(Arr::has($data, 'global_competition_end_date')){
+                    $data['global_competition_end_date'] = Carbon::createFromFormat('m/d/Y', $data['global_competition_end_date'])->format('Y-m-d');
                 }
-                if(Arr::has($organization, 'languages_to_view')){
-                    foreach($organization['languages_to_view'] as $lang_id){
-                        DB::table('competition_organization_languages')->insert([
-                            'competition_id'            => $competition->id,
-                            'organization_id'           => $organization['organization_id'],
-                            'language_id'               => $lang_id
+                
+                $competition->update($data);
+                if(Arr::has($data['tags'], 'tags')){
+                    foreach($data['tags'] as $tag){
+                        DB::table('competition_tag')->where('competition_id', $competition->id)->delete();
+                        DB::table('competition_tag')->insert([
+                            'competition_id'       => $competition->id,
+                            'tag_id'              => $tag,
                         ]);
                     }
                 }
             }
+            elseif($request->has('organizations')){
+                $competition->organizations()->delete();
+                $this->storeOrganizations($competition, $request->all());
+            }
+            elseif($request->has('rounds')){
+                $competition->rounds()->delete();
+                $this->storeRounds($competition, $request->all());
+            }
+            elseif($request->has('awards')){
+                $competition->awards()->delete();
+                $this->storeAwards($competition, $request->all());
+            }
+
+            $competition->updated_by = auth()->id();
+            $competition->save();
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => $e->getMessage()], 500);
         }
-    }
 
-    /**
-     * 
-     */
-    private function updateRounds($rounds, Competition $competition){
-        $competition->rounds()->delete();
-        $this->storeRounds($competition, [$rounds]);
-    }
-
-    /**
-     * 
-     */
-    private function updateAwards($awards, Competition $competition){
-        $competition->awards()->delete();
-        $this->storeAwards($competition, [$awards]);
+        DB::commit();
+        return $this->show($competition);
     }
 
     /**
@@ -268,5 +239,6 @@ class CompetitionController extends Controller
         $competition->deleted_by = auth()->id();
         $competition->save();
         $competition->delete();
+        return $this->index(new Request);
     }
 }

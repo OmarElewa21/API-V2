@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Competition;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
@@ -46,7 +46,7 @@ class UpdateCompetitionRequest extends FormRequest
         }
 
         if($this->has('organizations')){
-            foreach($this->organizations as $k=>$partner){
+            foreach($this->organizations as $k=>$organization){
                 $validation_arr = array_merge($validation_arr, [
                     'organizations.'.$k.'.organization_id'                   => ['required', Rule::exists(\App\Models\User::class, 'id')->whereNull('deleted_at')],
                     'organizations.'.$k.'.allow_session_edits_by_partners'   => 'boolean',
