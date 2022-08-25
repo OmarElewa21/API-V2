@@ -74,7 +74,7 @@ class StoreTaskRequest extends CreateBaseRequest
         if(Arr::has($this->get($key), 'topics')){
             foreach($this->get($key)['topics'] as $k=>$domain){
                 $validation_arr = array_merge($validation_arr, [
-                    $key.'.topics.'.$k      => Rule::exists(\App\Models\Topic::class, 'id')->whereNull('deleted_at')
+                    $key.'.topics.'.$k      => Rule::exists(\App\Models\DomainsTags::class, 'id')->where('is_tag', 0)->whereNull('deleted_at')->whereNotNull('parent_id')
                 ]);
             }
         }

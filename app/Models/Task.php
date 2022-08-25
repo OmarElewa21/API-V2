@@ -66,17 +66,9 @@ class Task extends BaseModel
         );
     }
 
-    public function domainsOnly()
-    {
-        return $this->belongsToMany(DomainsTags::class, 'task_domains', 'task_id', 'relation_id')->wherePivot('relation_type', 'App\Models\DomainsTags')->wherePivot('is_tag', 0);
-    }
-
     public function domains()
     {
-        $topics_Ids = $this->topics()->pluck('id');
-        return $this->domainsOnly()->with(['topics' => function($q) use($topics_Ids){
-            $q->whereIn('id', $topics_Ids);
-        }]);
+        return $this->belongsToMany(DomainsTags::class, 'task_domains', 'task_id', 'relation_id')->wherePivot('relation_type', 'App\Models\DomainsTags')->wherePivot('is_tag', 0)->whereNull('parent_id');;
     }
 
     public function tags()
@@ -91,7 +83,7 @@ class Task extends BaseModel
 
     public function topics()
     {
-        return $this->belongsToMany(Topic::class, 'task_domains', 'task_id', 'relation_id')->wherePivot('relation_type', 'App\Models\Topic');
+        return $this->belongsToMany(DomainsTags::class, 'task_domains', 'task_id', 'relation_id')->wherePivot('is_tag', 0)->whereNotNull('parent_id');
     }
     
     public function task_content()
@@ -149,8 +141,17 @@ class Task extends BaseModel
         return collect([
             'filterOptions' => [
                     'lang_count'    => $data->pluck('task_content_count')->unique(),
-                    'domain'        => $data->get()->pluck('domains')->map->pluck('name', 'id')->unique(),
-                    'tags'          => $data->get()->pluck('tags')->map->pluck('name', 'id')->unique(),
+
+                    'domain' 
+                        => $data->get()->pluck('domains')->flatten()->map(function ($item, $key) {
+                            return ['id' => $item['id'], 'name' => $item['name']];
+                        })->unique(),
+
+                    'tags' 
+                        => $data->get()->pluck('tags')->flatten()->map(function ($item, $key) {
+                            return ['id' => $item['id'], 'name' => $item['name']];
+                        })->unique(),
+
                     'status'        => $data->pluck("status")->unique()
                 ]
         ]);

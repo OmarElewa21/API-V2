@@ -40,7 +40,7 @@ class TasksController extends Controller
                     DB::table('task_domains')->insert([
                         'task_id'       => $task->id,
                         'relation_id'   => $topic,
-                        'relation_type' => 'App\Models\Topic'
+                        'relation_type' => 'App\Models\DomainsTags'
                     ]);
                 }
             }
@@ -91,15 +91,15 @@ class TasksController extends Controller
      */
     public function index(ValidateFilterOptionsRequest $request)
     {
-        $data = Task::with(['domains:id,name,uuid', 'domains.topics:domain_id,name,uuid','tags:id,name,uuid'])
+        $data = Task::with(['domains:id,name,uuid', 'tags:id,name,uuid'])
                 ->withCount(['task_content', 'task_answers as correct_answers_count' => function($q){
                     $q->where('is_correct', 1);
                 }]);
-
+        
         if($request->has('filterOptions')){
             $data = Task::applyFilter($request->get('filterOptions'), $data);
         }
-
+        
         $filterOptions = Task::getFilterForFrontEnd($data);        // get collection of availble filter options data
         
         // Get data as a collection

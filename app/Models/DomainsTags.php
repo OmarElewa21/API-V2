@@ -90,6 +90,10 @@ class DomainsTags extends BaseModel
         return $query->whereNotNull('parent_id');
     }
 
+    public function topics(){
+        return $this->hasMany(self::class, 'parent_id');
+    }
+
     public function domain()
     {
         return $this->belongsTo(self::class, 'parent_id');
