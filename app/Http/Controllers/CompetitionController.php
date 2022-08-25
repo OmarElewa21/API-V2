@@ -13,6 +13,7 @@ use App\Http\Requests\competition\UpdatecompetitionRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
 
 class CompetitionController extends Controller
@@ -239,6 +240,34 @@ class CompetitionController extends Controller
         $competition->deleted_by = auth()->id();
         $competition->save();
         $competition->delete();
+        return $this->index(new Request);
+    }
+
+    /**
+     * Remove multiple competition.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function massDelete(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            foreach($request->all() as $competition_uuid){
+                if(Str::isUuid($competition_uuid) && Competition::whereUuid($competition_uuid)->exists()){
+                    $competition = Competition::whereUuid($competition_uuid)->firstOrFail();
+                    $competition->deleted_by = auth()->id();
+                    $competition->save();
+                    $competition->delete();
+                }else{
+                    throw new \Exception("data is not valid");
+                }
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(["message" => $e->getMessage()], 500);
+        }
+        DB::commit();
         return $this->index(new Request);
     }
 }
