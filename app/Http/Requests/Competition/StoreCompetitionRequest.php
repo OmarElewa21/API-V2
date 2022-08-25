@@ -77,7 +77,7 @@ class StoreCompetitionRequest extends CreateBaseRequest
     {
         foreach($this->get($key)['organizations'] as $k=>$organization){
             $validation_arr = array_merge($validation_arr, [
-                $key.'.organizations.'.$k.'.organization_id'                   => ['required', Rule::exists(\App\Models\Oragnization::class, 'id')->whereNull('deleted_at')],
+                $key.'.organizations.'.$k.'.organization_id'                   => ['required', Rule::exists(\App\Models\Organization::class, 'id')->whereNull('deleted_at')],
                 $key.'.organizations.'.$k.'.allow_session_edits_by_partners'   => 'boolean',
                 $key.'.organizations.'.$k.'.registration_open'                 => 'required|date',
                 $key.'.organizations.'.$k.'.competition_dates'                 => 'required|string',
