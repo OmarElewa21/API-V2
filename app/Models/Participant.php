@@ -38,6 +38,7 @@ class Participant extends Authenticatable
         'index',
         'password',
         'name',
+        'competition_id',
         'class',
         'grade',
         'country_partner_id',
