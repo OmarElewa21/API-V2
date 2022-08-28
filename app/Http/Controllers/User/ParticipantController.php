@@ -50,8 +50,12 @@ class ParticipantController extends Controller
         $data = Participant::leftJoinRelationship('school')->leftJoinRelationship('countryPartner')
                     ->leftJoinRelationshipUsingAlias('tuition_centre', 'tuition_centre')
                     ->leftJoinRelationship('country')
+                    ->leftJoin('competitions', function ($join) {
+                        $join->on('competitions.id', '=', 'participants.competition_id')
+                             ->whereNull('competitions.deleted_at')->orWhereNotNull('competitions.deleted_at');
+                    })
                     ->select('participants.*', 'schools.name as school','users.name as partner',
-                                'countries.name as country', 'tuition_centre.name as tuition_centre');
+                                'countries.name as country', 'tuition_centre.name as tuition_centre', 'competitions.name as competition');
         
         $this->indexfilterByRole($data);
         

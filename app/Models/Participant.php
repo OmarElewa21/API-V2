@@ -123,6 +123,11 @@ class Participant extends Authenticatable
         return $this->belongsTo(Country::class);
     }
 
+    public function competition()
+    {
+        return $this->belongsTo(Competition::class)->withTrashed();
+    }
+
     protected static function boot()
     {
         parent::boot();
@@ -188,6 +193,10 @@ class Participant extends Authenticatable
             if(isset($filterOptions['grade']) && !is_null($filterOptions['grade'])){
                 $data->where('participants.grade', $filterOptions['grade']);
             }
+
+            if(isset($filterOptions['competition']) && !is_null($filterOptions['competition'])){
+                $data->where('participants.competition_id', $filterOptions['competition']);
+            }
     
             if(isset($filterOptions['status']) && !is_null($filterOptions['status']) && Arr::exists(self::STATUS, $filterOptions['status'])){
                 $data->where('participants.status', self::STATUS[$filterOptions['status']]);
@@ -213,6 +222,7 @@ class Participant extends Authenticatable
                     'school'           => $filter->pluck('school', 'school_id')->unique(),
                     'country'          => $filter->pluck('country', 'country_id')->unique(),
                     'grade'            => $filter->pluck('grade')->unique(),
+                    'competition'      => $filter->pluck('competition', 'competition_id')->unique(),
                     'status'           => array_keys(Arr::where(self::STATUS, function ($value, $key) use($statuses){
                                             return in_array($value, $statuses);
                                         }))
