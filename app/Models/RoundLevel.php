@@ -28,7 +28,7 @@ class RoundLevel extends Model
     
     public function round()
     {
-        return $this->belongsTo(Round::class);
+        return $this->belongsTo(Round::class)->withTrashed();
     }
 
     public function collection()

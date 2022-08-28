@@ -39,4 +39,9 @@ class Round extends BaseModel
     {
         return $this->hasMany(RoundLevel::class);
     }
+
+    public function competition()
+    {
+        return $this->belongsTo(Competition::class)->withTrashed();
+    }
 }

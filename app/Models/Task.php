@@ -66,6 +66,31 @@ class Task extends BaseModel
         );
     }
 
+    public function getCompetitionsAttribute(){
+        $sections = $this->sections;
+        if(count($sections) > 0){
+            $competitions = [];
+            foreach($sections as $section){
+                $roundLevels = $section->collection->roundLevels;
+                if(count($roundLevels) > 0){
+                    $competitions[] = $roundLevels->pluck('round')->pluck('competition');
+                }
+            }
+            return $competitions[0];
+        }
+        return null;
+    }
+
+    public function getLanguagesAttribute()
+    {
+        $langs = $this->task_content()->joinRelationship('language')->select('task_contents.status', 'languages.name')->get();
+        $langs = $langs->mergeRecursive([
+            'pending' => $this->task_content()->where('status', 'pending')->count(),
+            'total'   => $this->task_content()->count(),
+        ]);
+        return $langs->all();
+    }
+
     public function domains()
     {
         return $this->belongsToMany(DomainsTags::class, 'task_domains', 'task_id', 'relation_id')->wherePivot('relation_type', 'App\Models\DomainsTags')->wherePivot('is_tag', 0)->whereNull('parent_id');;
@@ -91,19 +116,9 @@ class Task extends BaseModel
         return $this->hasMany(TaskContent::class);
     }
 
-    public function section()
+    public function sections()
     {
         return $this->belongsToMany(Section::class)->withPivot('index', 'in_group', 'group_index');
-    }
-
-    public function getLanguagesAttribute()
-    {
-        $langs = $this->task_content()->joinRelationship('language')->select('task_contents.status', 'languages.name')->get();
-        $langs = $langs->mergeRecursive([
-            'pending' => $this->task_content()->where('status', 'pending')->count(),
-            'total'   => $this->task_content()->count(),
-        ]);
-        return $langs->all();
     }
 
     public function task_answers()
@@ -130,6 +145,11 @@ class Task extends BaseModel
             $data = $data->whereIn('domains_tags.id', $filterIds)->distinct();
         }
 
+        // filter by competition
+        if(isset($filterOptions['competition']) && !is_null($filterOptions['competition'])){
+            $data = $data->where('tasks.status', $filterOptions['status']);
+        }
+
         // filter by status
         if(isset($filterOptions['status']) && !is_null($filterOptions['status'])){
             $data = $data->where('tasks.status', $filterOptions['status']);
@@ -138,21 +158,22 @@ class Task extends BaseModel
     }
 
     public static function getFilterForFrontEnd($data){
+        $data = $data->get();
         return collect([
             'filterOptions' => [
-                    'lang_count'    => $data->pluck('task_content_count')->unique(),
+                    'lang_count' => $data->pluck('task_content_count')->unique(),
 
                     'domain' 
-                        => $data->get()->pluck('domains')->flatten()->map(function ($item, $key) {
+                        => $data->pluck('domains')->flatten()->map(function ($item, $key) {
                             return ['id' => $item['id'], 'name' => $item['name']];
                         })->unique(),
 
                     'tags' 
-                        => $data->get()->pluck('tags')->flatten()->map(function ($item, $key) {
+                        => $data->pluck('tags')->flatten()->map(function ($item, $key) {
                             return ['id' => $item['id'], 'name' => $item['name']];
                         })->unique(),
 
-                    'status'        => $data->pluck("status")->unique()
+                    'status'    => $data->pluck("status")->unique()
                 ]
         ]);
     }

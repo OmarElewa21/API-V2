@@ -66,6 +66,11 @@ class Collection extends BaseModel
         return $this->hasMany(Section::class);
     }
 
+    public function roundLevels()
+    {
+        return $this->hasMany(RoundLevel::class);
+    }
+
     public function tasks()
     {
         $sections =  $this->sections()->with('tasks')->get();

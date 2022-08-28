@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Dyrynda\Database\Support\GeneratesUuid;
+use Kirschbaum\PowerJoins\PowerJoins;
 
 class Section extends BaseModel
 {
-    use SoftDeletes, GeneratesUuid;
+    use SoftDeletes, GeneratesUuid, PowerJoins;
 
     protected $fillable = [
         'collection_id',

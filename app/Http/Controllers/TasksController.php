@@ -70,7 +70,7 @@ class TasksController extends Controller
             foreach($data['answers'] as $answer){
                 $task_answer = TaskAnswer::create(array_merge($answer, [
                     'task_id'    => $task->id,
-                    'is_img'     => (boolean)$data['answers_as_img'] ? 1 : 0,
+                    'is_img'     => (boolean) $data['answers_as_img'] ? 1 : 0,
                     'updated_by' => $withUpdatedBy ? auth()->id() : null
                 ]));
                 TaskAnswerContent::create(array_merge($answer, [
