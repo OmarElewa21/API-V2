@@ -81,6 +81,11 @@ class Competition extends BaseModel
         return $this->hasMany(Award::class)->where('is_overall', 0);
     }
 
+    public function participants()
+    {
+        return $this->hasMany(Participant::class);
+    }
+
     public static function getFilterForFrontEnd($filter){
         return collect([
             'filterOptions' => [

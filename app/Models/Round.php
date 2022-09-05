@@ -35,7 +35,7 @@ class Round extends BaseModel
         });
     }
 
-    public function round_level()
+    public function roundLevels()
     {
         return $this->hasMany(RoundLevel::class);
     }

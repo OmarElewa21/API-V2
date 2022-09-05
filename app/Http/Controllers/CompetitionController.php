@@ -32,7 +32,7 @@ class CompetitionController extends Controller
                 },
                 'tags:id,name',
                 'rounds' => function($query){
-                    $query->joinRelationship('round_level')->joinRelationship('round_level.collection')
+                    $query->joinRelationship('roundLevels')->joinRelationship('roundLevels.collection')
                         ->select('rounds.id', 'rounds.competition_id', 'round_levels.level', 'round_levels.grades', 'collections.name');
                 },
                 'round_awards:id,competition_id,labels'
@@ -170,7 +170,7 @@ class CompetitionController extends Controller
      */
     public function show(Competition $competition)
     {
-        return response($competition->load('organizations', 'tags:id,name', 'rounds', 'rounds.round_level', 'awards'), 200);
+        return response($competition->load('organizations', 'tags:id,name', 'rounds', 'rounds.roundLevels', 'awards'), 200);
     }
 
     /**
@@ -270,4 +270,31 @@ class CompetitionController extends Controller
         DB::commit();
         return $this->index(new Request);
     }
+
+    /**
+     * 
+     * @param  \App\Models\Competition  $competition
+     * @param  \Illuminate\Http\Request  $request
+     * @return response of competition rounds
+     */
+    public function roundsIndex(Competition $competition, Request $request)
+    {
+        return response(
+            $competition->select('id', 'name', 'global_competition_start_date', 'global_competition_end_date')
+            ->with(['rounds' => function($query)use($request){
+                $query->select('id', 'uuid', 'competition_id', 'index', 'label', 'configurations', 'contribute_to_individual_score')
+                ->with('roundLevels:id,round_id,uuid,level')->withCount('roundLevels');
+
+                if($request->filled('search')){
+                    $search = $request->search;
+                    $query->where(function($query)use($search){
+                        $query->where('label', 'LIKE', '%'. $search. '%');
+                    });
+                }
+            }])
+            ->withCount('rounds', 'participants')->get(),
+        200);
+    }
+
+    
 }

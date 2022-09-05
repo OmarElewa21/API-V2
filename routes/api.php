@@ -81,6 +81,7 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
         Route::post('difficulty_and_points', [App\Http\Controllers\DifficultyAndPointsController::class, 'store']);
 
         Route::delete('competitions/action/mass_delete', [App\Http\Controllers\CompetitionController::class, "massDelete"]);
+        Route::get('competitions/{competition}/rounds', [App\Http\Controllers\CompetitionController::class, "roundsIndex"]);
     });
 
     Route::middleware(['role:super admin|admin|country partner', 'users:country_partner_assistant'])
