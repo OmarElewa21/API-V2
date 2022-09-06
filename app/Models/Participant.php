@@ -32,8 +32,6 @@ class Participant extends Authenticatable
 
     public $incrementing = false;
 
-    protected $primaryKey = 'index';
-
     protected $fillable = [
         'index',
         'password',

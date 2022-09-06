@@ -14,12 +14,13 @@ return new class extends Migration
     public function up()
     {
         Schema::create('participants', function (Blueprint $table) {
+            $table->id();
             $table->string('index', 12)->unique();
             $table->string('password');
             $table->string('name', 132);
             $table->string('class', 32);
             $table->string('grade', 32);
-            $table->foreignId('user_id')->constrained('users');
+            $table->foreignId('organization_id')->constrained();
             $table->foreignId('school_id')->nullable()->constrained('schools');
             $table->foreignId('country_id')->constrained('countries');
             $table->unsignedBigInteger('tuition_centre_id')->nullable();

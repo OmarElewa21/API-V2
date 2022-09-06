@@ -16,14 +16,15 @@ return new class extends Migration
         Schema::create('schools', function (Blueprint $table) {
             $table->id();
             $table->string('name', 164);
-            $table->string('address', 240);
-            $table->string('postal_code', 16);
+            $table->string('address', 240)->nullable();
+            $table->string('postal_code', 16)->nullable();
             $table->string('phone', 24);
-            $table->foreignId('country_id')->constrained('countries');
+            $table->foreignId('country_id')->constrained();
+            $table->foreignId('organization_id')->nullable()->constrained();
             $table->boolean('is_tuition_centre')->default(false);
-            $table->string('province', 64);
+            $table->string('province', 64)->nullable();
             $table->string('email')->unique();
-            $table->string('status')->default('pending');
+            $table->set('status', ['Approved', 'Pending', 'Deleted'])->default('Pending');
             $table->foreignId('approved_by')->nullable()->constrained('users');
             $table->dateTime('approved_at')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users');

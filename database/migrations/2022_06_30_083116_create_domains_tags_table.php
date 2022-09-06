@@ -16,9 +16,10 @@ return new class extends Migration
         Schema::create('domains_tags', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('status', 16)->default('pending');
+            $table->set('status', ['Approved', 'Pending', 'Deleted'])->default('Pending');
             $table->boolean('is_tag')->default(false);
             $table->efficientUuid('uuid')->index()->unique()->nullable();
+            $table->foreignId('parent_id')->nullable()->constrained('domains_tags');
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->foreignId('approved_by')->nullable()->constrained('users');

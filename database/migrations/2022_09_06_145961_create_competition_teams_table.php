@@ -13,9 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('participants', function (Blueprint $table) {
-            $table->renameColumn('user_id', 'country_partner_id');
-            $table->unsignedTinyInteger('status')->default(1);
+        Schema::create('competition_teams', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->foreignId('competition_id')->constrained();
+            $table->timestamps();
         });
     }
 
@@ -26,9 +28,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('participants', function (Blueprint $table) {
-            $table->renameColumn('country_partner_id', 'user_id');
-            $table->dropColumn('status');
-        });
+        Schema::dropIfExists('competition_teams');
     }
 };

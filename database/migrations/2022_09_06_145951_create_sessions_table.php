@@ -13,15 +13,16 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('topics', function (Blueprint $table) {
+        Schema::create('sessions', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->foreignId('domain_id')->constrained('domains_tags');
-            $table->efficientUuid('uuid')->index()->unique()->nullable();
+            $table->foreignId('round_level_id')->constrained();
+            $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
-            $table->dateTime('updated_at')->nullable();
             $table->foreignId('deleted_by')->nullable()->constrained('users');
+            $table->efficientUuid('uuid')->index()->unique()->nullable();
             $table->softDeletes($column = 'deleted_at', $precision = 0);
+            $table->timestamps();
         });
     }
 
@@ -32,6 +33,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('topics');
+        Schema::dropIfExists('sessions');
     }
 };

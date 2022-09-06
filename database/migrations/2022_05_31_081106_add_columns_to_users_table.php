@@ -23,7 +23,9 @@ return new class extends Migration
             $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->foreignId('deleted_by')->nullable()->constrained('users');
             $table->foreignId('country_id')->nullable()->constrained('countries');
-            $table->string('status')->default('enabled');
+            $table->string('img')->nullable();
+            $table->text('about')->nullable();
+            $table->set('status', ['Disabled', 'Enabled', 'Deleted'])->default('Enabled');
         });
 
         DB::table('users')->insert(
