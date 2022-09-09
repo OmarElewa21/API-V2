@@ -20,7 +20,7 @@ return new class extends Migration
             $table->boolean('allow_session_edits_by_partners')->default(true);
             $table->date('registration_open');
             $table->json('competition_dates');
-            $table->set('status', ['Active', 'Locked', 'Ready', 'Rejected', 'Pending'])->default('Active');
+            $table->enum('status', ['Active', 'Locked', 'Ready', 'Rejected', 'Pending'])->default('Active');
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->foreignId('deleted_by')->nullable()->constrained('users');

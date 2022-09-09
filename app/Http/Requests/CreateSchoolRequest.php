@@ -8,6 +8,7 @@ class CreateSchoolRequest extends CreateBaseRequest
     function __construct()
     {
         $this->key = 'school';
+        $this->unique_fields = ['email'];
     }
 
     /**

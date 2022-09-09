@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('difficulty_groups', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
-            $table->set('status', ['Active', 'Deleted'])->default('Deleted');
+            $table->enum('status', ['Active', 'Deleted'])->default('Active');
             $table->boolean('has_default_marks')->default(true);
             $table->efficientUuid('uuid')->index()->unique()->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users');

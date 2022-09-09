@@ -21,7 +21,7 @@ return new class extends Migration
             $table->float('initial_points')->default(0);
             $table->text('description')->nullable();
             $table->json('recommendations')->nullable();
-            $table->set('status', ['Active', 'Pending Moderation'])->default('Active');
+            $table->enum('status', ['Active', 'Pending Moderation'])->default('Active');
             $table->foreignId('approved_by')->nullable()->constrained('users');
             $table->dateTime('approved_at')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users');

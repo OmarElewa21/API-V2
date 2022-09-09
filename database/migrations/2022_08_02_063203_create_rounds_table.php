@@ -18,7 +18,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('index');
             $table->foreignId('competition_id')->constrained();
             $table->string('label');
-            $table->set('configurations', ['Team', 'Individual'])->default('Team');
+            $table->enum('configurations', ['Team', 'Individual'])->default('Team');
             $table->boolean('contribute_to_individual_score')->default(false);
             $table->boolean('one_account_answer_tasks')->default(false);
             $table->boolean('tasks_assigned_by_leader')->default(false);

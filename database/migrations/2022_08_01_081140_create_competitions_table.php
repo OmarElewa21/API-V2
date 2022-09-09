@@ -20,12 +20,12 @@ return new class extends Migration
             $table->date('global_competition_start_date')->nullabe();
             $table->date('global_competition_end_date')->nullabe();
             $table->boolean('re_run')->default(0);
-            $table->set('format', ['Local', 'Global'])->default('Local');
-            $table->set('mode', ['Online', 'Paper-Based', 'Both'])->default('Online');
+            $table->enum('format', ['Local', 'Global'])->default('Local');
+            $table->enum('mode', ['Online', 'Paper-Based', 'Both'])->default('Online');
             $table->foreignId('difficulty_group_id')->constrained();
             $table->json('grades')->nullable();
             $table->text('instructions')->nullable();
-            $table->set('status', ['Active', 'Computed', 'Closed'])->default('Active');
+            $table->enum('status', ['Active', 'Computed', 'Closed'])->default('Active');
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->foreignId('deleted_by')->nullable()->constrained('users');

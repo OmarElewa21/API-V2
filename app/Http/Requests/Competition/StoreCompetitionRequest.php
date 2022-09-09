@@ -37,7 +37,7 @@ class StoreCompetitionRequest extends CreateBaseRequest
             $key.'.global_competition_start_date'   => 'date',
             $key.'.global_competition_end_date'     => 'date',
             $key.'.re_run'                          => 'boolean',
-            $key.'.competition_format'              => 'string|in:Local,Global',
+            $key.'.format'                          => 'string|in:Local,Global',
             $key.'.grades'                          => 'required|array',
             $key.'.difficulty_group_id'             => ['required',
                                                             Rule::exists(\App\Models\DifficultyGroup::class, 'id')
@@ -63,7 +63,7 @@ class StoreCompetitionRequest extends CreateBaseRequest
         if(Arr::has($this->get($key), 'tags')){
             foreach($this->get($key)['tags'] as $k=>$tag){
                 $validation_arr = array_merge($validation_arr, [
-                    $key.'.tags.'.$k      => Rule::exists(\App\Models\DomainsTags::class, 'id')->where('is_tag', 1)->where('status', 1)->whereNull('deleted_at')
+                    $key.'.tags.'.$k      => Rule::exists(\App\Models\DomainsTags::class, 'id')->where('is_tag', 1)->where('status', 'Approved')->whereNull('deleted_at')
                 ]);
             }
         }

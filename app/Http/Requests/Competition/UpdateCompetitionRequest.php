@@ -35,7 +35,7 @@ class UpdateCompetitionRequest extends FormRequest
             'settings.global_competition_start_date'   => 'date',
             'settings.global_competition_end_date'     => 'date',
             'settings.re_run'                          => 'boolean',
-            'settings.competition_format'              => 'string|in:Local,Global',
+            'settings.format'                          => 'string|in:Local,Global',
             'settings.grades'                          => 'required|array',
             'settings.difficulty_group_id'             => ['required',
                                                             Rule::exists(\App\Models\DifficultyGroup::class, 'id')

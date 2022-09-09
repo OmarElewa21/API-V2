@@ -7,23 +7,22 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Dyrynda\Database\Support\GeneratesUuid;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
-class Session extends BaseModel
+class CompetitionTeam extends BaseModel
 {
     use SoftDeletes, GeneratesUuid;
 
     protected $fillable = [
         'name',
-        'round_level_id',
-        'is_default',
+        'competition_id',
         'created_by',
         'updated_by',
         'deleted_at',
         'deleted_by',
     ];
 
-    public function round_level()
+    public function competition()
     {
-        return $this->belongsTo(RoundLevel::class);
+        return $this->blongsTo(Competition::class);
     }
 
     public function participants()

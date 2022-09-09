@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('domains_tags', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->set('status', ['Approved', 'Pending', 'Deleted'])->default('Pending');
+            $table->enum('status', ['Approved', 'Pending', 'Deleted'])->default('Pending');
             $table->boolean('is_tag')->default(false);
             $table->efficientUuid('uuid')->index()->unique()->nullable();
             $table->foreignId('parent_id')->nullable()->constrained('domains_tags');

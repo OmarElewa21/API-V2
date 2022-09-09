@@ -23,7 +23,7 @@ class Competition extends BaseModel
         'global_competition_start_date',
         'global_competition_end_date',
         're_run',
-        'competition_format',
+        'format',
         'difficulty_group_id',
         'grades',
         'instructions',
@@ -89,7 +89,7 @@ class Competition extends BaseModel
     public static function getFilterForFrontEnd($filter){
         return collect([
             'filterOptions' => [
-                    'format'    => $filter->pluck('competition_format')->unique()->values(),
+                    'format'    => $filter->pluck('format')->unique()->values(),
                     'tag'       => $filter->get()->pluck('tags')->unique()
                                         ->filter(function ($value, $key) {
                                             return count($value) !== 0;
@@ -104,7 +104,7 @@ class Competition extends BaseModel
             $filterOptions = json_decode($request->filterOptions, true);
 
             if(isset($filterOptions['format']) && !is_null($filterOptions['format'])){
-                $data->where('competition_format', $filterOptions['format']);
+                $data->where('format', $filterOptions['format']);
             }
     
             if(isset($filterOptions['tags']) && !is_null($filterOptions['tags'] && is_array($filterOptions['tags']))){

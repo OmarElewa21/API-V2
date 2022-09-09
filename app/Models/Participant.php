@@ -131,21 +131,34 @@ class Participant extends Authenticatable
     {
         parent::boot();
 
-        static::creating(function ($participant) {
-            $index = $participant->generateIndex($participant->country, $participant->school_id);
+        static::creating(function ($record) {
+            $index = $record->generateIndex($record->country, $record->school_id);
             $password = Str::random(14);
-            $participant->index = $index;
-            $participant->password = encrypt($password);
-            $participant->created_by = auth()->id();
+            $record->index = $index;
+            $record->password = encrypt($password);
+            $record->created_by = auth()->id();
         });
 
-        static::updating(function ($participant) {
-            $participant->updated_by = auth()->id();
+        static::created(function ($record){
+            $roundLevels = $record->competition->rounds()->JoinRelationship('roundLevels')
+                ->select('round_levels.*')->where('round_levels.grade', 'LIKE', $record->grade)->get();
+            foreach($roundLevelsIds as $roundLevel){
+                DB::table('session_participant')->insert([
+                    'participant_id'    => $record->id,
+                    'session_id'        => $roundLevel->defaultSession->id,
+                    'assigned_by'       => auth()->id(),
+                    'assigned_at'       => now()->toDateTimeString()
+                ]);
+            }
         });
 
-        static::deleted(function ($participant) {
-            $participant->deleted_by = auth()->id();
-            $participant->save();
+        static::updating(function ($record) {
+            $record->updated_by = auth()->id();
+        });
+
+        static::deleted(function ($record) {
+            $record->deleted_by = auth()->id();
+            $record->save();
         });
     }
 

@@ -17,6 +17,7 @@ class Role extends Model
         'name',
         'description',
         'permission_id',
+        'is_fixed',
         'created_by',
         'updated_by'
     ];

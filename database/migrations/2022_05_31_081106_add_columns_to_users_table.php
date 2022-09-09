@@ -25,7 +25,7 @@ return new class extends Migration
             $table->foreignId('country_id')->nullable()->constrained('countries');
             $table->string('img')->nullable();
             $table->text('about')->nullable();
-            $table->set('status', ['Disabled', 'Enabled', 'Deleted'])->default('Enabled');
+            $table->enum('status', ['Disabled', 'Enabled', 'Deleted'])->default('Enabled');
         });
 
         DB::table('users')->insert(

@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('img')->nullable();
             $table->text('solution_working')->nullable();
             $table->json('recommendations')->nullable();
-            $table->set('status', ['Active', 'Pending Moderation'])->default('Active');
+            $table->enum('status', ['Active', 'Pending Moderation'])->default('Active');
             $table->string('answer_type', 32)->default('MCQ');
             $table->string('answer_layout', 32)->default('Horizontal');
             $table->string('answer_structure', 32)->default('Default');

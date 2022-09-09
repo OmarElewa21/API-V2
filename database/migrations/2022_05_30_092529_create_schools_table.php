@@ -24,7 +24,7 @@ return new class extends Migration
             $table->boolean('is_tuition_centre')->default(false);
             $table->string('province', 64)->nullable();
             $table->string('email')->unique();
-            $table->set('status', ['Approved', 'Pending', 'Deleted'])->default('Pending');
+            $table->enum('status', ['Approved', 'Pending', 'Deleted'])->default('Pending');
             $table->foreignId('approved_by')->nullable()->constrained('users');
             $table->dateTime('approved_at')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users');

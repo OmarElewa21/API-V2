@@ -20,11 +20,13 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        DB::table('permissions')->insert(
+        DB::table('permissions')->insert(array(
             array(
-                'id'                    => 1,
                 'permissions_set'       => json_encode(['all' => true])
-            )
+            ),
+            array(
+                'permissions_set'       => json_encode(['all' => false])
+            ))
         );
     }
 

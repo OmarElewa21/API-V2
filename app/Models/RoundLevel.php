@@ -25,6 +25,21 @@ class RoundLevel extends Model
         'uuid'          => EfficientUuid::class,
         'grades'        => AsArrayObject::class,
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($record){
+            if($record->round->competition->mode !== 'Paper-Based'){
+                Session::create([
+                    'name'           => $record->level,
+                    'round_level_id' => $record->id,
+                    'is_default'     => 1
+                ]);
+            }
+        });
+    }
     
     public function round()
     {
@@ -39,5 +54,14 @@ class RoundLevel extends Model
     public function difficulty_and_points()
     {
         return $this->hasMany(DifficultyAndPoints::class, 'identifier', 'difficulty_and_points_identifier');
+    }
+
+    public function sessions()
+    {
+        return $this->hasMany(Session::class);
+    }
+
+    public function defaultSession(){
+        return $this->hasOne(Session::class)->where('is_default', 1);
     }
 }

@@ -51,7 +51,7 @@ class Task extends BaseModel
         static::creating(function($q) {
             $q->created_by = auth()->id();
             if(auth()->user()->hasRole(['super admin', 'admin'])){
-                $q->status      = "approved";
+                $q->status      = "Active";
                 $q->approved_by = auth()->id();
                 $q->approved_at = now();
             }
@@ -85,7 +85,7 @@ class Task extends BaseModel
     {
         $langs = $this->task_content()->joinRelationship('language')->select('task_contents.status', 'languages.name')->get();
         $langs = $langs->mergeRecursive([
-            'pending' => $this->task_content()->where('status', 'pending')->count(),
+            'pending' => $this->task_content()->where('status', 'Pending')->count(),
             'total'   => $this->task_content()->count(),
         ]);
         return $langs->all();

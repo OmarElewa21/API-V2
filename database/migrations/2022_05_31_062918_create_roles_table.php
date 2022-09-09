@@ -3,6 +3,8 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+use App\Models\Role;
 
 return new class extends Migration
 {
@@ -26,14 +28,18 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        DB::table('roles')->insert(
-            array(
-                'id'                    => 1,
-                'name'                  => 'super admin',
-                'permission_id'         => 1,
-                'is_fixed'              => 1
-            )
-        );
+        $insertions = [
+            ['name' => 'super admin', 'permission_id' => 1],
+            ['name' => 'admin', 'permission_id' => 1],
+            ['name' => 'country partner', 'permission_id' => 2],
+            ['name' => 'country partner assistant', 'permission_id' => 2],
+            ['name' => 'school manager', 'permission_id' => 2],
+            ['name' => 'teacher', 'permission_id' => 2]
+        ];
+
+        foreach($insertions as $insertion){
+            Role::create(array_merge($insertion, ['is_fixed' => 1]));
+        }
     }
 
     /**

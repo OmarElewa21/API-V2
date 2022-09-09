@@ -17,6 +17,11 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->foreignId('competition_id')->constrained();
+            $table->foreignId('created_by')->nullable()->constrained('users');
+            $table->foreignId('updated_by')->nullable()->constrained('users');
+            $table->foreignId('deleted_by')->nullable()->constrained('users');
+            $table->efficientUuid('uuid')->index()->unique()->nullable();
+            $table->softDeletes($column = 'deleted_at', $precision = 0);
             $table->timestamps();
         });
     }

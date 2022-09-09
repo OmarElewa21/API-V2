@@ -130,15 +130,9 @@ class StoreTaskRequest extends CreateBaseRequest
             foreach($this->get($key)['recommendations'] as $k=>$data){
                 $validation_arr = array_merge($validation_arr, [
                     $key.'.recommendations.'.$k                  => 'array',
-                    $key.'.recommendations.'.$k.'.grades'        => 'required|string',
-                    $key.'.recommendations.'.$k.'.difficulty'    => 'required|string',
+                    $key.'.recommendations.'.$k.'.grades'        => 'required|string|in:Grade 1,Grade 2,Grade 3,Grade 4,Grade 5,Grade 6',
+                    $key.'.recommendations.'.$k.'.difficulty'    => 'required|string|in:Easy,Intermediate,Hard,Very Hard',
                 ]);
-                foreach($data['grades'] as $k2=>$grade){
-                    $validation_arr = array_merge($validation_arr, [
-                        $key.'.recommendations.'.$k.'.grades.'.$k2     => 'in:Grade 1,Grade 2,Grade 3,Grade 4,Grade 5,Grade 6',
-                        $key.'.recommendations.'.$k.'.difficulty.'.$k2 => 'in:Easy,Intermediate,Hard,Very Hard',
-                    ]);
-                }
             }
         }
         return $validation_arr;

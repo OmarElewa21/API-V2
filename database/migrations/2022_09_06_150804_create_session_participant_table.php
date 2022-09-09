@@ -15,9 +15,9 @@ return new class extends Migration
     {
         Schema::create('session_participant', function (Blueprint $table) {
             $table->foreignId('participant_id')->constrained();
-            $table->foreignId('session_id')->constrained();
-            $table->foreignId('competition_team_id')->constrained();
-            $table->set('status', ['Active', 'In Progress', 'Completed', 'Inactive', 'Banned'])->default('Active');
+            $table->foreignId('session_id')->nullable()->constrained();
+            $table->foreignId('competition_team_id')->nullable()->constrained();
+            $table->enum('status', ['Active', 'In Progress', 'Completed', 'Inactive', 'Banned'])->default('Active');
             $table->foreignId('assigned_by')->nullable()->constrained('users');
             $table->dateTime('assigned_at')->nullable();
             $table->timestamps();
