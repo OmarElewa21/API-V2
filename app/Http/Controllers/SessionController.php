@@ -18,23 +18,25 @@ class SessionController extends Controller
      */
     public function index(RoundLevel $round_level, Request $request)
     {
-        $data = RoundLevel::distinct()->where('round_levels.id', $round_level->id)->joinRelationship('round')->joinRelationship('round.competition')
-                    ->leftJoinRelationship('sessions')
-                    ->select('round_levels.id', 'round_levels.level as level', 'rounds.index as round', 'competitions.name as competition',
-                            DB::raw('DATE_FORMAT(competitions.global_competition_start_date, "%Y/%m/%d") as start_date'),
-                            DB::raw('DATE_FORMAT(competitions.global_competition_end_date, "%Y/%m/%d") as end_date'))
-                    ->with(['sessions' => function($query) use($request){
-                        Session::applyFilter($request, $query);
-                        $query->withCount('participants');
-                    }]);
+        $headerData = RoundLevel::where('round_levels.id', $round_level->id)->joinRelationship('round')->joinRelationship('round.competition')
+                        ->leftJoinRelationship('sessions')
+                        ->select('round_levels.id', 'round_levels.level as level', 'rounds.index as round', 'competitions.name as competition',
+                                DB::raw('DATE_FORMAT(competitions.global_competition_start_date, "%Y/%m/%d") as start_date'),
+                                DB::raw('DATE_FORMAT(competitions.global_competition_end_date, "%Y/%m/%d") as end_date'));
 
-        $filterOptions = RoundLevel::getFilterForFrontEnd($data);        // get collection of availble filter options data
+        $data = Session::distinct()->where('sessions.round_level_id', $round_level->id)->withCount('participants');
 
-        // Get data as a collection
-        $data = collect($data->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5))
-                    ->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']);
-        
-        return response($filterOptions->merge($data), 200);
+        Session::applyFilter($request, $data);
+
+        $filterOptions = Session::getFilterForFrontEnd($data);        // get collection of availble filter options data
+
+        return $filterOptions->merge(
+                collect(["headerData" => $headerData->get()])
+                ->merge(
+                    collect($data->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5))
+                )
+            )
+            ->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']);
     }
 
     /**
@@ -92,11 +94,5 @@ class SessionController extends Controller
     {
         $session->delete();
         return $this->index($session->round_level, new Request);
-    }
-
-
-
-    public function assignSessionToParticipant(RoundLevel $round_level, AssignSessionRequest $request){
-
     }
 }

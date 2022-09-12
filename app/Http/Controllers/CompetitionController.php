@@ -279,22 +279,22 @@ class CompetitionController extends Controller
      */
     public function roundsIndex(Competition $competition, Request $request)
     {
-        return response(
-            $competition->select('id', 'name', 'global_competition_start_date', 'global_competition_end_date')
-            ->with(['rounds' => function($query)use($request){
-                $query->select('id', 'uuid', 'competition_id', 'index', 'label', 'configurations', 'contribute_to_individual_score')
-                ->with('roundLevels:id,round_id,uuid,level')->withCount('roundLevels');
-
-                if($request->filled('search')){
-                    $search = $request->search;
-                    $query->where(function($query)use($search){
-                        $query->where('label', 'LIKE', '%'. $search. '%');
-                    });
-                }
-            }])
-            ->withCount('rounds', 'participants')->get(),
-        200);
+        $headerData = $competition->select('name', 'global_competition_start_date', 'global_competition_end_date')
+                        ->withCount('rounds', 'participants')->get();
+        
+        $data = Round::where('competition_id', $competition->id)->with('roundLevels:id,round_id,uuid,level')->withCount('roundLevels');
+        if($request->filled('search')){
+            $search = $request->search;
+            $query->where(function($query)use($search){
+                $query->where('label', 'LIKE', '%'. $search. '%');
+            });
+        }
+        
+        return collect(["headerData" => $headerData])
+                ->merge(
+                    collect($data->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5))
+                )
+        
+                ->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']);   
     }
-
-    
 }

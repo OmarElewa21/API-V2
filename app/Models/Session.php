@@ -61,4 +61,12 @@ class Session extends BaseModel
             });
         }
     }
+
+    public static function getFilterForFrontEnd($data){
+        return collect([
+            'filterOptions' => [
+                    'status'    => $data->pluck('status')->unique()
+                ]
+            ]);
+    }
 }

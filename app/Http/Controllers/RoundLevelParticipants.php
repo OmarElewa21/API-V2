@@ -44,16 +44,19 @@ class RoundLevelParticipants extends Controller
                 ->select('participants.*', 'countries.name as country', 'schools.name as school',
                     DB::raw('DATE_FORMAT(round_level_participant.assigned_at, "%Y/%m/%d %H:%i") as assigned_at'),
                     'round_level_participant.status', 'users.name as assigned_by', 'roles.name as assigned_by_user_role',
-                    'sessions.name as session', 'sessions.id as session_id', 'competition_teams.name as team', 'competition_teams.id as team_id')
-                ->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5);
-        
+                    'sessions.name as session', 'sessions.id as session_id', 'competition_teams.name as team', 'competition_teams.id as team_id');
+
         $this->applyFilter($data, $request);
 
         $filterOptions = $this->getFilterForFrontend($data);
-        
+
         return $filterOptions->merge(
-            collect(["headerData" => $headerData])->merge(collect($data)))
-            ->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']);
+                    collect(["headerData" => $headerData])
+                    ->merge(
+                        collect($data->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5))
+                    )
+                )
+                ->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']);
     }
 
 

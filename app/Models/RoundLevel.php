@@ -73,12 +73,4 @@ class RoundLevel extends BaseModel
     public function participants(){
         return $this->belongsToMany(Participant::class, 'round_level_participant');
     }
-
-    public static function getFilterForFrontEnd($data){
-        return collect([
-            'filterOptions' => [
-                    'status'    => $data->get()->pluck('sessions')->flatten()->pluck('status')->unique()->values()
-                ]
-            ]);
-    }
 }
