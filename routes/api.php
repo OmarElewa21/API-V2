@@ -84,7 +84,9 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
         Route::get('competitions/{competition}/rounds', [App\Http\Controllers\CompetitionController::class, "roundsIndex"]);
 
         Route::apiResource('round_levels.sessions', App\Http\Controllers\SessionController::class)->shallow();
-        Route::apiResource('round_levels.participants', App\Http\Controllers\RoundLevelParticipants::class)->only('index', 'update')->shallow();
+
+        Route::get('round_levels/{round_level}/participants', [App\Http\Controllers\RoundLevelParticipants::class, 'index']);
+        Route::put('round_levels/{round_level}/participants', [App\Http\Controllers\RoundLevelParticipants::class, 'update']);
     });
 
     Route::middleware(['role:super admin|admin|country partner', 'users:country_partner_assistant'])

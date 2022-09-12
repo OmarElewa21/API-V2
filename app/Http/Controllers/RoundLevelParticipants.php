@@ -7,12 +7,12 @@ use App\Models\Participant;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
-use Illuminate\Database\Eloquent\Builder;
+use App\Models\RoundLevelParticipant;
+use App\Http\Requests\UpdateRoundLevelParticipantRequest;
 
 class RoundLevelParticipants extends Controller
 {
     const FILTER_COLUMNS = ['participants.name', 'countries.name', 'schools.name', 'sessions.name', 'competition_teams.name', 'round_level_participant.status'];
-    
 
     /**
      * Display a listing of the resource.
@@ -44,7 +44,7 @@ class RoundLevelParticipants extends Controller
                 ->select('participants.*', 'countries.name as country', 'schools.name as school',
                     DB::raw('DATE_FORMAT(round_level_participant.assigned_at, "%Y/%m/%d %H:%i") as assigned_at'),
                     'round_level_participant.status', 'users.name as assigned_by', 'roles.name as assigned_by_user_role',
-                    'sessions.name as session', 'competition_teams.name as team')
+                    'sessions.name as session', 'sessions.id as session_id', 'competition_teams.name as team', 'competition_teams.id as team_id')
                 ->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5);
         
         $this->applyFilter($data, $request);
@@ -86,11 +86,11 @@ class RoundLevelParticipants extends Controller
             }
 
             if(isset($filterOptions['team']) && !is_null($filterOptions['team'])){
-                $query->where('competition_teams.name', $filterOptions['team']);
+                $query->where('competition_teams.id', $filterOptions['team']);
             }
 
             if(isset($filterOptions['session']) && !is_null($filterOptions['session'])){
-                $query->where('sessions.name', $filterOptions['sessions']);
+                $query->where('sessions.id', $filterOptions['sessions']);
             }
         }
 
@@ -121,8 +121,8 @@ class RoundLevelParticipants extends Controller
             'country'          => $query->pluck('country', 'country_id')->unique(),
             'grade'            => $query->pluck('grade')->unique(),
             'status'           => $query->pluck('status')->unique(),
-            'team'             => $query->pluck('team')->filter(function ($value, $key) {return !is_null($value);})->unique(),
-            'session'          => $query->pluck('session')->unique()
+            'team'             => $query->pluck('team', 'team_id')->filter(function ($value, $key) {return !is_null($value);})->unique(),
+            'session'          => $query->pluck('session', 'session_id')->unique()
         ]]);
     }
 
@@ -134,8 +134,25 @@ class RoundLevelParticipants extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(RoundLevel $round_level, UpdateRoundLevelParticipantRequest $request)
     {
-        //
+        foreach($request->participants as $participant_id){
+            $round_level_participant = RoundLevelParticipant::where('participant_id', $participant_id)
+                            ->where('round_level_id', $round_level->id)->firstOrFail();
+            switch ($request->mode) {
+                case 'team':
+                    $round_level_participant->update(["competition_team_id" => $request->team]);
+                    break;
+                case 'session':
+                    $round_level_participant->update(["session_id" => $request->session]);
+                    break;
+                case 'status':
+                    $round_level_participant->update(["status" => $request->status]);
+                    break;
+                default:
+                    break;
+            }
+        }
+        return $round_level_participant;
     }
 }
