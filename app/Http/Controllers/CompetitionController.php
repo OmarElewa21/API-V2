@@ -280,7 +280,7 @@ class CompetitionController extends Controller
     public function roundsIndex(Competition $competition, Request $request)
     {
         $headerData = $competition->select('name', 'global_competition_start_date', 'global_competition_end_date')
-                        ->withCount('rounds', 'participants')->get();
+                        ->withCount('rounds', 'participants')->first();
         
         $data = Round::where('competition_id', $competition->id)->with('roundLevels:id,round_id,uuid,level')->withCount('roundLevels');
         if($request->filled('search')){

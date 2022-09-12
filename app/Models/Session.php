@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Dyrynda\Database\Support\GeneratesUuid;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Http\Request;
+use Kirschbaum\PowerJoins\PowerJoins;
 
 class Session extends BaseModel
 {
-    use SoftDeletes, GeneratesUuid;
+    use SoftDeletes, GeneratesUuid, PowerJoins;
 
     const FILTER_COLUMNS = ['name', 'status'];
 
