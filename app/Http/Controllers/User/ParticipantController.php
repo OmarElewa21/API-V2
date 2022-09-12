@@ -8,6 +8,7 @@ use App\Http\Requests\User\StoreParticipantRequest;
 use App\Http\Requests\User\UpdateParticipantRequest;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\School;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -47,20 +48,20 @@ class ParticipantController extends Controller
      */
     public function index(Request $request)
     {
-        $data = Participant::leftJoinRelationship('school')->leftJoinRelationship('countryPartner')
+        $data = Participant::leftJoinRelationship('school')->leftJoinRelationship('organization')
                     ->leftJoinRelationshipUsingAlias('tuition_centre', 'tuition_centre')
                     ->leftJoinRelationship('country')
                     ->leftJoin('competitions', function ($join) {
                         $join->on('competitions.id', '=', 'participants.competition_id')
                              ->whereNull('competitions.deleted_at')->orWhereNotNull('competitions.deleted_at');
                     })
-                    ->select('participants.*', 'schools.name as school','users.name as partner',
+                    ->select('participants.*', 'schools.name as school','organizations.name as organization',
                                 'countries.name as country', 'tuition_centre.name as tuition_centre', 'competitions.name as competition');
-        
+
         $this->indexfilterByRole($data);
-        
+
         $data = Participant::applyFilter($request, $data);
-        
+
         $filterOptions = Participant::getFilterForFrontEnd($data);
 
         return response($filterOptions->merge($data
@@ -81,25 +82,25 @@ class ParticipantController extends Controller
             try {
                 switch (auth()->user()->role->name) {
                     case 'country partner':
-                        $data['country_partner_id'] = auth()->id();
+                        $data['organization_id'] = auth()->user()->organization_id;
                         break;
                     case 'country partner assistant':
-                        $data['country_partner_id'] = auth()->user()->countryPartnerAssistant->country_partner_id;
+                        $data['organization_id'] = auth()->user()->countryPartnerAssistant->country_partner->organization_id;
                         break;
                     case 'school manager':
                         $schoolManager = auth()->user()->schoolManager;
-                        $data['country_partner_id'] = $schoolManager->country_partner_id;
+                        $data['organization_id'] = $schoolManager->organization_id;
                         $data['school_id'] = $schoolManager->school_id;
                         break;
                     case 'teacher':
                         $teacher = auth()->user()->teacher;
-                        $data['country_partner_id'] = $teacher->country_partner_id;
+                        $data['organization_id'] = $teacher->organization_id;
                         $data['school_id'] = $teacher->school_id;
                         break;
                     default:
                         break;
                 }
-                $data['country_id'] = User::find($data['country_partner_id'])->country_id;
+                $data['country_id'] = School::find($data['school_id'])->country_id;
                 Participant::create($data);
             } catch (Exception $e) {
                 DB::rollBack();

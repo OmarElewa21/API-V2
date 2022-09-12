@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Session;
+use App\Models\RoundLevel;
+use App\Http\Requests\StoreSessionRequest;
+use App\Http\Requests\UpdateSessionRequest;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 class SessionController extends Controller
@@ -12,20 +16,46 @@ class SessionController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(RoundLevel $round_level, Request $request)
     {
-        //
+        $data = RoundLevel::distinct()->where('round_levels.id', $round_level->id)->joinRelationship('round')->joinRelationship('round.competition')
+                    ->leftJoinRelationship('sessions')
+                    ->select('round_levels.id', 'round_levels.level as level', 'rounds.index as round', 'competitions.name as competition',
+                            DB::raw('DATE_FORMAT(competitions.global_competition_start_date, "%Y/%m/%d") as start_date'),
+                            DB::raw('DATE_FORMAT(competitions.global_competition_end_date, "%Y/%m/%d") as end_date'))
+                    ->with(['sessions' => function($query) use($request){
+                        Session::applyFilter($request, $query);
+                        $query->withCount('participants');
+                    }]);
+
+        $filterOptions = RoundLevel::getFilterForFrontEnd($data);        // get collection of availble filter options data
+
+        // Get data as a collection
+        $data = collect($data->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5))
+                    ->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']);
+        
+        return response($filterOptions->merge($data), 200);
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Http\Requests\StoreSessionRequest  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(RoundLevel $round_level, StoreSessionRequest $request)
     {
-        //
+        DB::beginTransaction();
+        try {
+            foreach($request->all() as $data){
+                Session::create(array_merge($data, ['round_level_id' => $round_level->id]));
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response($e->getMessage(), 500);
+        }
+        DB::commit();
+        return $this->index($round_level, new Request);
     }
 
     /**
@@ -36,19 +66,20 @@ class SessionController extends Controller
      */
     public function show(Session $session)
     {
-        //
+        return $session->load('round_level');
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Http\Requests\UpdateSessionRequest  $request
      * @param  \App\Models\Session  $session
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Session $session)
+    public function update(UpdateSessionRequest $request, Session $session)
     {
-        //
+        $session->update($request->all());
+        return $this->show($session);
     }
 
     /**
@@ -59,6 +90,13 @@ class SessionController extends Controller
      */
     public function destroy(Session $session)
     {
-        //
+        $session->delete();
+        return $this->index($session->round_level, new Request);
+    }
+
+
+
+    public function assignSessionToParticipant(RoundLevel $round_level, AssignSessionRequest $request){
+
     }
 }

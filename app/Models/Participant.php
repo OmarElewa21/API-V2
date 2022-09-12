@@ -17,20 +17,13 @@ use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Kirschbaum\PowerJoins\PowerJoins;
 use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Support\Facades\DB;
 
 class Participant extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes, GeneratesUuid, PowerJoins;
     
-    const STATUS = [
-        "Active"            => 1,
-        "Absent"            => 2,
-        "Pending Marking"   => 3,
-        "Computed"          => 4
-    ];
     const FILTER_COLUMNS = ['participants.name', 'participants.index', 'schools.name'];
-
-    public $incrementing = false;
 
     protected $fillable = [
         'index',
@@ -39,7 +32,7 @@ class Participant extends Authenticatable
         'competition_id',
         'class',
         'grade',
-        'country_partner_id',
+        'organization_id',
         'school_id',
         'country_id',
         'tuition_centre_id',
@@ -83,13 +76,6 @@ class Participant extends Authenticatable
         );
     }
 
-    protected function status(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value, $attributes) => array_search($value, self::STATUS) ? array_search($value, self::STATUS) : $value
-        );
-    }
-
     protected function getPasswordAttribute($value)
     {
         try {
@@ -102,9 +88,9 @@ class Participant extends Authenticatable
         }
     }
 
-    public function countryPartner()
+    public function organization()
     {
-        return $this->belongsTo(User::class, 'country_partner_id');
+        return $this->belongsTo(Organization::class);
     }
 
     public function school()
@@ -140,15 +126,21 @@ class Participant extends Authenticatable
         });
 
         static::created(function ($record){
-            $roundLevels = $record->competition->rounds()->JoinRelationship('roundLevels')
-                ->select('round_levels.*')->where('round_levels.grade', 'LIKE', $record->grade)->get();
-            foreach($roundLevelsIds as $roundLevel){
-                DB::table('session_participant')->insert([
-                    'participant_id'    => $record->id,
-                    'session_id'        => $roundLevel->defaultSession->id,
-                    'assigned_by'       => auth()->id(),
-                    'assigned_at'       => now()->toDateTimeString()
-                ]);
+            if($record->competition->mode !== 'Paper-Based'){
+                $roundLevelIds = $record->competition->rounds()->joinRelationship('roundLevels')
+                    ->select('round_levels.id')->where('round_levels.grades', 'LIKE', '%'.$record->grade.'%')->pluck('id');
+                foreach($roundLevelIds as $roundLevelId){
+                    $roundLevel = RoundLevel::whereId($roundLevelId)->with('defaultSession')->first();
+                    DB::table('round_level_participant')->insert([
+                        'participant_id'    => $record->id,
+                        'round_level_id'    => $roundLevel->id,
+                        'session_id'        => $roundLevel->defaultSession->id,
+                        'assigned_by'       => auth()->id(),
+                        'assigned_at'       => now()->toDateTimeString(),
+                        'created_at'        => now()->toDateTimeString(),
+                        'updated_at'        => now()->toDateTimeString()
+                    ]);
+                }
             }
         });
 
@@ -209,9 +201,9 @@ class Participant extends Authenticatable
             if(isset($filterOptions['competition']) && !is_null($filterOptions['competition'])){
                 $data->where('participants.competition_id', $filterOptions['competition']);
             }
-    
-            if(isset($filterOptions['status']) && !is_null($filterOptions['status']) && Arr::exists(self::STATUS, $filterOptions['status'])){
-                $data->where('participants.status', self::STATUS[$filterOptions['status']]);
+
+            if(isset($filterOptions['status']) && !is_null($filterOptions['status'])){
+                $data->where('participants.status', $filterOptions['status']);
             }
         }
 
@@ -227,17 +219,14 @@ class Participant extends Authenticatable
         return $data;
     }
 
-    public static function getFilterForFrontEnd($filter){
-        $statuses = $filter->pluck('status')->unique()->toArray();
+    public static function getFilterForFrontEnd($data){
         return collect([
             'filterOptions' => [
-                    'school'           => $filter->pluck('school', 'school_id')->unique(),
-                    'country'          => $filter->pluck('country', 'country_id')->unique(),
-                    'grade'            => $filter->pluck('grade')->unique(),
-                    'competition'      => $filter->pluck('competition', 'competition_id')->unique(),
-                    'status'           => array_keys(Arr::where(self::STATUS, function ($value, $key) use($statuses){
-                                            return in_array($value, $statuses);
-                                        }))
+                    'school'           => $data->pluck('school', 'school_id')->unique(),
+                    'country'          => $data->pluck('country', 'country_id')->unique(),
+                    'grade'            => $data->pluck('grade')->unique(),
+                    'competition'      => $data->pluck('competition', 'competition_id')->unique(),
+                    'status'           => $data->pluck('status')->unique(),
                 ]
             ]);
     }
@@ -246,10 +235,10 @@ class Participant extends Authenticatable
     {
         switch (auth()->user()->role->name) {
             case 'country partner':
-                return $participant->country_partner_id === auth()->id();
+                return $participant->organization->country_partners()->whereId(auth()->id())->exists();
                 break;
             case 'country partner assistant':
-                return $participant->country_partner_id === auth()->user()->countryPartnerAssistant->country_partner_id;
+                return $participant->organization->country_partners()->whereId(auth()->user()->countryPartnerAssistant->country_partner_id)->exists();
                 break;
             case 'school manager':
                 return $participant->school_id === auth()->user()->schoolManager->school_id;

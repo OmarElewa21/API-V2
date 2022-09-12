@@ -141,17 +141,17 @@ class CompetitionController extends Controller
                 }
                 $competition = Competition::create($data);
                 
-                if(Arr::has($data, 'tags')){
-                    foreach($data['tags'] as $tag){
-                        DB::table('competition_tag')->insert([
-                            'competition_id'       => $competition->id,
-                            'tag_id'              => $tag,
-                        ]);
-                    }
-                }
-                $this->storeOrganizations($competition, $data);
+                // if(Arr::has($data, 'tags')){
+                //     foreach($data['tags'] as $tag){
+                //         DB::table('competition_tag')->insert([
+                //             'competition_id'       => $competition->id,
+                //             'tag_id'              => $tag,
+                //         ]);
+                //     }
+                // }
+                // $this->storeOrganizations($competition, $data);
                 $this->storeRounds($competition, $data);
-                $this->storeAwards($competition, $data);
+                // $this->storeAwards($competition, $data);
 
             } catch (\Exception $e) {
                 DB::rollBack();

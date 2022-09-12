@@ -13,8 +13,9 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('session_participant', function (Blueprint $table) {
+        Schema::create('round_level_participant', function (Blueprint $table) {
             $table->foreignId('participant_id')->constrained();
+            $table->foreignId('round_level_id')->constrained();
             $table->foreignId('session_id')->nullable()->constrained();
             $table->foreignId('competition_team_id')->nullable()->constrained();
             $table->enum('status', ['Active', 'In Progress', 'Completed', 'Inactive', 'Banned'])->default('Active');
@@ -31,6 +32,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('session_participant');
+        Schema::dropIfExists('round_level_participant');
     }
 };

@@ -37,13 +37,7 @@ class StoreParticipantRequest extends CreateBaseRequest
 
         if(auth()->user()->hasRole(['admin', 'super admin'])){
             $rules = array_merge($rules, [
-                    $key.'.country_partner_id' => ['required',
-                                                    Rule::exists('users', 'id')->where(function($query){
-                                                        $query->join('roles', function ($join) {
-                                                            $join->on('roles.id', '=', 'users.role_id')->where('roles.name', 'country partner');
-                                                        })->whereNull('deleted_at');
-                                                    })
-                                                ]
+                    $key.'.organization_id' => ['required', Rule::exists('organizations', 'id')->whereNull('deleted_at')]
                                                                 
                 ]
             );

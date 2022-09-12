@@ -20,7 +20,11 @@ return new class extends Migration
             $table->foreignId('collection_id')->constrained();
             $table->json('grades')->nullable();
             $table->string('difficulty_and_points_identifier', 16);
+            $table->foreignId('created_by')->nullable()->constrained('users');
+            $table->foreignId('updated_by')->nullable()->constrained('users');
+            $table->foreignId('deleted_by')->nullable()->constrained('users');
             $table->efficientUuid('uuid')->index()->unique()->nullable();
+            $table->softDeletes($column = 'deleted_at', $precision = 0);
             $table->timestamps();
         });
     }

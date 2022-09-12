@@ -114,6 +114,9 @@ class RouteServiceProvider extends ServiceProvider
         Route::bind('competition', function ($value) {
             return \App\Models\Competition::whereUuid($value)->firstOrFail();
         });
+        Route::bind('session', function ($value) {
+            return \App\Models\Session::whereUuid($value)->firstOrFail();
+        });
     }
 
     /**

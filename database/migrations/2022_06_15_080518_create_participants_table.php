@@ -25,6 +25,7 @@ return new class extends Migration
             $table->foreignId('country_id')->constrained('countries');
             $table->unsignedBigInteger('tuition_centre_id')->nullable();
             $table->foreign('tuition_centre_id')->references('id')->on('schools');
+            $table->enum('status', ['Active', 'Absent', 'Pending Marking', 'Computed'])->default('Active');
             $table->efficientUuid('uuid')->index()->unique()->nullable();
             $table->softDeletes($column = 'deleted_at', $precision = 0);
             $table->foreignId('created_by')->nullable()->constrained('users');

@@ -2,23 +2,24 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Dyrynda\Database\Casts\EfficientUuid;
 use Dyrynda\Database\Support\GeneratesUuid;
 use Illuminate\Database\Eloquent\Casts\AsArrayObject;
 use Kirschbaum\PowerJoins\PowerJoins;
 
-class RoundLevel extends Model
+class RoundLevel extends BaseModel
 {
-    use HasFactory, GeneratesUuid, PowerJoins;
+    use GeneratesUuid, PowerJoins;
 
     protected $fillable = [
         'level',
         'round_id',
         'collection_id',
         'grades',
-        'difficulty_and_points_identifier'
+        'difficulty_and_points_identifier',
+        'created_by',
+        'updated_by',
+        'deleted_by'
     ];
 
     protected $casts = [
@@ -29,6 +30,10 @@ class RoundLevel extends Model
     protected static function boot()
     {
         parent::boot();
+
+        static::creating(function($q) {
+            $q->created_by = auth()->id();
+        });
 
         static::created(function ($record){
             if($record->round->competition->mode !== 'Paper-Based'){
@@ -63,5 +68,17 @@ class RoundLevel extends Model
 
     public function defaultSession(){
         return $this->hasOne(Session::class)->where('is_default', 1);
+    }
+
+    public function participants(){
+        return $this->belongsToMany(Participant::class, 'round_level_participant');
+    }
+
+    public static function getFilterForFrontEnd($data){
+        return collect([
+            'filterOptions' => [
+                    'status'    => $data->get()->pluck('sessions')->flatten()->pluck('status')->unique()->values()
+                ]
+            ]);
     }
 }
