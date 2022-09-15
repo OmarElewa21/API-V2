@@ -18,9 +18,20 @@ class RoleController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        return response(Role::get(), 200);
+        $data = Role::with('users:id,role_id,name')->withCount('users');
+
+        Role::applyFilter($request, $data);
+
+        $filterOptions = Role::getFilterForFrontEnd($data);
+
+        return response(
+            $filterOptions->merge(
+                collect(
+                    $data->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5)
+                )->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']))
+            ,200);
     }
 
 
@@ -65,7 +76,7 @@ class RoleController extends Controller
      */
     public function show(Role $role)
     {
-        return response($role, 200);
+        return $role->load('users:id,role_id,name')->loadCount('users');
     }
 
 
@@ -112,7 +123,7 @@ class RoleController extends Controller
                 return response()->json(['message' => 'Role is fixed and cannot be deleted'], 403);
             }
             $role->delete();
-            return $this->index();
+            return $this->index(new Request);
         } catch (Exception $e) {
             return response($e->getMessage(), 500);
         }
@@ -144,6 +155,6 @@ class RoleController extends Controller
             return response($e->getMessage(), 500);
         }
         DB::commit();
-        return $this->index();
+        return $this->index(new Request);
     }
 }

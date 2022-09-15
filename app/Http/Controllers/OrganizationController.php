@@ -21,19 +21,20 @@ class OrganizationController extends Controller
      */
     public function index(Request $request)
     {
-        $data = Organization::applyFilter($request, new Organization);
+        $data = Organization::join('countries', 'organizations.country_id', 'countries.id')
+                    ->joinRelationshipUsingAlias('country', 'c')
+                    ->select('organizations.*', 'countries.name as country')
+                    ->with('country_partners:uuid,name')
+                    ->withCount('country_partners');
+
+        Organization::applyFilter($request, $data);
 
         $filterOptions = Organization::getFilterForFrontEnd($data);
 
         return response(
             $filterOptions->merge(
                 collect(
-                    $data
-                    ->join('countries', 'organizations.country_id', 'countries.id')
-                    ->select('organizations.*', 'countries.name as country')
-                    ->with('country_partners:uuid,name')
-                    ->withCount('country_partners')
-                    ->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5)
+                    $data->paginate(is_numeric($request->paginationNumber) ? $request->paginationNumber : 5)
                 )->forget(['links', 'first_page_url', 'last_page_url', 'next_page_url', 'path', 'prev_page_url']))
             ,200);
     }

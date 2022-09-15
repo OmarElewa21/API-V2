@@ -2,16 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Dyrynda\Database\Casts\EfficientUuid;
 use Dyrynda\Database\Support\GeneratesUuid;
 use App\Http\Scopes\RoleScope;
+use Illuminate\Http\Request;
 
-class Role extends Model
+class Role extends BaseModel
 {
-    use HasFactory, SoftDeletes, GeneratesUuid;
+    use SoftDeletes, GeneratesUuid;
 
     protected $fillable = [
         'name',
@@ -43,5 +42,32 @@ class Role extends Model
     
     public function permission(){
         return $this->belongsTo(Permission::class)->withTrashed();
+    }
+
+    public static function applyFilter(Request $request, $data)
+    {
+        if($request->has('filterOptions') && gettype($request->filterOptions) === 'string'){
+            $filterOptions = json_decode($request->filterOptions, true);
+            if(isset($filterOptions['role']) && !is_null($filterOptions['role'])){
+                $data = $data->where('name', $filterOptions['role']);
+            }
+        }
+
+        if($request->filled('search')){
+            $search = $request->search;
+            $data = $data->where(function($query) use($search){
+                $query->where('name', 'LIKE', '%'. $search. '%');
+            });
+        }
+        return $data;
+    }
+
+    public static function getFilterForFrontEnd($data)
+    {
+        return collect([
+            'filterOptions' => [
+                    'role'   => $data->pluck('name')->unique(),
+                ]
+        ]);
     }
 }

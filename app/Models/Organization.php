@@ -75,7 +75,7 @@ class Organization extends BaseModel
             $search = $request->search;
             $data = $data->where(function($query)use($search){
                 $query->where('organizations.name', 'LIKE', '%'. $search. '%');
-                foreach(Organization::FILTER_COLUMNS as $column){
+                foreach(self::FILTER_COLUMNS as $column){
                     $query->orwhere('organizations.' . $column, 'LIKE', '%'. $search. '%');
                 }
             });
@@ -85,10 +85,9 @@ class Organization extends BaseModel
 
     public static function getFilterForFrontEnd($data)
     {
-        $filter = $data->joinRelationshipUsingAlias('country', 'c')->select('c.id as id','c.name as name');
         return collect([
             'filterOptions' => [
-                    'country'   => [$filter->pluck('name', 'id')->unique()],
+                    'country'   => $data->pluck('country', 'country_id')->unique(),
                 ]
         ]);
     }
