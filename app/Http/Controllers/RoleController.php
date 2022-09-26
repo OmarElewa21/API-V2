@@ -94,7 +94,7 @@ class RoleController extends Controller
     {
         try{
             if($role->is_fixed){
-                return response()->json(['message' => 'Role is fixed and cannot be updated'], 403);
+                return response()->json(['message' => 'Role is fixed and cannot be edited'], 403);
             }
             $role->update([
                 'name'          => $request->name,
