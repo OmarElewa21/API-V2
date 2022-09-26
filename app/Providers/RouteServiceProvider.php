@@ -37,6 +37,10 @@ class RouteServiceProvider extends ServiceProvider
                 ->group(base_path('routes/web.php'));
         });
 
+        Route::bind('user', function ($value) {
+            return \App\Models\User::withTrashed()->whereUuid($value)->firstOrFail();
+        });
+
         Route::bind('admin', function ($value) {
             return \App\Models\User::withTrashed()->whereUuid($value)->firstOrFail();
         });

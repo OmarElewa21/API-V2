@@ -208,10 +208,14 @@ class User extends Authenticatable
                 ->where('tokenable_type', 'App\Models\User')->latest('last_used_at');
     }
 
-    public function getUserPermissionSet(){
+    public function permissionSet(){
         return $this->belongsToMany(
             Permission::class, 'user_permissions',
             'user_id', 'permission_id');
+    }
+
+    public function getPermissionSetAttribute(){
+        return $this->permissionSet()->first()->permissions_set;
     }
 
     public function hasRole($roles){
@@ -237,8 +241,8 @@ class User extends Authenticatable
     }
 
     public function checkRouteEligibility($route_name){
-        if($this->hasOwnPermissionSet() && $this->getUserPermissionSet()->exists()){
-            $permission_set = $this->getUserPermissionSet()->first();
+        if($this->hasOwnPermissionSet() && $this->permissionSet()->exists()){
+            $permission_set = $this->permissionSet()->first();
         }else{
             $permission_set = $this->getRolePermissionSet();
         }

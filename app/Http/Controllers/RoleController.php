@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Role;
+use App\Models\User;
+use App\Models\UserPermission;
 use App\Models\Permission;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\SaveRoleRequest;
+use App\Http\Requests\ChangeUserPermissionRequest;
 use Illuminate\Http\Request;
 use Exception;
 
@@ -64,7 +67,7 @@ class RoleController extends Controller
             return response($e->getMessage(), 500);
         }
 
-        return response($role, 200);
+        return $this->show($role);
     }
 
 
@@ -76,7 +79,7 @@ class RoleController extends Controller
      */
     public function show(Role $role)
     {
-        return $role->load('users:id,role_id,name')->loadCount('users');
+        return $role->load('users:id,role_id,name')->loadCount('users')->load('permission');
     }
 
 
@@ -156,5 +159,39 @@ class RoleController extends Controller
         }
         DB::commit();
         return $this->index(new Request);
+    }
+
+    /**
+     * @param App\Models\User
+     */
+    public function changeUserPermission(User $user, ChangeUserPermissionRequest $request)
+    {
+        DB::beginTransaction();
+        try {
+            if($user->permission_by_role){
+                $user->update([
+                    'permission_by_role'    => false,
+                    'updated_by'            => auth()->id()
+                ]);
+            }
+            $permission = Permission::create([
+                'permissions_set'   =>  $request->all()
+            ]);
+            if(UserPermission::where('user_id', $user->id)->exists()){
+                UserPermission::where('user_id', $user->id)->update([
+                    'permission_id'     => $permission->id
+                ]);
+            }else{
+                UserPermission::create([
+                    'user_id'           => $user->id,
+                    'permission_id'     => $permission->id
+                ]);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response($e->getMessage(), 500);
+        }
+        DB::commit();
+        return $user->append('permission_set');
     }
 }

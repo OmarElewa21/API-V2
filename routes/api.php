@@ -43,6 +43,8 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
             'competitions'              => App\Http\Controllers\CompetitionController::class,
         ]);
 
+        Route::put('users/{user}/permission', [App\Http\Controllers\RoleController::class, 'changeUserPermission']);
+
         Route::apiResource('country_partners', App\Http\Controllers\User\CountryPartnerController::class)->except('index');
 
         Route::delete('roles/action/mass_delete', [App\Http\Controllers\RoleController::class, "massDelete"]);

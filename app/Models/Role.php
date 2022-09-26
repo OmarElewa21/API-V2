@@ -44,6 +44,20 @@ class Role extends BaseModel
         return $this->belongsTo(Permission::class)->withTrashed();
     }
 
+    public static function permissin_set(){
+        $default_set = ['allow_access', 'create', 'edit', 'delete'];
+        $permission_set = [
+            'participant'   => $default_set,
+            'difficulty'    => $default_set,
+            'collection'    => array_merge($default_set, ['approve_pending']),
+            'task'          => array_merge($default_set, ['global_view', 'approve_pending']),
+            'school'        => array_merge($default_set, ['approve_reject']),
+            'competition'   => array_merge($default_set, ['allow_marking', 'edit_marking_results']),
+            'session'       => array_merge($default_set, ['invigilate'])
+        ];
+        return $permission_set;
+    }
+
     public static function applyFilter(Request $request, $data)
     {
         if($request->has('filterOptions') && gettype($request->filterOptions) === 'string'){

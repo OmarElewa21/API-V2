@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use App\Models\Role;
 
 class SaveRoleRequest extends FormRequest
 {
@@ -15,7 +16,7 @@ class SaveRoleRequest extends FormRequest
      */
     public function authorize()
     {
-        return auth()->user()->hasRole('super admin');
+        return auth()->user()->hasRole(['super admin', 'admin']);
     }
 
     /**
@@ -25,11 +26,26 @@ class SaveRoleRequest extends FormRequest
      */
     public function rules()
     {
-        return [
-            'name'              => 'required|string|max:32',
-            'description'       => 'string',
-            'permission_set'    => 'required|array'
+        $rules = [
+            'name'                          => 'required|string|max:32',
+            'description'                   => 'string',
+            'permission_set'                => 'required|array',
+            'permission_set.all'            => 'required|boolean'
         ];
+
+        foreach(Role::permissin_set() as $key=>$set){
+            $rules = array_merge($rules, [
+                'permission_set.' . $key    => 'required|array'
+            ]);
+
+            foreach($set as $set_key=>$value){
+                $rules = array_merge($rules, [
+                    'permission_set.' . $key . '.' . $value  => 'required|boolean'
+                ]);
+            }
+        }
+
+        return $rules;
     }
 
     /**
