@@ -232,25 +232,22 @@ class User extends Authenticatable
         return false;
     }
 
-    public function hasOwnPermissionSet(){
-        return !$this->permission_by_role;
+    public function hasVariablePermissionSet(){
+        return !$this->permission_by_role || !$this->role->is_fixed;
     }
 
-    public function getRolePermissionSet(){
-        return $this->role->permission;
+    public function getUserPermissionSet(){
+        if($this->permission_by_role){
+            return $this->role->permission->permissions_set;
+        }
+        return $this->getPermissionSetAttribute();
     }
 
     public function checkRouteEligibility($route_name){
-        if($this->hasOwnPermissionSet() && $this->permissionSet()->exists()){
-            $permission_set = $this->permissionSet()->first();
-        }else{
-            $permission_set = $this->getRolePermissionSet();
-        }
-
+        $permission_set = $this->getUserPermissionSet();
         if(Arr::exists($permission_set, 'all') && $permission_set['all'] == true){
             return true;
         }
-        return true;
         switch ($route_name) {
             case 'roles.index':
                 return Arr::exists($permission_set, 'roles') && $permission_set['roles']['view'] == true;

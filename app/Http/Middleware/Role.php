@@ -17,14 +17,6 @@ class Role
      */
     public function handle(Request $request, Closure $next, $roles)
     {
-        if($request->user()->hasOwnPermissionSet()){
-            if($request->user()->checkRouteEligibility($request->route()->getName())){
-                return $next($request);
-            }else{
-                return response()->json(['message' => 'User is not authorized for this request'], 401);
-            }
-        }
-
         $roles = explode("|", $roles);
         if($request->user()->hasRole($roles)){
             if(! Arr::exists($request->route()->methods, 'GET') && $request->user()->status !== 'Enabled'){
