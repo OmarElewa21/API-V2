@@ -160,38 +160,4 @@ class RoleController extends Controller
         DB::commit();
         return $this->index(new Request);
     }
-
-    /**
-     * @param App\Models\User
-     */
-    public function changeUserPermission(User $user, ChangeUserPermissionRequest $request)
-    {
-        DB::beginTransaction();
-        try {
-            if($user->permission_by_role){
-                $user->update([
-                    'permission_by_role'    => false,
-                    'updated_by'            => auth()->id()
-                ]);
-            }
-            $permission = Permission::create([
-                'permissions_set'   =>  $request->all()
-            ]);
-            if(UserPermission::where('user_id', $user->id)->exists()){
-                UserPermission::where('user_id', $user->id)->update([
-                    'permission_id'     => $permission->id
-                ]);
-            }else{
-                UserPermission::create([
-                    'user_id'           => $user->id,
-                    'permission_id'     => $permission->id
-                ]);
-            }
-        } catch (Exception $e) {
-            DB::rollBack();
-            return response($e->getMessage(), 500);
-        }
-        DB::commit();
-        return $user->append('permission_set');
-    }
 }

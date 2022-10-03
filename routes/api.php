@@ -20,7 +20,7 @@ Route::post('login', [UsersController::class,"login"]);
 Route::post('send_reset_link', [UsersController::class,"sendResetLink"]);
 Route::post('change_password', [UsersController::class,"changePassword"]);
 
-Route::group(['middleware' => ['auth:sanctum']], function() {
+Route::group(['middleware' => ['auth:sanctum', 'user.permission.check']], function() {
     Route::post('logout', [UsersController::class,"logout"]);
     Route::get('profile', [UsersController::class,"profile"]);
     Route::put('profile', [UsersController::class,"updateProfile"]);
@@ -43,7 +43,7 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
             'competitions'              => App\Http\Controllers\CompetitionController::class,
         ]);
 
-        Route::put('users/{user}/permission', [App\Http\Controllers\RoleController::class, 'changeUserPermission']);
+        Route::put('users/{user}/permission', [UsersController::class, 'changeUserPermission']);
 
         Route::apiResource('country_partners', App\Http\Controllers\User\CountryPartnerController::class)->except('index');
 

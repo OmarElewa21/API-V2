@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Permission;
+use App\Models\UserPermission;
 use App\Models\PasswordReset;
 use Exception;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ResetPassword;
 use App\Http\Requests\ChangePasswordRequest;
+use App\Http\Requests\ChangeUserPermissionRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -334,5 +337,44 @@ class UsersController extends Controller
         }
 
         return $this->profile();
+    }
+
+    /**
+     * @param App\Models\User
+     */
+    public function changeUserPermission(User $user, ChangeUserPermissionRequest $request)
+    {
+        DB::beginTransaction();
+        try {
+            if($user->permission_by_role){
+                $user->update([
+                    'permission_by_role'    => false,
+                    'updated_by'            => auth()->id()
+                ]);
+            }
+
+            if(UserPermission::where('user_id', $user->id)->exists()){
+                $user_permission = UserPermission::where('user_id', $user->id)->first();
+                Permission::find($user_permission->permission_id)->update([
+                    'permissions_set'   =>  $request->all()
+                ]);
+            }
+            
+            else{
+                $permission = Permission::create([
+                    'permissions_set'   =>  $request->all()
+                ]);
+                UserPermission::create([
+                    'user_id'           => $user->id,
+                    'permission_id'     => $permission->id
+                ]);
+            }
+            
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response($e->getMessage(), 500);
+        }
+        DB::commit();
+        return $user->append('permission_set');
     }
 }

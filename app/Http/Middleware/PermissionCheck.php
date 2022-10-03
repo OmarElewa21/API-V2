@@ -17,12 +17,14 @@ class PermissionCheck
      */
     public function handle(Request $request, Closure $next)
     {
-        if(in_array($request->route()->getName(), CPS::ROUTE_LIST_TO_CHECK)){
+        if(auth()->check() && is_string($request->route()->getName()) && array_key_exists($request->route()->getName(), CPS::ROUTE_CHECK_LIST)){
             if(CPS::checkAccessPermission($request->user(), $request->route()->getName())){
                 return $next($request);
+            }else{
+                return response('User is not allowed for this action' ,403);
             }
-        }else{
-            return response('User is not allowed for this action' ,403);
         }
+
+        return $next($request);
     }
 }
