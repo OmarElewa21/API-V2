@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Dyrynda\Database\Support\GeneratesUuid;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class School extends BaseModel
 {
@@ -68,10 +67,6 @@ class School extends BaseModel
     public function getTeachersAttribute()
     {
         return $this->teachers()->joinRelationship('user')->get()->pluck('user')->map->only(['uuid','name']);
-    }
-
-    public function scopeGetRelatedUserSchoolsBasedOnCountry(){
-        return $this->where('country_id', auth()->user()->getRelatedUser()->country_id);
     }
 
     public static function applyFilter(Request $request, $data){
